@@ -1,6 +1,37 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=15 format=3 uid="uid://uv36io5ofeec"]
 
-[ext_resource type="Script" path="res://scripts/MainMenu.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://doxiianmbebdg" path="res://img/MainMenu/background.png" id="2_0ykhv"]
+[ext_resource type="Texture2D" uid="uid://2re3gb8w87k7" path="res://img/MainMenu/Title.png" id="2_2wh52"]
+[ext_resource type="Texture2D" uid="uid://bumw8dy524x60" path="res://img/MainMenu/buttons/Play.png" id="3_2wh52"]
+[ext_resource type="Texture2D" uid="uid://dw47u1s6mrtc5" path="res://img/MainMenu/buttons/Play_Hover.png" id="4_ow34m"]
+[ext_resource type="Texture2D" uid="uid://tvx8qyhhbhon" path="res://img/MainMenu/buttons/HowToPlay.png" id="5_826wr"]
+[ext_resource type="Texture2D" uid="uid://8ag7viaas37a" path="res://img/MainMenu/buttons/Settings.png" id="5_mipys"]
+[ext_resource type="Texture2D" uid="uid://bogejsg83ufws" path="res://img/MainMenu/buttons/Settings_Hover.png" id="6_8a8k8"]
+[ext_resource type="Texture2D" uid="uid://d2ipi4thqvaer" path="res://img/MainMenu/buttons/HowToPlay_Hover.png" id="6_ucygd"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_l72w3"]
+texture = ExtResource("3_2wh52")
+region_rect = Rect2(16, 48, 256, 152)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_826wr"]
+texture = ExtResource("4_ow34m")
+region_rect = Rect2(24, 56, 248, 144)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_7la6k"]
+texture = ExtResource("5_mipys")
+region_rect = Rect2(16, 40, 448, 168)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_2nypq"]
+texture = ExtResource("6_8a8k8")
+region_rect = Rect2(24, 56, 432, 144)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mipys"]
+texture = ExtResource("5_826wr")
+region_rect = Rect2(16, 56, 600, 144)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_8a8k8"]
+texture = ExtResource("6_ucygd")
+region_rect = Rect2(24, 56, 592, 136)
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -9,50 +40,91 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_script")
+pivot_offset = Vector2(303, 283)
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
+clip_contents = true
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = -1
+anchor_left = -0.03211806
+anchor_top = -0.10493827
+anchor_right = 1.4609375
+anchor_bottom = 1.5617286
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.95, 0.95, 0.95, 1)
+scale = Vector2(0.7, 0.7)
+pivot_offset = Vector2(3.6988602, 0.8476944)
+metadata/_edit_use_anchors_ = true
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="Background" type="TextureRect" parent="MarginContainer"]
+layout_mode = 2
+texture = ExtResource("2_0ykhv")
+
+[node name="Title" type="TextureRect" parent="MarginContainer/Background"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -100.0
-offset_right = 100.0
-offset_bottom = 100.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 20
+anchors_preset = -1
+anchor_left = 0.113000005
+anchor_top = 0.065000005
+anchor_right = 0.294
+anchor_bottom = 0.157
+offset_left = 79.76907
+offset_top = 49.436714
+offset_right = 46.306213
+offset_bottom = 28.290985
+scale = Vector2(4, 4)
+texture = ExtResource("2_2wh52")
+expand_mode = 1
 
-[node name="Title" type="Label" parent="VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
-theme_override_font_sizes/font_size = 48
-text = "Card Game"
-horizontal_alignment = 1
-
-[node name="StartButton" type="Button" parent="VBoxContainer"]
+[node name="StartButton" type="Button" parent="MarginContainer/Background"]
 custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-text = "Start Game"
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.45400003
+anchor_top = 0.393
+anchor_right = 0.605
+anchor_bottom = 0.52500004
+offset_left = 0.39190674
+offset_top = -0.5175476
+offset_right = -0.32800293
+offset_bottom = 21.922302
+focus_neighbor_top = NodePath("../Title")
+focus_neighbor_bottom = NodePath("../SettingsButton")
+theme_override_styles/normal = SubResource("StyleBoxTexture_l72w3")
+theme_override_styles/hover = SubResource("StyleBoxTexture_826wr")
 
-[node name="SettingsButton" type="Button" parent="VBoxContainer"]
+[node name="SettingsButton" type="Button" parent="MarginContainer/Background"]
 custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-text = "Settings"
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.42800003
+anchor_top = 0.551
+anchor_right = 0.559
+anchor_bottom = 0.59900004
+offset_left = -32.030945
+offset_top = 0.27093506
+offset_right = 0.64904785
+offset_bottom = -1.5690918
+scale = Vector2(1.6882509, 3.3215353)
+focus_neighbor_top = NodePath("../StartButton")
+focus_neighbor_bottom = NodePath("../HowToPlayButton")
+theme_override_styles/normal = SubResource("StyleBoxTexture_7la6k")
+theme_override_styles/hover = SubResource("StyleBoxTexture_2nypq")
 
-[node name="HowToPlayButton" type="Button" parent="VBoxContainer"]
+[node name="HowToPlayButton" type="Button" parent="MarginContainer/Background"]
 custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-text = "How to Play"
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.379
+anchor_top = 0.72800004
+anchor_right = 0.63900006
+anchor_bottom = 0.82000005
+offset_left = 2.2490845
+offset_top = 0.53948975
+offset_right = 16.026245
+offset_bottom = 31.737549
+scale = Vector2(1.1683254, 1.159857)
+focus_neighbor_top = NodePath("../SettingsButton")
+theme_override_styles/normal = SubResource("StyleBoxTexture_mipys")
+theme_override_styles/hover = SubResource("StyleBoxTexture_8a8k8")
