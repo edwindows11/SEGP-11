@@ -1,29 +1,48 @@
-[gd_scene load_steps=15 format=3 uid="uid://uv36io5ofeec"]
+[gd_scene load_steps=24 format=3 uid="uid://uv36io5ofeec"]
 
-[ext_resource type="Texture2D" uid="uid://doxiianmbebdg" path="res://img/MainMenu/background.png" id="2_0ykhv"]
-[ext_resource type="Texture2D" uid="uid://2re3gb8w87k7" path="res://img/MainMenu/Title.png" id="2_2wh52"]
-[ext_resource type="Texture2D" uid="uid://bumw8dy524x60" path="res://img/MainMenu/buttons/Play.png" id="3_2wh52"]
-[ext_resource type="Texture2D" uid="uid://dw47u1s6mrtc5" path="res://img/MainMenu/buttons/Play_Hover.png" id="4_ow34m"]
-[ext_resource type="Texture2D" uid="uid://tvx8qyhhbhon" path="res://img/MainMenu/buttons/HowToPlay.png" id="5_826wr"]
-[ext_resource type="Texture2D" uid="uid://8ag7viaas37a" path="res://img/MainMenu/buttons/Settings.png" id="5_mipys"]
-[ext_resource type="Texture2D" uid="uid://bogejsg83ufws" path="res://img/MainMenu/buttons/Settings_Hover.png" id="6_8a8k8"]
-[ext_resource type="Texture2D" uid="uid://d2ipi4thqvaer" path="res://img/MainMenu/buttons/HowToPlay_Hover.png" id="6_ucygd"]
+[ext_resource type="Texture2D" uid="uid://doxiianmbebdg" path="res://assets/MainMenu/background.png" id="2_0ykhv"]
+[ext_resource type="Texture2D" uid="uid://2re3gb8w87k7" path="res://assets/MainMenu/Title.png" id="2_2wh52"]
+[ext_resource type="Texture2D" uid="uid://bumw8dy524x60" path="res://assets/MainMenu/buttons/Play.png" id="3_2wh52"]
+[ext_resource type="Texture2D" uid="uid://dw47u1s6mrtc5" path="res://assets/MainMenu/buttons/Play_Hover.png" id="4_ow34m"]
+[ext_resource type="Script" uid="uid://crer7at5wljon" path="res://scripts/MainMenu/Buttons/start_button.gd" id="5_8a8k8"]
+[ext_resource type="Texture2D" uid="uid://tvx8qyhhbhon" path="res://assets/MainMenu/buttons/HowToPlay.png" id="5_826wr"]
+[ext_resource type="Texture2D" uid="uid://8ag7viaas37a" path="res://assets/MainMenu/buttons/Settings.png" id="5_mipys"]
+[ext_resource type="Texture2D" uid="uid://bogejsg83ufws" path="res://assets/MainMenu/buttons/Settings_Hover.png" id="6_8a8k8"]
+[ext_resource type="Texture2D" uid="uid://d2ipi4thqvaer" path="res://assets/MainMenu/buttons/HowToPlay_Hover.png" id="6_ucygd"]
+[ext_resource type="Script" uid="uid://crufckq7qphc6" path="res://scripts/MainMenu/Buttons/settings_button.gd" id="8_2nypq"]
+[ext_resource type="Script" uid="uid://cnhwglppb2ux5" path="res://scripts/MainMenu/Buttons/how_to_play_button.gd" id="11_bky6r"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_l72w3"]
 texture = ExtResource("3_2wh52")
 region_rect = Rect2(16, 48, 256, 152)
 
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_l4mxc"]
+texture = ExtResource("4_ow34m")
+region_rect = Rect2(24, 56, 240, 144)
+
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_826wr"]
 texture = ExtResource("4_ow34m")
 region_rect = Rect2(24, 56, 248, 144)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_bky6r"]
+texture = ExtResource("4_ow34m")
+region_rect = Rect2(24, 56, 240, 144)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2nypq"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_7la6k"]
 texture = ExtResource("5_mipys")
 region_rect = Rect2(16, 40, 448, 168)
 
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5faoh"]
+texture = ExtResource("6_8a8k8")
+region_rect = Rect2(24, 56, 432, 144)
+
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_2nypq"]
 texture = ExtResource("6_8a8k8")
 region_rect = Rect2(24, 56, 432, 144)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bky6r"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mipys"]
 texture = ExtResource("5_826wr")
@@ -32,6 +51,8 @@ region_rect = Rect2(16, 56, 600, 144)
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_8a8k8"]
 texture = ExtResource("6_ucygd")
 region_rect = Rect2(24, 56, 592, 136)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_l4mxc"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -89,10 +110,15 @@ offset_left = 0.39190674
 offset_top = -0.5175476
 offset_right = -0.32800293
 offset_bottom = 21.922302
+scale = Vector2(1.0158751, 0.9029035)
 focus_neighbor_top = NodePath("../Title")
 focus_neighbor_bottom = NodePath("../SettingsButton")
 theme_override_styles/normal = SubResource("StyleBoxTexture_l72w3")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_l4mxc")
 theme_override_styles/hover = SubResource("StyleBoxTexture_826wr")
+theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_bky6r")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_2nypq")
+script = ExtResource("5_8a8k8")
 
 [node name="SettingsButton" type="Button" parent="MarginContainer/Background"]
 custom_minimum_size = Vector2(0, 50)
@@ -110,7 +136,10 @@ scale = Vector2(1.6882509, 3.3215353)
 focus_neighbor_top = NodePath("../StartButton")
 focus_neighbor_bottom = NodePath("../HowToPlayButton")
 theme_override_styles/normal = SubResource("StyleBoxTexture_7la6k")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_5faoh")
 theme_override_styles/hover = SubResource("StyleBoxTexture_2nypq")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_bky6r")
+script = ExtResource("8_2nypq")
 
 [node name="HowToPlayButton" type="Button" parent="MarginContainer/Background"]
 custom_minimum_size = Vector2(0, 50)
@@ -122,9 +151,11 @@ anchor_right = 0.63900006
 anchor_bottom = 0.82000005
 offset_left = 2.2490845
 offset_top = 0.53948975
-offset_right = 16.026245
-offset_bottom = 31.737549
-scale = Vector2(1.1683254, 1.159857)
+offset_right = 16.026123
+offset_bottom = 45.939514
+scale = Vector2(1.1796377, 1.0634071)
 focus_neighbor_top = NodePath("../SettingsButton")
 theme_override_styles/normal = SubResource("StyleBoxTexture_mipys")
 theme_override_styles/hover = SubResource("StyleBoxTexture_8a8k8")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_l4mxc")
+script = ExtResource("11_bky6r")
