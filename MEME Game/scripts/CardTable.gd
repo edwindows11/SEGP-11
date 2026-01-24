@@ -73,7 +73,7 @@ func spawn_cards():
 func _on_card_selected(selected_card):
 	if cards_played_this_turn >= 1:
 		print("Cannot play more than 1 card per turn!")
-		return
+		
 
 	cards_played_this_turn += 1
 	

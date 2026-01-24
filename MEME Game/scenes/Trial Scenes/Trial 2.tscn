@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://w2pirshj72gv"]
+
+[ext_resource type="PackedScene" uid="uid://cwmp8tfq2qo1r" path="res://assets/Pieces/Meeple.blend" id="1_pchr6"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Meeple" parent="." instance=ExtResource("1_pchr6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)

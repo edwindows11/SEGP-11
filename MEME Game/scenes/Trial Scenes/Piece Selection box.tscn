@@ -1,0 +1,33 @@
+[gd_scene load_steps=3 format=3 uid="uid://j7ptscew7ca4"]
+
+[ext_resource type="Script" uid="uid://dye87w54eyh6a" path="res://scripts/Actions/piece_selection_box.gd" id="1_g50ch"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_igiud"]
+bg_color = Color(1, 1, 1, 1)
+
+[node name="Trial" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Control" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Pieces Container" type="PanelContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_igiud")
+
+[node name="Control" type="HBoxContainer" parent="Control/Pieces Container"]
+layout_direction = 4
+layout_mode = 2
+script = ExtResource("1_g50ch")

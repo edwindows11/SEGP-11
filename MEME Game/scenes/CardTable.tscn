@@ -20,7 +20,13 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
+[node name="Control" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
 [node name="Background" type="ColorRect" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -88,12 +94,26 @@ grow_horizontal = 0
 grow_vertical = 2
 text = "End Turn"
 
+[node name="BottomBar" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 597.0
+offset_bottom = 648.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
 [node name="ActionLog" parent="." instance=ExtResource("2_actionlog")]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = 20.0
 offset_top = 70.0
-offset_right = 220.0
-offset_bottom = 170.0
+offset_right = -932.0
+offset_bottom = -478.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="UserRoleLabel" type="Label" parent="."]
 layout_mode = 1

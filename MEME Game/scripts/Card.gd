@@ -5,6 +5,7 @@ signal card_selected(card)
 @onready var background = $Background
 @onready var label = $Label
 
+
 var original_position: Vector2
 var is_hovered = false
 var is_selected = false
@@ -28,7 +29,7 @@ func set_card_data(idx: int):
 	index = idx
 	label.text = "Card " + str(idx + 1)
 	# Set color from specific palette
-	var colors = [Color.GREEN, Color.RED, Color.BLACK]
+	var colors = [Color.GREEN, Color.RED, Color.BLACK, Color.YELLOW]
 	background.color = colors.pick_random()
 
 func _on_mouse_entered():
