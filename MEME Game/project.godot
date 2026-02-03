@@ -17,3 +17,7 @@ config/features=PackedStringArray("4.5", "Forward Plus")
 [dotnet]
 
 project/assembly_name="Strategy Game"
+
+[editor_plugins]
+
+enabled=PackedStringArray()
