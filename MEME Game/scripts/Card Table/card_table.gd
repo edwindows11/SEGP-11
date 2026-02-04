@@ -6,9 +6,13 @@ var Play: Node3D
 var totalElephants: int = 0
 var totalMeeple: int = 0 
 
+var player_role: String = "Unknown"
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	UI = $Control
+	UI.player_role = player_role
+	UI.new()
 	Play = $Play
 	Play.del_Elephant() # cards will call this for delete elephant function
 	Play.del_Meeple() # cards will call this for delete meeple function

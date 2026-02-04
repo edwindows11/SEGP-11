@@ -47,7 +47,6 @@ func _ready() -> void:
 		
 		# !! important : add this line after you add child for delete to work
 		meeple.Del_Meeple.connect(func(): meeple_count += 1)
-		
 	#end of testing
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

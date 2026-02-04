@@ -2,3 +2,6 @@ res://scripts/Card Table/card_table.gd
 res://scenes/CardTable.tscn
 res://scripts/Card Table/card_functions.gd
 res://scripts/Pieces/meeple.gd
+res://scenes/MainMenu.tscn
+res://scripts/RoleSelection.gd
+res://scripts/Card Table/card_table_ui.gd

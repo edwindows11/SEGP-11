@@ -144,7 +144,7 @@ autostart = true
 script = ExtResource("3_wt453")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(0.01824947, 0.6359301, -0.77153087, -0.015037816, 0.7717467, 0.6357523, 0.9997204, -2.7931972e-09, 0.023646967, -9.761966, 5.8465443, 3.1005745)
+transform = Transform3D(0.02092747, 0.4655991, -0.88474834, -0.011010005, 0.88499576, 0.4654689, 0.9997204, -2.794749e-09, 0.023646971, -20.313103, 8.213781, 3.1005745)
 
 [connection signal="gui_input" from="Control" to="." method="_on_control_gui_input"]
 [connection signal="gui_input" from="Control" to="Play" method="_on_control_gui_input"]

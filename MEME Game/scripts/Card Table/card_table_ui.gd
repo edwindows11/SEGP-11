@@ -20,6 +20,9 @@ var cards_played_this_turn = 0
 var pending_card: Control = null
 
 func _ready():
+	pass
+
+func new():
 	spawn_cards()
 	spawn_players()
 	if user_role_label:
@@ -103,6 +106,7 @@ func _on_end_turn_pressed():
 		# Here we would maintain the card on the board. 
 		# Since it's already physically there, we just ensure it's removed from 'hand logic' if we had any.
 		# For now, we just clear the pending reference so it's 'committed'.
+		pending_card = null
 		
 	time_left = 60
 	timer_label.text = str(time_left)
