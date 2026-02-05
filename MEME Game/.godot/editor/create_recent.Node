@@ -1,0 +1,14 @@
+Camera3D
+Node3D
+Control
+MarginContainer
+VBoxContainer
+Container
+TextureRect
+NinePatchRect
+Label3D
+Sprite3D
+Panel
+Node2D
+CollisionShape3D
+CharacterBody3D

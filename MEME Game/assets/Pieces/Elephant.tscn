@@ -1,0 +1,52 @@
+[gd_scene load_steps=8 format=3 uid="uid://dchrsn41sr62g"]
+
+[ext_resource type="PackedScene" uid="uid://b7uymon61dd8t" path="res://assets/Pieces/blend/Elephant.blend" id="1_4lisr"]
+[ext_resource type="Script" uid="uid://dgjw4p74ghs2b" path="res://scripts/Pieces/elephant.gd" id="2_1ocwb"]
+[ext_resource type="Material" uid="uid://p1adtaq8li1b" path="res://assets/Pieces/outline.tres" id="3_mjm3k"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mjm3k"]
+resource_local_to_scene = true
+cull_mode = 1
+albedo_color = Color(0, 0, 0, 1)
+metallic_specular = 0.0
+disable_receive_shadows = true
+grow = true
+stencil_mode = 3
+stencil_flags = 2
+stencil_outline_thickness = 0.0
+
+[sub_resource type="Skin" id="Skin_mjm3k"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_kb8pw"]
+points = PackedVector3Array(2.8661184, -1.0039446, -3.5017185, 2.8661184, 0.99590755, -3.5017185, 4.154372, -1.0039446, -3.380909, 1.6744318, -1.0047495, -3.1458008, 0.7067003, -1.0039446, -3.4011645, 4.154372, 0.99590755, -3.380909, 0.7067003, 0.99590755, -3.4011645, -2.7378893, 1.0510452, -1.8783865, 5.3429766, -1.0039446, -2.546094, -0.047348976, -1.0039446, -3.2405674, 5.9901857, -1.0039446, -1.4248085, 6.1257915, -1.0039446, -0.1371386, 5.0758743, -1.0039446, 3.888638, -1.7496114, -1.0039446, 3.888638, -4.15353, -1.0039446, 0.6788678, -4.3692665, -1.0039446, -0.46629024, -3.984023, -1.0039446, -1.56515, -3.6665826, -1.0039446, -2.011494, -3.3871527, -1.0039446, -2.22707, 5.3429766, 0.99590755, -2.546094, -0.047348976, 0.99590755, -3.2405674, -2.861167, 1.0313244, -2.126516, -3.6665826, 0.99590755, -2.011494, -3.984023, 0.99590755, -1.56515, -4.3692665, 0.99590755, -0.46629024, -4.15353, 0.99590755, 0.6788678, -1.7496114, 0.99590755, 3.888638, -1.227735, 1.0144207, 2.3651366, 1.2347407, 1.0144207, 2.3651366, 5.0758743, 0.99590755, 3.888638, 6.1257915, 0.99590755, -0.1371386, 5.9901857, 0.99590755, -1.4248085, -3.3871527, 0.99590755, -2.22707)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ilss0"]
+render_priority = 1
+transparency = 1
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.43774965, 0.43323597, 0.42097294, 1)
+grow = true
+
+[node name="Elephant" node_paths=PackedStringArray("mesh") instance=ExtResource("1_4lisr")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
+script = ExtResource("2_1ocwb")
+mesh = NodePath("Cylinder_001")
+material = SubResource("StandardMaterial3D_mjm3k")
+
+[node name="Cylinder_001" parent="." index="0"]
+material_overlay = ExtResource("3_mjm3k")
+skin = SubResource("Skin_mjm3k")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Cylinder_001" index="0"]
+transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Cylinder_001/StaticBody3D" index="0"]
+shape = SubResource("ConvexPolygonShape3D_kb8pw")
+debug_color = Color(0, 0, 0, 1)
+
+[node name="Cylinder_002" parent="." index="1"]
+material_overlay = SubResource("StandardMaterial3D_ilss0")
+
+[connection signal="input_event" from="Cylinder_001/StaticBody3D" to="." method="_on_static_body_3d_input_event"]
+[connection signal="mouse_entered" from="Cylinder_001/StaticBody3D" to="." method="_on_static_body_3d_mouse_entered"]
+[connection signal="mouse_exited" from="Cylinder_001/StaticBody3D" to="." method="_on_static_body_3d_mouse_exited"]
