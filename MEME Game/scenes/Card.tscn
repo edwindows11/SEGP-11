@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 [gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scripts/Card.gd" id="1_script"]
@@ -43,3 +44,147 @@ grow_vertical = 2
 text = "Card"
 horizontal_alignment = 1
 vertical_alignment = 1
+=======
+[gd_scene load_steps=9 format=3 uid="uid://bt1rs8cr5imh4"]
+
+[ext_resource type="Script" uid="uid://bkonqrcid8iyp" path="res://scripts/Card.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/Card/9.png" id="2_qbjcq"]
+[ext_resource type="Texture2D" uid="uid://xsi3nxmyj1p1" path="res://assets/Card/move away.png" id="3_dqwud"]
+[ext_resource type="FontFile" uid="uid://bdr13mohjmjic" path="res://assets/Fonts/LeagueSpartan-Bold.ttf" id="4_5273u"]
+[ext_resource type="Texture2D" path="res://assets/Card/10.png" id="4_hddve"]
+[ext_resource type="FontFile" uid="uid://phgwxhwsbsrj" path="res://assets/Fonts/canva-sans-regular.otf" id="5_qbjcq"]
+[ext_resource type="FontFile" uid="uid://c5fo6gne3p0xs" path="res://assets/Fonts/canva-sans-bold.otf" id="6_dqwud"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_qf083"]
+load_path = "res://.godot/imported/green.png-adbbdcdb271e2832b46cae84b3b11ca2.ctex"
+
+[node name="Card" type="Control"]
+custom_minimum_size = Vector2(180, 108)
+layout_mode = 3
+anchor_right = 1.0
+anchor_bottom = 1.2390001
+offset_right = -13.0
+offset_bottom = -160.87207
+grow_horizontal = 0
+pivot_offset = Vector2(90, 54)
+script = ExtResource("1_script")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0070001
+anchor_bottom = 1.001
+offset_left = 119.0
+offset_top = 2.0
+offset_right = -129.97314
+offset_bottom = 0.78656006
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer"]
+layout_mode = 2
+texture = SubResource("CompressedTexture2D_qf083")
+expand_mode = 5
+
+[node name="Icons" type="HBoxContainer" parent="MarginContainer/TextureRect"]
+clip_contents = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.037
+anchor_top = 0.5
+anchor_right = 0.97200006
+anchor_bottom = 0.74300003
+offset_left = -0.22600174
+offset_top = 1.0
+offset_right = 0.1439209
+offset_bottom = 0.021972656
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/TextureRect/Icons"]
+layout_mode = 2
+texture = ExtResource("2_qbjcq")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="TextureRect2" type="TextureRect" parent="MarginContainer/TextureRect/Icons"]
+layout_mode = 2
+texture = ExtResource("3_dqwud")
+expand_mode = 3
+
+[node name="TextureRect3" type="TextureRect" parent="MarginContainer/TextureRect/Icons"]
+layout_mode = 2
+texture = ExtResource("4_hddve")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="TextureRect4" type="TextureRect" parent="MarginContainer/TextureRect/Icons"]
+layout_mode = 2
+texture = ExtResource("4_hddve")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="MarginContainer/TextureRect"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.18300001
+anchor_top = 0.039
+anchor_right = 0.822
+anchor_bottom = 0.245
+offset_left = -0.3270111
+offset_top = 15.923
+offset_right = 0.48199463
+offset_bottom = -0.27000427
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.34117648, 0.38039216, 0.16470589, 1)
+theme_override_fonts/font = ExtResource("4_5273u")
+theme_override_font_sizes/font_size = 60
+text = "Crop guarding"
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
+
+[node name="Desc" type="Label" parent="MarginContainer/TextureRect"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.041
+anchor_top = 0.27600002
+anchor_right = 0.96700007
+anchor_bottom = 0.467
+offset_left = 116.403
+offset_top = -0.46801758
+offset_right = -111.739075
+offset_bottom = 11.145996
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("5_qbjcq")
+theme_override_font_sizes/font_size = 28
+text = "Keeping elephants away through human presence and patrolling."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="Action" type="RichTextLabel" parent="MarginContainer/TextureRect"]
+layout_mode = 0
+offset_left = 41.0
+offset_top = 500.7143
+offset_right = 862.0
+offset_bottom = 628.7143
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_constants/line_separation = -4
+theme_override_constants/paragraph_separation = -4
+theme_override_constants/table_v_separation = 3
+theme_override_fonts/normal_font = ExtResource("5_qbjcq")
+theme_override_fonts/bold_font = ExtResource("6_dqwud")
+theme_override_font_sizes/normal_font_size = 23
+theme_override_font_sizes/bold_font_size = 22
+bbcode_enabled = true
+text = "[b]Move[/b] two elephant [b][color=red]one[/color][/b] tile away from the plantation."
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+>>>>>>> Stashed changes

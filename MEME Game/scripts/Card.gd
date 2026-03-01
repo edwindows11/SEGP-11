@@ -6,6 +6,11 @@ signal card_selected(card)
 @onready var label = $Label
 
 
+<<<<<<< Updated upstream
+=======
+const Card_details = preload("res://scripts/Card Table/card_details.gd")
+
+>>>>>>> Stashed changes
 var original_position: Vector2
 var is_hovered = false
 var is_selected = false
@@ -26,8 +31,9 @@ func _ready():
 	gui_input.connect(_on_gui_input)
 
 func set_card_data(idx: int):
-	index = idx
-	label.text = "Card " + str(idx + 1)
+	var card_enum = Card_details.CardID.CROP_GUARDING
+	var card_name = Card_details.CARDS[card_enum]["name"]
+	label.text = card_name
 	# Set color from specific palette
 	var colors = [Color.GREEN, Color.RED, Color.BLACK, Color.YELLOW]
 	background.color = colors.pick_random()
