@@ -2,8 +2,13 @@
 
 importer="texture"
 type="CompressedTexture2D"
+<<<<<<<< Updated upstream:MEME Game/assets/MainMenu/MEME logo.png.import
 uid="uid://cobya6p65w4jm"
 path="res://.godot/imported/MEME logo.png-689333c34e353a71f963c93a43642c6f.ctex"
+========
+uid="uid://boe60d03a20hg"
+path="res://.godot/imported/elephant.png-aba5eb0b5a608604d9d4e3b5a155165f.ctex"
+>>>>>>>> Stashed changes:MEME Game/assets/Card/elephant.png.import
 metadata={
 "vram_texture": false
 }

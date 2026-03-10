@@ -22,6 +22,7 @@ func new(mesh_instance, material_instance) -> void:
 func colour(colour: String):
 	if colour == "red":
 		material.albedo_color = Color("d30000ff")
+<<<<<<< Updated upstream
 		material.grow_amount = 0.1 # Visible highlight
 	elif colour == "white":
 		# Optional friendly highlight
@@ -30,6 +31,10 @@ func colour(colour: String):
 	elif colour == "black":
 		material.albedo_color = Color("000000ff")
 		material.grow_amount = 0.0 # Invisible
+=======
+	elif colour == "black":
+		material.albedo_color = Color("000000ff")
+>>>>>>> Stashed changes
 	
 func deleteFunc():
 	if (delete):

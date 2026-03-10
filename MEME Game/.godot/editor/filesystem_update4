@@ -1,1 +1,9 @@
+<<<<<<< Updated upstream
 res://scenes/MainMenu.tscn
+=======
+res://scenes/Card.tscn
+res://scripts/Card/Card.gd
+res://scripts/Card Table/card_table_ui.gd
+res://scenes/CardTable.tscn
+res://assets/Pieces/Meeple.tscn
+>>>>>>> Stashed changes

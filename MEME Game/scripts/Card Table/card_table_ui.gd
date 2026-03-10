@@ -21,6 +21,9 @@ var cards_played_this_turn = 0
 var pending_card: Control = null
 
 func _ready():
+	pass
+
+func new():
 	spawn_cards()
 	spawn_players()
 	if user_role_label:
@@ -99,11 +102,26 @@ func spawn_cards():
 	for i in range(TOTAL_CARDS):
 		var card = CARD_SCENE.instantiate()
 		cards_container.add_child(card)
+<<<<<<< Updated upstream
 		card.set_card_data(i)
 		card.card_selected.connect(_on_card_selected)
 	
 	# Initial positioning
 	reposition_cards()
+=======
+		# Set initial position
+		# Center the card based on its size (assuming 180 width from Card.tscn)
+		var card_width = card.custom_minimum_size.x
+		var x_pos = start_x + (i * CARD_SPACING) - (card_width / 2.0)
+		var y_pos = screen_size.y - card.custom_minimum_size.y - BOTTOM_MARGIN
+		
+		card.position = Vector2(x_pos, y_pos)
+		card.original_position = card.position
+		
+		
+		card.card_selected.connect(_on_card_selected)
+		
+>>>>>>> Stashed changes
 
 func _on_card_selected(selected_card):
 	if cards_played_this_turn >= 1:

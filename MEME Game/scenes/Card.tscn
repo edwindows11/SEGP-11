@@ -1,26 +1,56 @@
+<<<<<<< Updated upstream
 [gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scripts/Card.gd" id="1_script"]
+=======
+[gd_scene load_steps=6 format=3 uid="uid://bog3tkpvaqymt"]
+
+[ext_resource type="Script" uid="uid://bkonqrcid8iyp" path="res://scripts/Card/Card.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://c2ku2hf3nt3qv" path="res://assets/Card/green.png" id="2_40ytf"]
+[ext_resource type="FontFile" uid="uid://bdr13mohjmjic" path="res://assets/Fonts/LeagueSpartan-Bold.ttf" id="4_5273u"]
+[ext_resource type="FontFile" uid="uid://phgwxhwsbsrj" path="res://assets/Fonts/canva-sans-regular.otf" id="5_qbjcq"]
+[ext_resource type="FontFile" uid="uid://c5fo6gne3p0xs" path="res://assets/Fonts/canva-sans-bold.otf" id="6_dqwud"]
+>>>>>>> Stashed changes
 
 [node name="Card" type="Control"]
 custom_minimum_size = Vector2(180, 108)
 layout_mode = 3
+<<<<<<< Updated upstream
 anchors_preset = 0
 offset_right = 180.0
 offset_bottom = 108.0
+=======
+anchor_right = 1.0
+anchor_bottom = 1.2390001
+offset_right = -936.0
+offset_bottom = -679.8721
+grow_horizontal = 0
+>>>>>>> Stashed changes
 pivot_offset = Vector2(90, 54)
 script = ExtResource("1_script")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
+<<<<<<< Updated upstream
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+=======
+anchors_preset = -1
+anchor_left = 0.104
+anchor_right = 0.89300007
+anchor_bottom = 1.0
+offset_left = 0.5439987
+offset_top = 2.0
+offset_right = -0.1270752
+offset_bottom = 1.4285889
+>>>>>>> Stashed changes
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0.15, 0.15, 0.2, 1)
 
+<<<<<<< Updated upstream
 [node name="Border" type="ReferenceRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -43,3 +73,93 @@ grow_vertical = 2
 text = "Card"
 horizontal_alignment = 1
 vertical_alignment = 1
+=======
+[node name="Background" type="TextureRect" parent="MarginContainer"]
+layout_mode = 2
+texture = ExtResource("2_40ytf")
+expand_mode = 5
+
+[node name="Icons" type="HBoxContainer" parent="MarginContainer/Background"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.056
+anchor_top = 0.45800003
+anchor_right = 0.9480001
+anchor_bottom = 0.717
+offset_left = -1.4720001
+offset_top = 0.123996735
+offset_right = 0.7799988
+offset_bottom = 0.026809692
+grow_vertical = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="MarginContainer/Background"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.18300001
+anchor_top = 0.052
+anchor_right = 0.845
+anchor_bottom = 0.245
+offset_left = -4.9350014
+offset_top = -0.029000282
+offset_right = 1.1869965
+offset_bottom = 0.78499985
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.34117648, 0.38039216, 0.16470589, 1)
+theme_override_constants/line_spacing = 0
+theme_override_fonts/font = ExtResource("4_5273u")
+theme_override_font_sizes/font_size = 10
+text = "Light Based Repellent"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+uppercase = true
+
+[node name="Desc" type="Label" parent="MarginContainer/Background"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.041
+anchor_top = 0.27600002
+anchor_right = 0.947
+anchor_bottom = 0.476
+offset_left = 5.893002
+offset_top = -1.4840088
+offset_right = -0.050994873
+offset_bottom = -0.051006317
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_constants/line_spacing = 0
+theme_override_fonts/font = ExtResource("5_qbjcq")
+theme_override_font_sizes/font_size = 5
+text = "Keeping elephants away using light e.g., LED lights, bonfire, torches and solar powered lamps."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="Action" type="RichTextLabel" parent="MarginContainer/Background"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.041
+anchor_top = 0.753
+anchor_right = 0.97
+anchor_bottom = 0.966
+offset_left = -0.10700226
+offset_top = -0.027008057
+offset_right = 0.0619812
+offset_bottom = -0.057014465
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_constants/line_separation = -4
+theme_override_constants/paragraph_separation = -4
+theme_override_constants/table_v_separation = 3
+theme_override_fonts/normal_font = ExtResource("5_qbjcq")
+theme_override_fonts/bold_font = ExtResource("6_dqwud")
+theme_override_font_sizes/normal_font_size = 5
+theme_override_font_sizes/bold_font_size = 5
+bbcode_enabled = true
+text = "Keeping elephants away using light e.g., LED lights, bonfire, torches and solar powered lamps.Keeping elephants away using light e.g., LED lights, bonfire, torches and solar powered lamps."
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+>>>>>>> Stashed changes

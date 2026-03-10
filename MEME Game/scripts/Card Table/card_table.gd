@@ -1,5 +1,6 @@
 extends Node3D
 
+<<<<<<< Updated upstream
 @onready var UI: Control = $CanvasLayer/Control
 @onready var Play: Node3D = $Play
 @onready var camera: Camera3D = $Camera3D
@@ -25,6 +26,22 @@ func _ready() -> void:
 	if UI.user_role_label:
 		UI.user_role_label.text = "My Role: " + player_role
 		
+=======
+var UI: Control
+var Play: Node3D
+
+var totalElephants: int = 0
+var totalMeeple: int = 0 
+
+var player_role: String = "Unknown"
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	UI = $Control
+	UI.player_role = player_role
+	UI.new()
+	Play = $Play
+>>>>>>> Stashed changes
 	Play.del_Elephant() # cards will call this for delete elephant function
 	Play.del_Meeple() # cards will call this for delete meeple function
 
@@ -32,6 +49,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	pass
 
+<<<<<<< Updated upstream
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		# Toggle Pause Menu
@@ -130,6 +148,8 @@ func _unhandled_input(event: InputEvent) -> void:
 						print("Clicked object is not a removable piece (or group not found). Collider: ", collider.name)
 
 
+=======
+>>>>>>> Stashed changes
 
 func _on_play_increase_total_elephant() -> void:
 	totalElephants += 1

@@ -4,10 +4,13 @@
 [ext_resource type="Script" uid="uid://oti8gk6h0m1r" path="res://scripts/Card Table/card_table_ui.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/ActionLog.tscn" id="2_actionlog"]
 [ext_resource type="Script" uid="uid://cytbbj4ddsi50" path="res://scripts/Card Table/card_functions.gd" id="3_wt453"]
+<<<<<<< Updated upstream
 [ext_resource type="Script" path="res://scripts/Board.gd" id="4_board"]
 [ext_resource type="Script" path="res://scripts/CameraControls.gd" id="5_camera"]
 
 [ext_resource type="PackedScene" path="res://scenes/PauseMenu.tscn" id="6_pause"]
+=======
+>>>>>>> Stashed changes
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fbsjb"]
 sky_top_color = Color(0.29079154, 0.43925896, 0.73398376, 1)
@@ -28,7 +31,10 @@ bg_color = Color(0.133333, 0.254902, 0.133333, 0.901961)
 border_width_bottom = 4
 border_color = Color(0.4, 0.266667, 0.133333, 1)
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 [node name="CardTable" type="Node3D"]
 script = ExtResource("1_fbsjb")
 
@@ -38,6 +44,7 @@ shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_2tgwj")
+<<<<<<< Updated upstream
 
 [node name="Board" type="Node3D" parent="."]
 script = ExtResource("4_board")
@@ -56,6 +63,17 @@ script = ExtResource("1_script")
 
 [node name="Background" type="ColorRect" parent="CanvasLayer/Control"]
 visible = false
+=======
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="Control"]
+>>>>>>> Stashed changes
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -68,7 +86,11 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.95, 0.95, 0.95, 1)
 
+<<<<<<< Updated upstream
 [node name="CardsContainer" type="Control" parent="CanvasLayer/Control"]
+=======
+[node name="CardsContainer" type="Control" parent="Control"]
+>>>>>>> Stashed changes
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -77,16 +99,28 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+<<<<<<< Updated upstream
 [node name="TopBar" type="Panel" parent="CanvasLayer/Control"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_right = 0.0
+=======
+[node name="TopBar" type="Panel" parent="Control"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_right = 1112.0
+>>>>>>> Stashed changes
 offset_bottom = 60.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
 
+<<<<<<< Updated upstream
 [node name="TimerLabel" type="Label" parent="CanvasLayer/Control/TopBar"]
+=======
+[node name="TimerLabel" type="Label" parent="Control/TopBar"]
+>>>>>>> Stashed changes
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -102,7 +136,11 @@ text = "60"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+<<<<<<< Updated upstream
 [node name="PlayersContainer" type="HBoxContainer" parent="CanvasLayer/Control/TopBar"]
+=======
+[node name="PlayersContainer" type="HBoxContainer" parent="Control/TopBar"]
+>>>>>>> Stashed changes
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -112,6 +150,7 @@ grow_vertical = 2
 theme_override_constants/separation = 50
 alignment = 1
 
+<<<<<<< Updated upstream
 [node name="PlacementMode" type="OptionButton" parent="CanvasLayer/Control/TopBar"]
 layout_mode = 1
 anchors_preset = 6
@@ -139,6 +178,9 @@ popup/item_3/id = 3
 item_count = 4
 
 [node name="EndTurnButton" type="Button" parent="CanvasLayer/Control/TopBar"]
+=======
+[node name="EndTurnButton" type="Button" parent="Control/TopBar"]
+>>>>>>> Stashed changes
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -155,22 +197,30 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0.8, 1, 0.8, 1)
 text = "End Turn"
 
+<<<<<<< Updated upstream
 [node name="ActionLog" parent="CanvasLayer/Control" instance=ExtResource("2_actionlog")]
+=======
+[node name="ActionLog" parent="Control" instance=ExtResource("2_actionlog")]
+>>>>>>> Stashed changes
 layout_mode = 0
 offset_left = 20.0
 offset_top = 70.0
 offset_right = 220.0
 offset_bottom = 170.0
 
+<<<<<<< Updated upstream
 [node name="UserRoleLabel" type="Label" parent="CanvasLayer/Control"]
+=======
+[node name="UserRoleLabel" type="Label" parent="Control"]
+>>>>>>> Stashed changes
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = -40.0
+offset_top = 568.0
 offset_right = 300.0
-offset_bottom = -10.0
+offset_bottom = 598.0
 grow_vertical = 0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 1)
@@ -181,13 +231,18 @@ theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 20
 text = "My Role: "
 
+<<<<<<< Updated upstream
 [node name="TurnTimer" type="Timer" parent="CanvasLayer/Control"]
+=======
+[node name="TurnTimer" type="Timer" parent="Control"]
+>>>>>>> Stashed changes
 autostart = true
 
 [node name="Play" type="Node3D" parent="."]
 script = ExtResource("3_wt453")
 
 [node name="Camera3D" type="Camera3D" parent="."]
+<<<<<<< Updated upstream
 transform = Transform3D(0.01824947, 0.6359301, -0.77153087, -0.015037816, 0.7717467, 0.6357523, 0.9997204, -2.7931972e-09, 0.023646967, -9.761966, 5.8465443, 3.1005745)
 script = ExtResource("5_camera")
 
@@ -199,3 +254,12 @@ script = ExtResource("5_camera")
 
 [node name="PauseMenu" parent="CanvasLayer" instance=ExtResource("6_pause")]
 visible = false
+=======
+transform = Transform3D(0.02092747, 0.4655991, -0.88474834, -0.011010005, 0.88499576, 0.4654689, 0.9997204, -2.794749e-09, 0.023646971, -20.313103, 8.213781, 3.1005745)
+
+[connection signal="gui_input" from="Control" to="." method="_on_control_gui_input"]
+[connection signal="gui_input" from="Control" to="Play" method="_on_control_gui_input"]
+[connection signal="pressed" from="Control/TopBar/EndTurnButton" to="." method="_on_end_turn_button_pressed"]
+[connection signal="increase_total_Elephant" from="Play" to="." method="_on_play_increase_total_elephant"]
+[connection signal="increase_total_Meeple" from="Play" to="." method="_on_play_increase_total_meeple"]
+>>>>>>> Stashed changes

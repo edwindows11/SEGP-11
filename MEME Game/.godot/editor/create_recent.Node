@@ -1,14 +1,24 @@
 TextureRect
+<<<<<<< Updated upstream
 Control
 Camera3D
 Node3D
+=======
+HBoxContainer
+Container
+Camera3D
+Node3D
+Control
+>>>>>>> Stashed changes
 MarginContainer
 VBoxContainer
-Container
 NinePatchRect
 Label3D
 Sprite3D
 Panel
 Node2D
 CollisionShape3D
+<<<<<<< Updated upstream
 CharacterBody3D
+=======
+>>>>>>> Stashed changes
