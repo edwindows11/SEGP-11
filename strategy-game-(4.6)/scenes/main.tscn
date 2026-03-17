@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3 uid="uid://bm5nty3p4g1xl"]
+
+[ext_resource type="Script" uid="uid://c53lmlm3k7fop" path="res://scripts/grid_manager.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://c8q4j5k6l7m8" path="res://scenes/elephant.tscn" id="2_elephant"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_1"]
+size = Vector2(20, 20)
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_1"]
+
+[node name="Main" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 10, 10)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 0, 0)
+shadow_enabled = true
+
+[node name="GridManager" type="Node3D" parent="."]
+script = ExtResource("1_script")
+elephant_scene = ExtResource("2_elephant")
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.011256218, 0.034525156, -0.017568707)
+mesh = SubResource("PlaneMesh_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("WorldBoundaryShape3D_1")

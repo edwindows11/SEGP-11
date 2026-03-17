@@ -1,0 +1,201 @@
+[gd_scene load_steps=9 format=3 uid="uid://c6soa4g4ojqjl"]
+
+[ext_resource type="Script" uid="uid://b5fykedev53t2" path="res://scripts/Card Table/card_table.gd" id="1_fbsjb"]
+[ext_resource type="Script" uid="uid://oti8gk6h0m1r" path="res://scripts/Card Table/card_table_ui.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/ActionLog.tscn" id="2_actionlog"]
+[ext_resource type="Script" uid="uid://cytbbj4ddsi50" path="res://scripts/Card Table/card_functions.gd" id="3_wt453"]
+[ext_resource type="Script" path="res://scripts/Board.gd" id="4_board"]
+[ext_resource type="Script" path="res://scripts/CameraControls.gd" id="5_camera"]
+
+[ext_resource type="PackedScene" path="res://scenes/PauseMenu.tscn" id="6_pause"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fbsjb"]
+sky_top_color = Color(0.29079154, 0.43925896, 0.73398376, 1)
+sky_horizon_color = Color(0.62428546, 0.6536523, 0.7183335, 1)
+ground_horizon_color = Color(0.62428546, 0.6536523, 0.7183335, 1)
+
+[sub_resource type="Sky" id="Sky_yw5gw"]
+sky_material = SubResource("ProceduralSkyMaterial_fbsjb")
+
+[sub_resource type="Environment" id="Environment_2tgwj"]
+background_mode = 2
+sky = SubResource("Sky_yw5gw")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
+bg_color = Color(0.133333, 0.254902, 0.133333, 0.901961)
+border_width_bottom = 4
+border_color = Color(0.4, 0.266667, 0.133333, 1)
+
+
+[node name="CardTable" type="Node3D"]
+script = ExtResource("1_fbsjb")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_2tgwj")
+
+[node name="Board" type="Node3D" parent="."]
+script = ExtResource("4_board")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="CanvasLayer/Control"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 600.0
+offset_right = 1112.0
+offset_bottom = 608.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.95, 0.95, 0.95, 1)
+
+[node name="CardsContainer" type="Control" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="Panel" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_right = 0.0
+offset_bottom = 60.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
+[node name="TimerLabel" type="Label" parent="CanvasLayer/Control/TopBar"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 20.0
+offset_top = -20.0
+offset_right = 120.0
+offset_bottom = 20.0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.960784, 0.960784, 0.862745, 1)
+theme_override_font_sizes/font_size = 24
+text = "60"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayersContainer" type="HBoxContainer" parent="CanvasLayer/Control/TopBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="PlacementMode" type="OptionButton" parent="CanvasLayer/Control/TopBar"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -15.0
+offset_right = -150.0
+offset_bottom = 15.0
+grow_horizontal = 0
+grow_vertical = 2
+tooltip_text = "Select piece to place"
+item_count = 4
+selected = 0
+popup/item_0/text = "Select Mode"
+popup/item_0/id = 0
+popup/item_1/text = "Place Elephant"
+popup/item_1/id = 1
+popup/item_2/text = "Place Meeple"
+popup/item_2/id = 2
+popup/item_3/text = "Remove Piece"
+popup/item_3/id = 3
+item_count = 4
+
+[node name="EndTurnButton" type="Button" parent="CanvasLayer/Control/TopBar"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -20.0
+offset_right = -20.0
+offset_bottom = 20.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0.8, 1, 0.8, 1)
+text = "End Turn"
+
+[node name="ActionLog" parent="CanvasLayer/Control" instance=ExtResource("2_actionlog")]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 70.0
+offset_right = 220.0
+offset_bottom = 170.0
+
+[node name="UserRoleLabel" type="Label" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -40.0
+offset_right = 300.0
+offset_bottom = -10.0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_shadow_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 20
+text = "My Role: "
+
+[node name="TurnTimer" type="Timer" parent="CanvasLayer/Control"]
+autostart = true
+
+[node name="Play" type="Node3D" parent="."]
+script = ExtResource("3_wt453")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.01824947, 0.6359301, -0.77153087, -0.015037816, 0.7717467, 0.6357523, 0.9997204, -2.7931972e-09, 0.023646967, -9.761966, 5.8465443, 3.1005745)
+script = ExtResource("5_camera")
+
+[connection signal="gui_input" from="CanvasLayer/Control" to="." method="_on_control_gui_input"]
+[connection signal="gui_input" from="CanvasLayer/Control" to="Play" method="_on_control_gui_input"]
+[connection signal="pressed" from="CanvasLayer/Control/TopBar/EndTurnButton" to="." method="_on_end_turn_button_pressed"]
+[connection signal="increase_total_Elephant" from="Play" to="." method="_on_play_increase_total_elephant"]
+[connection signal="increase_total_Meeple" from="Play" to="." method="_on_play_increase_total_meeple"]
+
+[node name="PauseMenu" parent="CanvasLayer" instance=ExtResource("6_pause")]
+visible = false

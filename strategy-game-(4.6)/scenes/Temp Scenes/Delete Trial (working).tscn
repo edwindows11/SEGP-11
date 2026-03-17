@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://w2pirshj72gv"]
+
+[ext_resource type="Script" uid="uid://bbakqa5er2leu" path="res://scripts/TEMP/Delete.gd" id="1_hqeol"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_hqeol"]
+sky_top_color = Color(0.16963512, 0.440979, 0.8056858, 1)
+sky_horizon_color = Color(0.57799286, 0.63797605, 0.7203183, 1)
+ground_bottom_color = Color(0.20032352, 0.16891244, 0.13357472, 1)
+ground_horizon_color = Color(0.57799286, 0.63797605, 0.7203183, 1)
+energy_multiplier = 1.35
+
+[sub_resource type="Sky" id="Sky_el0k4"]
+sky_material = SubResource("ProceduralSkyMaterial_hqeol")
+
+[sub_resource type="Environment" id="Environment_s61qs"]
+background_mode = 2
+sky = SubResource("Sky_el0k4")
+tonemap_mode = 2
+glow_enabled = true
+
+[node name="Delete" type="Node3D"]
+script = ExtResource("1_hqeol")
+metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_s61qs")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.25881907, 0.4829629, -0.8365163, 0, 0.8660254, 0.5, 0.9659258, -0.12940954, 0.22414389, -14.766289, 6, 5.3921967)
