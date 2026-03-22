@@ -2,6 +2,14 @@ extends Node
 
 enum TileType { FOREST, HUMAN, PLANTATION }
 
+const MAX_ELEPHANTS_PER_TILE := 1
+const MAX_VILLAGERS_PER_TILE := 2
+
+const VILLAGER_SLOT_OFFSETS := [
+	Vector3(-0.45, 0.5, 0.0),
+	Vector3(0.45, 0.5, 0.0)
+]
+
 # Tile registry
 # Key: Vector2i(grid_x, grid_z)
 # Value: {
@@ -99,10 +107,7 @@ func get_total_villagers() -> int:
 func get_valid_add_tiles(piece_type: String) -> Array:
 	var result: Array = []
 	for key in tile_registry:
-		var entry = tile_registry[key]
-		if piece_type == "elephant" and entry["elephant_nodes"].size() < 1:
-			result.append(key)
-		elif piece_type == "villager" and entry["villager_nodes"].size() < 2:
+		if can_place_piece(key, piece_type):
 			result.append(key)
 	return result
 
@@ -112,38 +117,76 @@ func get_valid_add_tiles_in(piece_type: String, type_filter: Array) -> Array:
 		var entry = tile_registry[key]
 		if not (entry["type"] in type_filter):
 			continue
-		if piece_type == "elephant" and entry["elephant_nodes"].size() < 1:
-			result.append(key)
-		elif piece_type == "villager" and entry["villager_nodes"].size() < 2:
+		if can_place_piece(key, piece_type):
 			result.append(key)
 	return result
+
+func can_place_piece(tile_key: Vector2i, piece_type: String) -> bool:
+	if not tile_registry.has(tile_key):
+		return false
+	var entry = tile_registry[tile_key]
+	var is_elephant = piece_type == "elephant" or piece_type == "Elephant"
+	if is_elephant:
+		return entry["elephant_nodes"].size() < MAX_ELEPHANTS_PER_TILE
+	return entry["villager_nodes"].size() < MAX_VILLAGERS_PER_TILE
 
 
 # --- Piece Tracking ---
 
-func piece_placed(piece_node: Node3D, tile_key: Vector2i, piece_type: String) -> void:
+func piece_placed(piece_node: Node3D, tile_key: Vector2i, piece_type: String) -> bool:
 	if not tile_registry.has(tile_key):
-		return
+		return false
+	if not can_place_piece(tile_key, piece_type):
+		return false
 	var entry = tile_registry[tile_key]
-	if piece_type == "elephant":
+	var is_elephant = piece_type == "elephant" or piece_type == "Elephant"
+	if is_elephant:
 		if not piece_node in entry["elephant_nodes"]:
 			entry["elephant_nodes"].append(piece_node)
 	else:
 		if not piece_node in entry["villager_nodes"]:
 			entry["villager_nodes"].append(piece_node)
+	_reflow_tile_piece_positions(tile_key)
+	return true
 
 func piece_removed(piece_node: Node3D, tile_key: Vector2i, piece_type: String) -> void:
 	if not tile_registry.has(tile_key):
 		return
 	var entry = tile_registry[tile_key]
-	if piece_type == "elephant":
+	var is_elephant = piece_type == "elephant" or piece_type == "Elephant"
+	if is_elephant:
 		entry["elephant_nodes"].erase(piece_node)
 	else:
 		entry["villager_nodes"].erase(piece_node)
+	_reflow_tile_piece_positions(tile_key)
 
 func piece_moved(piece_node: Node3D, from_key: Vector2i, to_key: Vector2i, piece_type: String) -> void:
 	piece_removed(piece_node, from_key, piece_type)
-	piece_placed(piece_node, to_key, piece_type)
+	if not piece_placed(piece_node, to_key, piece_type):
+		# Destination was full; restore piece to original tile.
+		piece_placed(piece_node, from_key, piece_type)
+
+func _reflow_tile_piece_positions(tile_key: Vector2i) -> void:
+	if not tile_registry.has(tile_key):
+		return
+	var entry = tile_registry[tile_key]
+	var world_pos: Vector3 = entry["world_pos"]
+
+	# Elephant stays centered on the tile.
+	for elephant in entry["elephant_nodes"]:
+		if is_instance_valid(elephant):
+			elephant.position = world_pos
+
+	# Villagers occupy fixed slots so two are visually distinct.
+	var villagers: Array = entry["villager_nodes"]
+	for i in range(villagers.size()):
+		var villager = villagers[i]
+		if not is_instance_valid(villager):
+			continue
+		if i < VILLAGER_SLOT_OFFSETS.size():
+			villager.position = world_pos + VILLAGER_SLOT_OFFSETS[i]
+		else:
+			villager.position = world_pos + Vector3(0.0, 0.5, 0.0)
 
 
 # --- Deck Management ---
