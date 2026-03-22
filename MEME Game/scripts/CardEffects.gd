@@ -42,6 +42,9 @@ signal effects_complete()
 signal request_tile_selection(valid_keys: Array, instruction: String)
 signal clear_tile_selection()
 
+# Valid tile keys for the current interactive step.
+var _current_valid_keys: Array = []
+
 
 # --- Entry point ---
 
@@ -61,6 +64,7 @@ func execute_card(card_id: String) -> void:
 func _advance_effect() -> void:
 	if effect_index >= pending_effects.size():
 		state = State.IDLE
+		_current_valid_keys.clear()
 		if board:
 			board.clear_all_highlights()
 		clear_tile_selection.emit()
@@ -108,6 +112,7 @@ func _do_add(piece_type: String, count: int, type_filter: Array) -> void:
 	_interact_type_filter = type_filter
 
 	state = State.WAITING_SOURCE
+	_current_valid_keys = valid_tiles.duplicate()
 	if board:
 		board.clear_all_highlights()
 		board.highlight_tiles(valid_tiles, Color(0.2, 0.8, 1.0, 0.5))  # Cyan
@@ -134,6 +139,7 @@ func _do_remove(piece_type: String, count: int) -> void:
 	_interact_count_remaining = count
 
 	state = State.WAITING_SOURCE
+	_current_valid_keys = valid_tiles.duplicate()
 	if board:
 		board.clear_all_highlights()
 		board.highlight_tiles(valid_tiles, Color(1.0, 0.2, 0.2, 0.5))  # Red
@@ -209,12 +215,15 @@ func _request_source_selection_move(effect: Dictionary) -> void:
 		return
 
 	state = State.WAITING_SOURCE
+	_current_valid_keys = valid_source_keys.duplicate()
 	if board:
 		board.highlight_tiles(valid_source_keys, Color(1.0, 0.8, 0.0, 0.5))  # Yellow
 	request_tile_selection.emit(valid_source_keys, "Select " + _current_piece_type + " to move (source)")
 
 func confirm_source_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_SOURCE:
+		return
+	if not _current_valid_keys.has(tile_key):
 		return
 
 	var op: String = current_effect.get("op", "")
@@ -297,12 +306,15 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 		return
 
 	state = State.WAITING_DEST
+	_current_valid_keys = valid_dest_keys.duplicate()
 	if board:
 		board.highlight_tiles(valid_dest_keys, Color(0.0, 0.6, 1.0, 0.5))  # Blue
 	request_tile_selection.emit(valid_dest_keys, "Select destination tile")
 
 func confirm_dest_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_DEST:
+		return
+	if not _current_valid_keys.has(tile_key):
 		return
 
 	var source_entry = GameState.tile_registry.get(selected_source_key, {})
@@ -355,11 +367,11 @@ func _begin_convert(effect: Dictionary) -> void:
 
 func _request_convert_click(effect: Dictionary) -> void:
 	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
-	var valid_keys: Array
-	if from_types == null:
-		valid_keys = GameState.tile_registry.keys()
-	else:
-		valid_keys = GameState.get_tiles_matching(effect.get("from", []))
+	var valid_keys: Array = []
+	for key in GameState.tile_registry:
+		var entry = GameState.tile_registry[key]
+		if from_types == null or (entry["type"] in from_types):
+			valid_keys.append(key)
 
 	if valid_keys.is_empty():
 		_log("No tiles to convert", false)
@@ -368,12 +380,16 @@ func _request_convert_click(effect: Dictionary) -> void:
 		return
 
 	state = State.WAITING_SOURCE
+	_current_valid_keys = valid_keys.duplicate()
 	if board:
+		board.clear_all_highlights()
 		board.highlight_tiles(valid_keys, Color(0.4, 1.0, 0.2, 0.5))  # Green
 	request_tile_selection.emit(valid_keys, "Select tile to convert to " + effect.get("to", "?") + " (" + str(convert_count_remaining) + " left)")
 
 func confirm_convert_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_SOURCE:
+		return
+	if not _current_valid_keys.has(tile_key):
 		return
 
 	if board:
@@ -401,12 +417,16 @@ func _begin_convert_any_any(effect: Dictionary) -> void:
 func _request_convert_any_any_click() -> void:
 	var all_keys: Array = GameState.tile_registry.keys()
 	state = State.WAITING_SOURCE
+	_current_valid_keys = all_keys.duplicate()
 	if board:
+		board.clear_all_highlights()
 		board.highlight_tiles(all_keys, Color(1.0, 0.5, 0.0, 0.4))  # Orange
 	request_tile_selection.emit(all_keys, "Select any tile to change its type (" + str(convert_count_remaining) + " left)")
 
 func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_SOURCE:
+		return
+	if not _current_valid_keys.has(tile_key):
 		return
 
 	var entry = GameState.tile_registry.get(tile_key, {})
