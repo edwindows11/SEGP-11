@@ -10,7 +10,7 @@ var roles = [
 	"Environmental Consultant",
 	"Government",
 	"Land Developer",
-	"Plantation",
+	"Plantation Owner",
 	"Researcher",
 	"Village Head",
 	"Wildfire Department"

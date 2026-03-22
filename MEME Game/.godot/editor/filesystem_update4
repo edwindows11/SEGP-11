@@ -1,0 +1,4 @@
+res://scripts/GameState.gd
+res://scripts/Card Table/card_table.gd
+res://scripts/Card Table/card_table_ui.gd
+res://scripts/RoleSelection.gd

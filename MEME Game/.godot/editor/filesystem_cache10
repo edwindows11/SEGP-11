@@ -1,12 +1,12 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1773242414
+::res://::1774142940
 README.md::TextFile::-1::1773240679::0::1::::<><><>0<>0<><>::
 Updates.md::TextFile::-1::1773240679::0::1::::<><><>0<>0<><>::
 ::res://assets/::1773240679
-::res://assets/MainMenu/::1773240679
+::res://assets/MainMenu/::1773242415
 background.png::CompressedTexture2D::8189886593277679584::1773240679::1773242415::1::::<><><>0<>0<>3fa6725b8edce7968e948ce4f9297baf<>res://.godot/imported/background.png-02aa4f8d08fe9d58d5222d72e208b249.ctex::
 Title.png::CompressedTexture2D::1930486388461301564::1773240679::1773242415::1::::<><><>0<>0<>a0b619c8f502e93a94c0f2addb286798<>res://.godot/imported/Title.png-5197aeb7550a16cbe7b20dca54c08ade.ctex::
-::res://assets/MainMenu/buttons/::1773240679
+::res://assets/MainMenu/buttons/::1773242415
 HowToPlay.png::CompressedTexture2D::1378396261766719325::1773240679::1773242415::1::::<><><>0<>0<>5bebbcb3762483c0370ab7f51db188c6<>res://.godot/imported/HowToPlay.png-e9f10262e33877c484ad98a00e32c376.ctex::
 HowToPlay_Hover.png::CompressedTexture2D::9071802445450084833::1773240679::1773242415::1::::<><><>0<>0<>9041fc89340aa80c60ab317653259b2c<>res://.godot/imported/HowToPlay_Hover.png-24534ec457c6d656260ecfccad6db4fa.ctex::
 Play.png::CompressedTexture2D::3816364990587857515::1773240679::1773242415::1::::<><><>0<>0<>f89ba84a504c41a456e57c45af361881<>res://.godot/imported/Play.png-614a5fd846851e5a5a2c78f5f2c25abf.ctex::
@@ -18,7 +18,7 @@ Elephant.tscn::PackedScene::7315155444610064320::1773240679::0::1::::<><><>0<>0<
 Meeple.tscn::PackedScene::7580436012762488179::1773240679::0::1::::<><><>0<>0<><>::uid://chv44r2w6i86d::::res://assets/Pieces/blend/Meeple2.blend<>uid://bnfbinc8sdors::::res://scripts/Pieces/meeple.gd<>uid://p1adtaq8li1b::::res://assets/Pieces/outline.tres
 Outline.tres::StandardMaterial3D::1106512832272915709::1773240679::0::1::::<><><>0<>0<><>::
 ::res://assets/Pieces/blend/::1773240679
-::res://assets/Tiles/::1773240679
+::res://assets/Tiles/::1773242416
 ForestTile.glb::PackedScene::7963592313741091600::1773240679::1773242416::1::::<><><>0<>0<>4d4e904b01da2c003509408a08b23074<>res://.godot/imported/ForestTile.glb-a1bd726e3b4e129e16863911103ec2c9.scn::uid://dqup5nvo0xvwl::::res://assets/Tiles/ForestTile_3.png
 ForestTile_1.png::CompressedTexture2D::2171488458284129217::1773240679::1773242416::1::::<><><>0<>0<>dfb5da2e0e57f96870bf994ba0cd5cf5<>res://.godot/imported/ForestTile_1.png-33b37625549bb8bc620cae8505c89b8c.s3tc.ctex::
 ForestTile_3.png::CompressedTexture2D::8324536148992538643::1773240679::1773242416::1::::<><><>0<>0<>2598609ad94264e23befbd3d0c568552<>res://.godot/imported/ForestTile_3.png-eb9e2a6b274f8e9fe308cc098495889e.s3tc.ctex::
@@ -45,7 +45,7 @@ CameraControls.gd::GDScript::7715669217550061510::1773240679::0::1::::<>Camera3D
 Card.gd::GDScript::3118029198594064919::1773240679::0::1::::<>Control<><>0<>0<><>::
 CardData.gd::GDScript::8308118792669831157::1773240679::0::1::::CardData<>RefCounted<><>0<>0<><>::
 CardEffects.gd::GDScript::5574388463560760133::1773240679::0::1::::<>Node<><>0<>0<><>::
-GameState.gd::GDScript::8753606182841504797::1773241340::0::1::::<>Node<><>0<>0<><>::
+GameState.gd::GDScript::8753606182841504797::1774142764::0::1::::<>Node<><>0<>0<><>::
 grid_manager.gd::GDScript::6936999167669461023::1773240679::0::1::::<>Node3D<><>0<>0<><>::
 PauseMenu.gd::GDScript::689138363115911362::1773240679::0::1::::<>Control<><>0<>0<><>::
 PlayerDisplay.gd::GDScript::7339365875984792514::1773240679::0::1::::<>Control<><>0<>0<><>::
@@ -57,8 +57,8 @@ camera.gd::GDScript::9140071614531063616::1773240679::0::1::::<>CharacterBody3D<
 global.gd::GDScript::3578250104377179340::1773240679::0::1::::Enums<>Node<><>0<>0<><>::
 ::res://scripts/Card Table/::1773240679
 card_functions.gd::GDScript::6496659812463298837::1773240679::0::1::::<>Node3D<><>0<>0<><>::
-card_table.gd::GDScript::4503883162308646289::1773241367::0::1::::<>Node3D<><>0<>0<><>::
-card_table_ui.gd::GDScript::1022411987407577293::1773241428::0::1::::<>Control<><>0<>0<><>::
+card_table.gd::GDScript::4503883162308646289::1774142799::0::1::::<>Node3D<><>0<>0<><>::
+card_table_ui.gd::GDScript::1022411987407577293::1774142801::0::1::::<>Control<><>0<>0<><>::
 ::res://scripts/MainMenu/::1773240679
 ::res://scripts/MainMenu/Buttons/::1773240679
 how_to_play_button.gd::GDScript::5701094069176203780::1773240679::0::1::::<>Button<><>0<>0<><>::

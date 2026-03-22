@@ -20,11 +20,17 @@ var selected_scenario_index: int = -1
 var current_player_index: int = 0
 var player_count: int = 4
 var player_roles: Array = []
-var player_stats: Array = [{"green_cards_played": 0}, {"green_cards_played": 0}, {"green_cards_played": 0}, {"green_cards_played": 0}]
+var player_stats: Array = [
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0},
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0},
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0},
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0}
+]
 var cards_played_this_turn: int = 0
 
 # Track forest increase
 var initial_forest_count: int = 0
+var initial_plantation_count: int = 0
 
 # Deck
 var draw_pile: Array = []
@@ -75,10 +81,20 @@ func count_tiles_of_type(tile_type: int) -> int:
 
 func setup_stats() -> void:
 	initial_forest_count = count_tiles_of_type(TileType.FOREST)
-	print("GameState: initial_forest_count set to ", initial_forest_count)
+	initial_plantation_count = count_tiles_of_type(TileType.PLANTATION)
+	print("GameState: initial_forest_count set to ", initial_forest_count, " plantation: ", initial_plantation_count)
 
 func get_forest_increase() -> int:
 	return count_tiles_of_type(TileType.FOREST) - initial_forest_count
+
+func get_plantation_increase() -> int:
+	return count_tiles_of_type(TileType.PLANTATION) - initial_plantation_count
+
+func get_total_villagers() -> int:
+	var total = 0
+	for key in tile_registry:
+		total += tile_registry[key]["villager_nodes"].size()
+	return total
 
 func get_valid_add_tiles(piece_type: String) -> Array:
 	var result: Array = []

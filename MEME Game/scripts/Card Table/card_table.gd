@@ -194,6 +194,14 @@ func _on_end_turn_button_pressed() -> void:
 		var card_color = CardData.ALL_CARDS.get(card_id, {}).get("color", Color.WHITE)
 		if card_color == Color.GREEN:
 			GameState.player_stats[GameState.current_player_index]["green_cards_played"] += 1
+		elif card_color == Color.RED:
+			GameState.player_stats[GameState.current_player_index]["red_cards_played"] += 1
+		elif card_color == Color.YELLOW:
+			GameState.player_stats[GameState.current_player_index]["yellow_cards_played"] += 1
+		
+		# Track if the card played was Green, Yellow, or Red
+		if card_color == Color.GREEN or card_color == Color.YELLOW or card_color == Color.RED:
+			GameState.player_stats[GameState.current_player_index]["action_cards_played"] += 1
 		
 		GameState.discard_card(GameState.current_player_index, UI.pending_card.card_id)
 		UI.remove_played_card_and_draw_replacement()
