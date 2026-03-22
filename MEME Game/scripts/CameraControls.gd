@@ -88,4 +88,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Prevent flipping over the top (approx 10 degrees to 80 degrees relative to ground)
 		target_rotation.y = clamp(target_rotation.y, deg_to_rad(10), deg_to_rad(85))
 
+	# Q / E — snap-rotate 90° to cycle through the 4 cardinal sides
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_Q:
+			_snap_rotate(-90.0)
+		elif event.keycode == KEY_E:
+			_snap_rotate(90.0)
 
+
+# Snap the yaw to the nearest multiple of 90° then step by `degrees`.
+func _snap_rotate(degrees: float) -> void:
+	var step: float = deg_to_rad(90.0)
+	# Round current target to the nearest 90° multiple, then step
+	var snapped: float = round(target_rotation.x / step) * step
+	target_rotation.x = snapped + deg_to_rad(degrees)

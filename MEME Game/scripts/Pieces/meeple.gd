@@ -8,6 +8,7 @@ var outline_S = OUTLINE.new()
 
 var parent:Node3D
 var selected: bool = false
+var tile_key: Vector2i = Vector2i(-1, -1)
 
 signal Del_Meeple
 
