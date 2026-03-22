@@ -369,12 +369,19 @@ func _request_convert_click(effect: Dictionary) -> void:
 
 	state = State.WAITING_SOURCE
 	if board:
+		board.clear_all_highlights()
 		board.highlight_tiles(valid_keys, Color(0.4, 1.0, 0.2, 0.5))  # Green
 	request_tile_selection.emit(valid_keys, "Select tile to convert to " + effect.get("to", "?") + " (" + str(convert_count_remaining) + " left)")
 
 func confirm_convert_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_SOURCE:
 		return
+
+	var from_types = _parse_types_or_any(current_effect.get("from", ["ANY"]))
+	if from_types != null:
+		var entry = GameState.tile_registry.get(tile_key, {})
+		if entry.is_empty() or not (entry["type"] in from_types):
+			return
 
 	if board:
 		board.convert_tile(tile_key, _convert_to_type)
@@ -402,6 +409,7 @@ func _request_convert_any_any_click() -> void:
 	var all_keys: Array = GameState.tile_registry.keys()
 	state = State.WAITING_SOURCE
 	if board:
+		board.clear_all_highlights()
 		board.highlight_tiles(all_keys, Color(1.0, 0.5, 0.0, 0.4))  # Orange
 	request_tile_selection.emit(all_keys, "Select any tile to change its type (" + str(convert_count_remaining) + " left)")
 

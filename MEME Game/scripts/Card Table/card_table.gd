@@ -8,6 +8,7 @@ var totalElephants: int = 0
 var totalMeeple: int = 0
 var player_role: String = ""
 var player_roles: Array = []
+var _current_valid_selection_keys: Array = []
 
 var card_effects: Node = null  # CardEffects instance
 
@@ -155,6 +156,9 @@ func _raycast_to_tile_key(screen_pos: Vector2) -> Vector2i:
 	return Vector2i(-1, -1)
 
 func _route_tile_click_to_effects(tile_key: Vector2i) -> void:
+	if not _current_valid_selection_keys.has(tile_key):
+		return
+
 	var op: String = card_effects.current_effect.get("op", "")
 	match card_effects.state:
 		1:  # WAITING_SOURCE
@@ -178,9 +182,11 @@ func _on_card_effects_complete() -> void:
 	UI.end_turn_button.disabled = false
 
 func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void:
+	_current_valid_selection_keys = _valid_keys.duplicate()
 	UI.show_instruction(instruction)
 
 func _on_clear_tile_selection() -> void:
+	_current_valid_selection_keys.clear()
 	UI.hide_instruction()
 	$Board.clear_all_highlights()
 
