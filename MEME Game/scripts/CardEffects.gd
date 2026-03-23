@@ -140,7 +140,9 @@ func _do_remove(piece_type: String, count: int) -> void:
 	request_tile_selection.emit(valid_tiles, "Remove " + piece_type + " — " + str(count) + " left")
 
 func _do_immune() -> void:
-	_log("Immune effect applied", true)
+	var owner_player := GameState.current_player_index
+	var affected_count := GameState.apply_elephant_immunity_for_round(owner_player)
+	_log("Immune effect applied to " + str(affected_count) + " elephant(s) until this turn comes back to Player " + str(owner_player + 1), true)
 	effect_index += 1
 	_advance_effect()
 
@@ -156,6 +158,7 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 		# Find nearest valid destination
 		var best_key = Vector2i(-1, -1)
 		var best_dist = INF
+		var blocked_by_immunity := false
 		for key in GameState.tile_registry:
 			if key == from_key:
 				continue
@@ -167,6 +170,9 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			var dist = abs(key.x - from_key.x) + abs(key.y - from_key.y)
 			if max_dist > 0 and dist > max_dist:
 				continue
+			if GameState.is_elephant_immune(elephant) and _is_move_closer_to_human_or_plantation(from_key, key):
+				blocked_by_immunity = true
+				continue
 			if dist < best_dist:
 				best_dist = dist
 				best_key = key
@@ -177,6 +183,8 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			GameState.piece_moved(elephant, from_key, best_key, "elephant")
 			elephant.tile_key = best_key
 			moved += 1
+		elif blocked_by_immunity:
+			_log("Move blocked: elephant immunity prevents moving closer to Human/Plantation", false)
 
 	_log("Moved " + str(moved) + " elephants", true)
 	effect_index += 1
@@ -194,15 +202,28 @@ func _request_source_selection_move(effect: Dictionary) -> void:
 	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
 
 	var valid_source_keys: Array = []
+	var source_piece_count := 0
+	var immunity_blocked_sources := 0
 	for key in GameState.tile_registry:
 		var entry = GameState.tile_registry[key]
 		if from_types != null and not (entry["type"] in from_types):
 			continue
 		var node_list = entry["elephant_nodes"] if _current_piece_type == "elephant" else entry["villager_nodes"]
-		if node_list.size() > 0:
+		if node_list.is_empty():
+			continue
+		source_piece_count += 1
+		var piece_node = node_list[0]
+		var preview_dests := _build_valid_dest_keys_for_source(key, effect, _current_piece_type, piece_node, true)
+		if not preview_dests.is_empty():
 			valid_source_keys.append(key)
+		elif _current_piece_type == "elephant" and GameState.is_elephant_immune(piece_node):
+			var preview_without_immunity := _build_valid_dest_keys_for_source(key, effect, _current_piece_type, piece_node, false)
+			if not preview_without_immunity.is_empty():
+				immunity_blocked_sources += 1
 
 	if valid_source_keys.is_empty():
+		if _current_piece_type == "elephant" and source_piece_count > 0 and immunity_blocked_sources > 0:
+			_log("Move blocked: elephant immunity prevents moving closer to Human/Plantation", false)
 		_log("No " + _current_piece_type + " to move", false)
 		effect_index += 1
 		_advance_effect()
@@ -267,29 +288,16 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 
 	# Build valid destinations
 	var effect = current_effect
-	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
-	var max_dist: int = effect.get("max_dist", -1)
-
-	var valid_dest_keys: Array = []
-	for key in GameState.tile_registry:
-		if key == selected_source_key:
-			continue
-		var entry = GameState.tile_registry[key]
-		if to_types != null and not (entry["type"] in to_types):
-			continue
-		# Occupancy check
-		if _current_piece_type == "elephant" and entry["elephant_nodes"].size() >= 1:
-			continue
-		if _current_piece_type == "villager" and entry["villager_nodes"].size() >= 2:
-			continue
-		# Distance check
-		if max_dist > 0:
-			var dist = abs(key.x - selected_source_key.x) + abs(key.y - selected_source_key.y)
-			if dist > max_dist:
-				continue
-		valid_dest_keys.append(key)
+	var source_entry = GameState.tile_registry.get(selected_source_key, {})
+	var source_node_list = source_entry["elephant_nodes"] if _current_piece_type == "elephant" else source_entry["villager_nodes"]
+	var source_piece_node = source_node_list[0] if source_node_list.size() > 0 else null
+	var valid_dest_keys: Array = _build_valid_dest_keys_for_source(selected_source_key, effect, _current_piece_type, source_piece_node, true)
 
 	if valid_dest_keys.is_empty():
+		if _current_piece_type == "elephant" and source_piece_node != null and GameState.is_elephant_immune(source_piece_node):
+			var valid_without_immunity := _build_valid_dest_keys_for_source(selected_source_key, effect, _current_piece_type, source_piece_node, false)
+			if not valid_without_immunity.is_empty():
+				_log("Move blocked: elephant immunity prevents moving closer to Human/Plantation", false)
 		_log("No valid destination for move", false)
 		move_count_remaining -= 1
 		if move_count_remaining <= 0:
@@ -442,6 +450,52 @@ func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 
 
 # --- Helpers ---
+
+func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary, piece_type: String, piece_node: Node = null, enforce_immunity: bool = true) -> Array:
+	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
+	var max_dist: int = effect.get("max_dist", -1)
+
+	var valid_dest_keys: Array = []
+	for key in GameState.tile_registry:
+		if key == source_key:
+			continue
+		var entry = GameState.tile_registry[key]
+		if to_types != null and not (entry["type"] in to_types):
+			continue
+		# Occupancy check
+		if piece_type == "elephant" and entry["elephant_nodes"].size() >= 1:
+			continue
+		if piece_type == "villager" and entry["villager_nodes"].size() >= 2:
+			continue
+		# Distance check
+		if max_dist > 0:
+			var dist = abs(key.x - source_key.x) + abs(key.y - source_key.y)
+			if dist > max_dist:
+				continue
+		# Immune elephants cannot be moved to tiles that are closer to Human/Plantation.
+		if enforce_immunity and piece_type == "elephant" and piece_node != null and GameState.is_elephant_immune(piece_node):
+			if _is_move_closer_to_human_or_plantation(source_key, key):
+				continue
+		valid_dest_keys.append(key)
+
+	return valid_dest_keys
+
+func _is_move_closer_to_human_or_plantation(from_key: Vector2i, to_key: Vector2i) -> bool:
+	var threat_types = [GameState.TileType.HUMAN, GameState.TileType.PLANTATION]
+	var from_dist := _min_distance_to_types(from_key, threat_types)
+	var to_dist := _min_distance_to_types(to_key, threat_types)
+	return to_dist < from_dist
+
+func _min_distance_to_types(origin_key: Vector2i, target_types: Array) -> int:
+	var best_dist := 999999
+	for key in GameState.tile_registry:
+		var entry = GameState.tile_registry[key]
+		if not (entry["type"] in target_types):
+			continue
+		var dist = abs(key.x - origin_key.x) + abs(key.y - origin_key.y)
+		if dist < best_dist:
+			best_dist = dist
+	return best_dist
 
 func _parse_types(type_strings: Array) -> Array:
 	var result: Array = []
