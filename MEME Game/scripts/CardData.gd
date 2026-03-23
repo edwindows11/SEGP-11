@@ -173,7 +173,7 @@ static var ALL_CARDS: Dictionary = {
 		"name": "Reforestation",
 		"color": Color.GREEN,
 		"sub_effects": [
-			{"op": "convert", "count": 2, "from": ["HUMAN"], "to": "FOREST"}
+			{"op": "convert", "count": 2, "from": ["HUMAN", "PLANTATION"], "to": "FOREST"}
 		]
 	},
 	"green_removal_subsidies": {
