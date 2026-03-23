@@ -1,6 +1,7 @@
-<<<<<<< Updated upstream
 res://scripts/CardEffects.gd
 res://scripts/Card Table/card_table.gd
-=======
 res://scripts/CardData.gd
->>>>>>> Stashed changes
+=======
+res://scripts/GameState.gd
+res://scripts/Card Table/card_functions.gd
+>>>>>>> main

@@ -227,10 +227,13 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 	if op in ["add_v", "add_e", "add_v_in"]:
 		# Spawn piece at the chosen tile
 		var entry = GameState.tile_registry.get(tile_key, {})
+		var placed := false
 		if not entry.is_empty() and play:
 			var world_pos: Vector3 = entry["world_pos"]
-			play.spawn_piece_on_tile(_interact_piece_type, world_pos, tile_key)
-			_log("+1 " + _interact_piece_type, true)
+			placed = play.spawn_piece_on_tile(_interact_piece_type, world_pos, tile_key)
+		if not placed:
+			return
+		_log("+1 " + _interact_piece_type, true)
 		_interact_count_remaining -= 1
 		if _interact_count_remaining > 0:
 			_do_add(_interact_piece_type, _interact_count_remaining, _interact_type_filter)
