@@ -45,6 +45,10 @@ var draw_pile: Array = []
 var discard_pile: Array = []
 var player_hands: Array = [[], [], [], []]
 
+# Elephant immunity: instance_id -> owner player index that applied immunity.
+# Expires when turn returns to that same player.
+var elephant_immunity_owner_by_id: Dictionary = {}
+
 signal turn_changed(player_index: int, role_name: String)
 
 
@@ -233,9 +237,56 @@ func _pop_from_draw_pile() -> String:
 
 func advance_turn() -> void:
 	current_player_index = (current_player_index + 1) % player_count
+	_expire_elephant_immunity_for_player(current_player_index)
 	cards_played_this_turn = 0
 	var role_name = player_roles[current_player_index] if current_player_index < player_roles.size() else "Unknown"
 	turn_changed.emit(current_player_index, role_name)
+
+
+# --- Elephant Immunity ---
+
+func apply_elephant_immunity_for_round(owner_player_index: int) -> int:
+	var elephants = get_tree().get_nodes_in_group("elephants")
+	var applied_count := 0
+	for elephant in elephants:
+		if not is_instance_valid(elephant):
+			continue
+		var elephant_id := elephant.get_instance_id()
+		elephant_immunity_owner_by_id[elephant_id] = owner_player_index
+		elephant.set_meta("is_immune", true)
+		elephant.set_meta("immune_owner_player", owner_player_index)
+		applied_count += 1
+	return applied_count
+
+func is_elephant_immune(elephant: Node) -> bool:
+	if not is_instance_valid(elephant):
+		return false
+	var elephant_id := elephant.get_instance_id()
+	if not elephant_immunity_owner_by_id.has(elephant_id):
+		return false
+	return true
+
+func _expire_elephant_immunity_for_player(player_index: int) -> void:
+	var expired_ids: Array = []
+	for elephant_id in elephant_immunity_owner_by_id.keys():
+		if elephant_immunity_owner_by_id[elephant_id] == player_index:
+			expired_ids.append(elephant_id)
+
+	if expired_ids.is_empty():
+		return
+
+	for elephant_id in expired_ids:
+		elephant_immunity_owner_by_id.erase(elephant_id)
+
+	# Keep node metadata in sync for debugging/inspection.
+	var elephants = get_tree().get_nodes_in_group("elephants")
+	for elephant in elephants:
+		if not is_instance_valid(elephant):
+			continue
+		var elephant_id := elephant.get_instance_id()
+		if expired_ids.has(elephant_id):
+			elephant.set_meta("is_immune", false)
+			elephant.set_meta("immune_owner_player", -1)
 
 
 # --- Helpers ---
