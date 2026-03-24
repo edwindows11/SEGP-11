@@ -1,57 +1,355 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=16 format=3 uid="uid://b10wnwl5ipxjo"]
 
-[ext_resource type="Script" path="res://scripts/RoleSelection.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bgjoas2k4a4wu" path="res://scenes/role_selection.gd" id="1_cmgv8"]
+[ext_resource type="Texture2D" uid="uid://capck6yhu24lu" path="res://assets/ui/Board Background.tres" id="2_3up06"]
+[ext_resource type="Texture2D" uid="uid://bmhtphcya5wsm" path="res://new_atlas_texture.tres" id="2_cmgv8"]
+[ext_resource type="Texture2D" uid="uid://doxiianmbebdg" path="res://assets/MainMenu/background.png" id="2_dbn5j"]
+[ext_resource type="Script" uid="uid://cu3mdjxvgwvu7" path="res://scenes/conservationist.gd" id="3_o753h"]
+[ext_resource type="Script" uid="uid://ckh8k87alxnpb" path="res://scenes/start_game_button.gd" id="3_w0sg7"]
+[ext_resource type="FontFile" uid="uid://cmroqvp3pa21y" path="res://assets/Ahkio-Thin.otf" id="4_3up06"]
+[ext_resource type="Script" uid="uid://dg0klja54lkcj" path="res://scenes/ecotourism_manager.gd" id="5_aqvp0"]
+[ext_resource type="Script" uid="uid://dc84h5xllcxso" path="res://scenes/environmental_consultant.gd" id="6_ggxpi"]
+[ext_resource type="Script" uid="uid://q7yo22wgdf1n" path="res://scenes/government.gd" id="7_dnkxr"]
+[ext_resource type="Script" uid="uid://dnjqw67gjngjh" path="res://scenes/land_developer.gd" id="8_x827m"]
+[ext_resource type="Script" uid="uid://tx66lwhffc13" path="res://scenes/plantation_owner.gd" id="9_dbn5j"]
+[ext_resource type="Script" uid="uid://c4hw3r4gpyoxg" path="res://scenes/researcher.gd" id="10_x827m"]
+[ext_resource type="Script" uid="uid://b2qku3tv52mrv" path="res://scenes/village_head.gd" id="11_dbn5j"]
+[ext_resource type="Script" uid="uid://dr6wn8cocj270" path="res://scenes/wildlife_department.gd" id="12_vryi5"]
 
-[node name="RoleSelection" type="Control"]
+[node name="RoleCard" type="Control"]
 layout_mode = 3
-anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("1_script")
+offset_right = 321.0
+offset_bottom = 280.0
+script = ExtResource("1_cmgv8")
 
-[node name="Background" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.95, 0.95, 0.95, 1)
+[node name="Background" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(1152, 648)
+layout_mode = 0
+offset_top = -2.0
+offset_right = 1932.4445
+offset_bottom = 1133.0
+texture = ExtResource("2_dbn5j")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -100.0
-offset_right = 200.0
-offset_bottom = 100.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 30
+[node name="InfoLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 777.0
+offset_top = 92.0
+offset_right = 817.0
+offset_bottom = 115.0
 
-[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+[node name="Choose" type="Label" parent="."]
+custom_minimum_size = Vector2(300, 150)
+layout_mode = 0
+offset_left = 330.0
+offset_top = 62.0
+offset_right = 870.0
+offset_bottom = 212.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 64
+text = "Choose Your Role"
+
+[node name="RoleButtons" type="GridContainer" parent="."]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 176.0
+offset_right = 972.0
+offset_bottom = 666.0
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 3
+
+[node name="Conservationist" type="TextureButton" parent="RoleButtons"]
+custom_minimum_size = Vector2(300, 150)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
+texture_normal = ExtResource("2_3up06")
+stretch_mode = 0
+script = ExtResource("3_o753h")
+
+[node name="Label" type="Label" parent="RoleButtons/Conservationist"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 45.0
+offset_right = 237.0
+offset_bottom = 112.0
+theme_override_fonts/font = ExtResource("4_3up06")
 theme_override_font_sizes/font_size = 32
-text = "Your Role is:"
+text = "Conservationist
+"
+
+[node name="EcotourismManager" type="TextureButton" parent="RoleButtons"]
+custom_minimum_size = Vector2(300, 150)
+layout_mode = 2
+texture_normal = ExtResource("2_3up06")
+stretch_mode = 0
+script = ExtResource("5_aqvp0")
+
+[node name="Label" type="Label" parent="RoleButtons/EcotourismManager"]
+layout_mode = 0
+offset_left = 58.0
+offset_top = 43.0
+offset_right = 239.0
+offset_bottom = 110.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Ecotourism
+Manager"
 horizontal_alignment = 1
 
-[node name="RoleLabel" type="Label" parent="VBoxContainer"]
+[node name="EnvironmentalConsultant" type="TextureButton" parent="RoleButtons"]
+custom_minimum_size = Vector2(300, 150)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.5, 0.0, 1)
-theme_override_font_sizes/font_size = 48
-text = "Role Name"
-horizontal_alignment = 1
-autowrap_mode = 2
+texture_normal = ExtResource("2_3up06")
+stretch_mode = 0
+script = ExtResource("6_ggxpi")
 
-[node name="ContinueButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(200, 50)
+[node name="Label" type="Label" parent="RoleButtons/EnvironmentalConsultant"]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 45.0
+offset_right = 245.0
+offset_bottom = 112.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Environmental
+Consultant"
+horizontal_alignment = 1
+
+[node name="Government" type="TextureButton" parent="RoleButtons"]
+custom_minimum_size = Vector2(300, 150)
 layout_mode = 2
-size_flags_horizontal = 4
-text = "Continue"
+texture_normal = ExtResource("2_3up06")
+stretch_mode = 0
+script = ExtResource("7_dnkxr")
+
+[node name="Label" type="Label" parent="RoleButtons/Government"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 63.0
+offset_right = 237.0
+offset_bottom = 95.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Government"
+horizontal_alignment = 1
+
+[node name="LandDeveloper" type="TextureButton" parent="RoleButtons"]
+custom_minimum_size = Vector2(300, 150)
+layout_mode = 2
+texture_normal = ExtResource("2_3up06")
+stretch_mode = 0
+script = ExtResource("8_x827m")
+
+[node name="Label" type="Label" parent="RoleButtons/LandDeveloper"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 63.0
+offset_right = 237.0
+offset_bottom = 95.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Land Developer"
+horizontal_alignment = 1
+
+[node name="PlantationOwner" type="TextureButton" parent="RoleButtons"]
+custom_minimum_size = Vector2(300, 150)
+layout_mode = 2
+texture_normal = ExtResource("2_3up06")
+stretch_mode = 0
+script = ExtResource("9_dbn5j")
+
+[node name="Label" type="Label" parent="RoleButtons/PlantationOwner"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 63.0
+offset_right = 237.0
+offset_bottom = 95.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Plantation Owner"
+horizontal_alignment = 1
+
+[node name="Researcher" type="TextureButton" parent="RoleButtons"]
+custom_minimum_size = Vector2(300, 150)
+layout_mode = 2
+texture_normal = ExtResource("2_3up06")
+stretch_mode = 0
+script = ExtResource("10_x827m")
+
+[node name="Label" type="Label" parent="RoleButtons/Researcher"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 63.0
+offset_right = 237.0
+offset_bottom = 95.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Researcher"
+horizontal_alignment = 1
+
+[node name="VillageHead" type="TextureButton" parent="RoleButtons"]
+custom_minimum_size = Vector2(300, 150)
+layout_mode = 2
+texture_normal = ExtResource("2_3up06")
+stretch_mode = 0
+script = ExtResource("11_dbn5j")
+
+[node name="Label" type="Label" parent="RoleButtons/VillageHead"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 63.0
+offset_right = 237.0
+offset_bottom = 95.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Village Head"
+horizontal_alignment = 1
+
+[node name="WildlifeDepartment" type="TextureButton" parent="RoleButtons"]
+custom_minimum_size = Vector2(300, 150)
+layout_mode = 2
+texture_normal = ExtResource("2_3up06")
+stretch_mode = 0
+script = ExtResource("12_vryi5")
+
+[node name="Label" type="Label" parent="RoleButtons/WildlifeDepartment"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 61.0
+offset_right = 267.0
+offset_bottom = 93.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Wildlife Department"
+horizontal_alignment = 1
+
+[node name="PlayerSlots" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_top = -1.0
+offset_right = 412.0
+offset_bottom = 299.0
+
+[node name="Player1" type="Panel" parent="PlayerSlots"]
+layout_mode = 2
+
+[node name="CardImage" type="TextureRect" parent="PlayerSlots/Player1"]
+custom_minimum_size = Vector2(350, 500)
+layout_mode = 0
+offset_left = 1019.0
+offset_top = 49.0
+offset_right = 1369.0
+offset_bottom = 499.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CardLabel" type="Label" parent="PlayerSlots/Player1"]
+layout_mode = 0
+offset_left = 1005.0
+offset_top = 5.0
+offset_right = 1155.0
+offset_bottom = 67.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Player 1: "
+
+[node name="Player2" type="Panel" parent="PlayerSlots"]
+layout_mode = 2
+
+[node name="CardImage" type="TextureRect" parent="PlayerSlots/Player2"]
+custom_minimum_size = Vector2(350, 500)
+layout_mode = 0
+offset_left = 1517.0
+offset_top = 56.0
+offset_right = 1817.0
+offset_bottom = 506.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CardLabel" type="Label" parent="PlayerSlots/Player2"]
+layout_mode = 0
+offset_left = 1476.0
+offset_top = 5.0
+offset_right = 1626.0
+offset_bottom = 67.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Player 2: "
+
+[node name="Player3" type="Panel" parent="PlayerSlots"]
+layout_mode = 2
+
+[node name="CardImage" type="TextureRect" parent="PlayerSlots/Player3"]
+custom_minimum_size = Vector2(350, 500)
+layout_mode = 0
+offset_left = 1015.0
+offset_top = 622.0
+offset_right = 1365.0
+offset_bottom = 1122.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CardLabel" type="Label" parent="PlayerSlots/Player3"]
+layout_mode = 0
+offset_left = 992.0
+offset_top = 562.0
+offset_right = 1142.0
+offset_bottom = 624.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Player 3: "
+
+[node name="Player4" type="Panel" parent="PlayerSlots"]
+layout_mode = 2
+
+[node name="CardImage" type="TextureRect" parent="PlayerSlots/Player4"]
+custom_minimum_size = Vector2(350, 500)
+layout_mode = 0
+offset_left = 1509.0001
+offset_top = 622.0
+offset_right = 1859.0001
+offset_bottom = 1122.0
+scale = Vector2(0.99662393, 1)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CardLabel" type="Label" parent="PlayerSlots/Player4"]
+layout_mode = 0
+offset_left = 1468.0
+offset_top = 562.0
+offset_right = 1618.0
+offset_bottom = 624.0
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 32
+text = "Player 4: "
+
+[node name="StartGameButton" type="TextureButton" parent="."]
+custom_minimum_size = Vector2(100, 50)
+layout_mode = 0
+offset_left = 489.0
+offset_top = 794.0
+offset_right = 639.0
+offset_bottom = 869.0
+scale = Vector2(3, 3)
+disabled = true
+texture_normal = ExtResource("2_cmgv8")
+texture_pressed = ExtResource("2_cmgv8")
+texture_hover = ExtResource("2_cmgv8")
+stretch_mode = 0
+script = ExtResource("3_w0sg7")
+
+[node name="Label" type="Label" parent="StartGameButton"]
+layout_mode = 0
+offset_left = 19.66667
+offset_top = 25.66666
+offset_right = 165.66667
+offset_bottom = 61.66666
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("4_3up06")
+theme_override_font_sizes/font_size = 28
+text = "Start Game"
+
+[connection signal="mouse_entered" from="StartGameButton" to="." method="_on_start_game_button_mouse_entered"]
+[connection signal="pressed" from="StartGameButton" to="." method="_on_start_game_button_pressed"]
