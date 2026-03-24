@@ -16,7 +16,10 @@ func _ready() -> void:
 	pass
 
 # Tile-aware spawn — used by CardEffects with a known tile_key
-func spawn_piece_on_tile(type: String, pos: Vector3, tile_key: Vector2i) -> void:
+func spawn_piece_on_tile(type: String, pos: Vector3, tile_key: Vector2i) -> bool:
+	if not GameState.can_place_piece(tile_key, type):
+		return false
+
 	var piece_instance
 
 	if type == "elephant" or type == "Elephant":
@@ -40,13 +43,17 @@ func spawn_piece_on_tile(type: String, pos: Vector3, tile_key: Vector2i) -> void
 	if piece_instance:
 		piece_instance.position = pos
 		piece_instance.tile_key = tile_key
-		if type in ["villager", "Meeple"]:
-			piece_instance.position.y += 0.5
-		GameState.piece_placed(
+		var placed := GameState.piece_placed(
 			piece_instance,
 			tile_key,
 			"elephant" if type in ["Elephant", "elephant"] else "villager"
 		)
+		if not placed:
+			piece_instance.queue_free()
+			return false
+		return true
+
+	return false
 
 # Legacy wrapper — used by the manual placement (dropdown mode) flow in card_table.gd
 func spawn_piece(type: String, pos: Vector3) -> void:

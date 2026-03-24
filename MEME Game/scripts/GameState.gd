@@ -2,6 +2,14 @@ extends Node
 
 enum TileType { FOREST, HUMAN, PLANTATION }
 
+const MAX_ELEPHANTS_PER_TILE := 1
+const MAX_VILLAGERS_PER_TILE := 2
+
+const VILLAGER_SLOT_OFFSETS := [
+	Vector3(-0.45, 0.5, 0.0),
+	Vector3(0.45, 0.5, 0.0)
+]
+
 # Tile registry
 # Key: Vector2i(grid_x, grid_z)
 # Value: {
@@ -20,16 +28,26 @@ var selected_scenario_index: int = -1
 var current_player_index: int = 0
 var player_count: int = 4
 var player_roles: Array = []
-var player_stats: Array = [{"green_cards_played": 0}, {"green_cards_played": 0}, {"green_cards_played": 0}, {"green_cards_played": 0}]
+var player_stats: Array = [
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0},
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0},
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0},
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0}
+]
 var cards_played_this_turn: int = 0
 
 # Track forest increase
 var initial_forest_count: int = 0
+var initial_plantation_count: int = 0
 
 # Deck
 var draw_pile: Array = []
 var discard_pile: Array = []
 var player_hands: Array = [[], [], [], []]
+
+# Elephant immunity: instance_id -> owner player index that applied immunity.
+# Expires when turn returns to that same player.
+var elephant_immunity_owner_by_id: Dictionary = {}
 
 signal turn_changed(player_index: int, role_name: String)
 
@@ -75,18 +93,25 @@ func count_tiles_of_type(tile_type: int) -> int:
 
 func setup_stats() -> void:
 	initial_forest_count = count_tiles_of_type(TileType.FOREST)
-	print("GameState: initial_forest_count set to ", initial_forest_count)
+	initial_plantation_count = count_tiles_of_type(TileType.PLANTATION)
+	print("GameState: initial_forest_count set to ", initial_forest_count, " plantation: ", initial_plantation_count)
 
 func get_forest_increase() -> int:
 	return count_tiles_of_type(TileType.FOREST) - initial_forest_count
 
+func get_plantation_increase() -> int:
+	return count_tiles_of_type(TileType.PLANTATION) - initial_plantation_count
+
+func get_total_villagers() -> int:
+	var total = 0
+	for key in tile_registry:
+		total += tile_registry[key]["villager_nodes"].size()
+	return total
+
 func get_valid_add_tiles(piece_type: String) -> Array:
 	var result: Array = []
 	for key in tile_registry:
-		var entry = tile_registry[key]
-		if piece_type == "elephant" and entry["elephant_nodes"].size() < 1:
-			result.append(key)
-		elif piece_type == "villager" and entry["villager_nodes"].size() < 2:
+		if can_place_piece(key, piece_type):
 			result.append(key)
 	return result
 
@@ -96,38 +121,76 @@ func get_valid_add_tiles_in(piece_type: String, type_filter: Array) -> Array:
 		var entry = tile_registry[key]
 		if not (entry["type"] in type_filter):
 			continue
-		if piece_type == "elephant" and entry["elephant_nodes"].size() < 1:
-			result.append(key)
-		elif piece_type == "villager" and entry["villager_nodes"].size() < 2:
+		if can_place_piece(key, piece_type):
 			result.append(key)
 	return result
+
+func can_place_piece(tile_key: Vector2i, piece_type: String) -> bool:
+	if not tile_registry.has(tile_key):
+		return false
+	var entry = tile_registry[tile_key]
+	var is_elephant = piece_type == "elephant" or piece_type == "Elephant"
+	if is_elephant:
+		return entry["elephant_nodes"].size() < MAX_ELEPHANTS_PER_TILE
+	return entry["villager_nodes"].size() < MAX_VILLAGERS_PER_TILE
 
 
 # --- Piece Tracking ---
 
-func piece_placed(piece_node: Node3D, tile_key: Vector2i, piece_type: String) -> void:
+func piece_placed(piece_node: Node3D, tile_key: Vector2i, piece_type: String) -> bool:
 	if not tile_registry.has(tile_key):
-		return
+		return false
+	if not can_place_piece(tile_key, piece_type):
+		return false
 	var entry = tile_registry[tile_key]
-	if piece_type == "elephant":
+	var is_elephant = piece_type == "elephant" or piece_type == "Elephant"
+	if is_elephant:
 		if not piece_node in entry["elephant_nodes"]:
 			entry["elephant_nodes"].append(piece_node)
 	else:
 		if not piece_node in entry["villager_nodes"]:
 			entry["villager_nodes"].append(piece_node)
+	_reflow_tile_piece_positions(tile_key)
+	return true
 
 func piece_removed(piece_node: Node3D, tile_key: Vector2i, piece_type: String) -> void:
 	if not tile_registry.has(tile_key):
 		return
 	var entry = tile_registry[tile_key]
-	if piece_type == "elephant":
+	var is_elephant = piece_type == "elephant" or piece_type == "Elephant"
+	if is_elephant:
 		entry["elephant_nodes"].erase(piece_node)
 	else:
 		entry["villager_nodes"].erase(piece_node)
+	_reflow_tile_piece_positions(tile_key)
 
 func piece_moved(piece_node: Node3D, from_key: Vector2i, to_key: Vector2i, piece_type: String) -> void:
 	piece_removed(piece_node, from_key, piece_type)
-	piece_placed(piece_node, to_key, piece_type)
+	if not piece_placed(piece_node, to_key, piece_type):
+		# Destination was full; restore piece to original tile.
+		piece_placed(piece_node, from_key, piece_type)
+
+func _reflow_tile_piece_positions(tile_key: Vector2i) -> void:
+	if not tile_registry.has(tile_key):
+		return
+	var entry = tile_registry[tile_key]
+	var world_pos: Vector3 = entry["world_pos"]
+
+	# Elephant stays centered on the tile.
+	for elephant in entry["elephant_nodes"]:
+		if is_instance_valid(elephant):
+			elephant.position = world_pos
+
+	# Villagers occupy fixed slots so two are visually distinct.
+	var villagers: Array = entry["villager_nodes"]
+	for i in range(villagers.size()):
+		var villager = villagers[i]
+		if not is_instance_valid(villager):
+			continue
+		if i < VILLAGER_SLOT_OFFSETS.size():
+			villager.position = world_pos + VILLAGER_SLOT_OFFSETS[i]
+		else:
+			villager.position = world_pos + Vector3(0.0, 0.5, 0.0)
 
 
 # --- Deck Management ---
@@ -174,9 +237,56 @@ func _pop_from_draw_pile() -> String:
 
 func advance_turn() -> void:
 	current_player_index = (current_player_index + 1) % player_count
+	_expire_elephant_immunity_for_player(current_player_index)
 	cards_played_this_turn = 0
 	var role_name = player_roles[current_player_index] if current_player_index < player_roles.size() else "Unknown"
 	turn_changed.emit(current_player_index, role_name)
+
+
+# --- Elephant Immunity ---
+
+func apply_elephant_immunity_for_round(owner_player_index: int) -> int:
+	var elephants = get_tree().get_nodes_in_group("elephants")
+	var applied_count := 0
+	for elephant in elephants:
+		if not is_instance_valid(elephant):
+			continue
+		var elephant_id := elephant.get_instance_id()
+		elephant_immunity_owner_by_id[elephant_id] = owner_player_index
+		elephant.set_meta("is_immune", true)
+		elephant.set_meta("immune_owner_player", owner_player_index)
+		applied_count += 1
+	return applied_count
+
+func is_elephant_immune(elephant: Node) -> bool:
+	if not is_instance_valid(elephant):
+		return false
+	var elephant_id := elephant.get_instance_id()
+	if not elephant_immunity_owner_by_id.has(elephant_id):
+		return false
+	return true
+
+func _expire_elephant_immunity_for_player(player_index: int) -> void:
+	var expired_ids: Array = []
+	for elephant_id in elephant_immunity_owner_by_id.keys():
+		if elephant_immunity_owner_by_id[elephant_id] == player_index:
+			expired_ids.append(elephant_id)
+
+	if expired_ids.is_empty():
+		return
+
+	for elephant_id in expired_ids:
+		elephant_immunity_owner_by_id.erase(elephant_id)
+
+	# Keep node metadata in sync for debugging/inspection.
+	var elephants = get_tree().get_nodes_in_group("elephants")
+	for elephant in elephants:
+		if not is_instance_valid(elephant):
+			continue
+		var elephant_id := elephant.get_instance_id()
+		if expired_ids.has(elephant_id):
+			elephant.set_meta("is_immune", false)
+			elephant.set_meta("immune_owner_player", -1)
 
 
 # --- Helpers ---
