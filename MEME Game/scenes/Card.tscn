@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://bt1rs8cr5imh4"]
 
-[ext_resource type="Script" path="res://scripts/Card.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bkonqrcid8iyp" path="res://scripts/Card.gd" id="1_script"]
 
 [node name="Card" type="Control"]
 custom_minimum_size = Vector2(180, 108)
@@ -43,3 +43,10 @@ grow_vertical = 2
 text = "Card"
 horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 179.2
+offset_bottom = 128.0
+expand_mode = 3

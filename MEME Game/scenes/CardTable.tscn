@@ -1,12 +1,11 @@
-[gd_scene load_steps=9 format=3 uid="uid://c6soa4g4ojqjl"]
+[gd_scene load_steps=12 format=3 uid="uid://c6soa4g4ojqjl"]
 
 [ext_resource type="Script" uid="uid://b5fykedev53t2" path="res://scripts/Card Table/card_table.gd" id="1_fbsjb"]
 [ext_resource type="Script" uid="uid://oti8gk6h0m1r" path="res://scripts/Card Table/card_table_ui.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/ActionLog.tscn" id="2_actionlog"]
 [ext_resource type="Script" uid="uid://cytbbj4ddsi50" path="res://scripts/Card Table/card_functions.gd" id="3_wt453"]
-[ext_resource type="Script" path="res://scripts/Board.gd" id="4_board"]
-[ext_resource type="Script" path="res://scripts/CameraControls.gd" id="5_camera"]
-
+[ext_resource type="Script" uid="uid://dktt2i1ceg3ah" path="res://scripts/Board.gd" id="4_board"]
+[ext_resource type="Script" uid="uid://dh6r7eebvovxe" path="res://scripts/CameraControls.gd" id="5_camera"]
 [ext_resource type="PackedScene" path="res://scenes/PauseMenu.tscn" id="6_pause"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fbsjb"]
@@ -27,7 +26,6 @@ glow_enabled = true
 bg_color = Color(0.133333, 0.254902, 0.133333, 0.901961)
 border_width_bottom = 4
 border_color = Color(0.4, 0.266667, 0.133333, 1)
-
 
 [node name="CardTable" type="Node3D"]
 script = ExtResource("1_fbsjb")
@@ -81,7 +79,6 @@ mouse_filter = 2
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_right = 0.0
 offset_bottom = 60.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
@@ -126,8 +123,8 @@ offset_bottom = 15.0
 grow_horizontal = 0
 grow_vertical = 2
 tooltip_text = "Select piece to place"
-item_count = 4
 selected = 0
+item_count = 4
 popup/item_0/text = "Select Mode"
 popup/item_0/id = 0
 popup/item_1/text = "Place Elephant"
@@ -136,7 +133,6 @@ popup/item_2/text = "Place Meeple"
 popup/item_2/id = 2
 popup/item_3/text = "Remove Piece"
 popup/item_3/id = 3
-item_count = 4
 
 [node name="EndTurnButton" type="Button" parent="CanvasLayer/Control/TopBar"]
 layout_mode = 1
@@ -184,6 +180,9 @@ text = "My Role: "
 [node name="TurnTimer" type="Timer" parent="CanvasLayer/Control"]
 autostart = true
 
+[node name="PauseMenu" parent="CanvasLayer" instance=ExtResource("6_pause")]
+visible = false
+
 [node name="Play" type="Node3D" parent="."]
 script = ExtResource("3_wt453")
 
@@ -196,6 +195,3 @@ script = ExtResource("5_camera")
 [connection signal="pressed" from="CanvasLayer/Control/TopBar/EndTurnButton" to="." method="_on_end_turn_button_pressed"]
 [connection signal="increase_total_Elephant" from="Play" to="." method="_on_play_increase_total_elephant"]
 [connection signal="increase_total_Meeple" from="Play" to="." method="_on_play_increase_total_meeple"]
-
-[node name="PauseMenu" parent="CanvasLayer" instance=ExtResource("6_pause")]
-visible = false

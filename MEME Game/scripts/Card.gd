@@ -4,6 +4,7 @@ signal card_selected(card)
 
 @onready var background = $Background
 @onready var label = $Label
+@onready var display = $TextureRect
 
 var original_position: Vector2
 var is_hovered = false
@@ -28,7 +29,9 @@ func _ready():
 func set_card_data(id: String) -> void:
 	card_id = id
 	var card_def = CardData.ALL_CARDS.get(id, {})
+	
 	label.text = card_def.get("name", "Unknown Card")
+	display.texture = load("res://assets/Card/" + label.text + ".png")
 	background.color = card_def.get("color", Color.WHITE)
 	label.add_theme_color_override("font_color", Color.BLACK)
 
