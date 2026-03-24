@@ -29,16 +29,17 @@ var current_player_index: int = 0
 var player_count: int = 4
 var player_roles: Array = []
 var player_stats: Array = [
-	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0},
-	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0},
-	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0},
-	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0}
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0, "e_inc_cards": 0, "v_inc_cards": 0, "both_inc_cards": 0},
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0, "e_inc_cards": 0, "v_inc_cards": 0, "both_inc_cards": 0},
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0, "e_inc_cards": 0, "v_inc_cards": 0, "both_inc_cards": 0},
+	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0, "e_inc_cards": 0, "v_inc_cards": 0, "both_inc_cards": 0}
 ]
 var cards_played_this_turn: int = 0
 
 # Track forest increase
 var initial_forest_count: int = 0
 var initial_plantation_count: int = 0
+var initial_human_count: int = 0
 
 # Deck
 var draw_pile: Array = []
@@ -94,13 +95,17 @@ func count_tiles_of_type(tile_type: int) -> int:
 func setup_stats() -> void:
 	initial_forest_count = count_tiles_of_type(TileType.FOREST)
 	initial_plantation_count = count_tiles_of_type(TileType.PLANTATION)
-	print("GameState: initial_forest_count set to ", initial_forest_count, " plantation: ", initial_plantation_count)
+	initial_human_count = count_tiles_of_type(TileType.HUMAN)
+	print("GameState: initial_forest_count set to ", initial_forest_count, " plantation: ", initial_plantation_count, " human: ", initial_human_count)
 
 func get_forest_increase() -> int:
 	return count_tiles_of_type(TileType.FOREST) - initial_forest_count
 
 func get_plantation_increase() -> int:
 	return count_tiles_of_type(TileType.PLANTATION) - initial_plantation_count
+
+func get_human_increase() -> int:
+	return count_tiles_of_type(TileType.HUMAN) - initial_human_count
 
 func get_total_villagers() -> int:
 	var total = 0
@@ -134,6 +139,77 @@ func can_place_piece(tile_key: Vector2i, piece_type: String) -> bool:
 		return entry["elephant_nodes"].size() < MAX_ELEPHANTS_PER_TILE
 	return entry["villager_nodes"].size() < MAX_VILLAGERS_PER_TILE
 
+func get_shortest_distance_human_elephant() -> int:
+	var elephant_tiles: Array = []
+	var human_tiles: Array = []
+	var min_dist = -1
+	for key in tile_registry:
+		var entry = tile_registry[key]
+		if entry["elephant_nodes"].size() > 0:
+			elephant_tiles.append(key)
+		if entry["villager_nodes"].size() > 0:
+			human_tiles.append(key)
+			
+	if elephant_tiles.is_empty() or human_tiles.is_empty():
+		return -1
+		
+	for e in elephant_tiles:
+		for h in human_tiles:
+			var dist = abs(e.x - h.x) + abs(e.y - h.y)
+			if min_dist == -1 or dist < min_dist:
+				min_dist = dist
+	return min_dist
+
+func get_elephants_in_forest() -> int:
+	var count = 0
+	for key in tile_registry:
+		var entry = tile_registry[key]
+		if entry["type"] == TileType.FOREST:
+			count += entry["elephant_nodes"].size()
+	return count
+
+func count_vacant_secondary_met() -> int:
+	var met_count = 0
+	var roles = [
+		"Conservationist", 
+		"Village Head", 
+		"Plantation Owner", 
+		"Land Developer",
+		"Ecotourism Manager",
+		"Wildfire Department",
+		"Researcher"
+	]
+	
+	for role in roles:
+		if role in player_roles:
+			continue # Not vacant
+			
+		var is_met = false
+		match role:
+			"Conservationist":
+				is_met = (get_forest_increase() >= 2)
+			"Village Head":
+				is_met = (get_total_villagers() >= 16)
+			"Plantation Owner":
+				is_met = (get_plantation_increase() >= 2)
+			"Land Developer":
+				is_met = (get_human_increase() >= 2)
+			"Ecotourism Manager":
+				var dist = get_shortest_distance_human_elephant()
+				var total_e = 0
+				for key in tile_registry:
+					if tile_registry[key]["elephant_nodes"].size() > 0:
+						total_e += 1
+				is_met = (total_e > 0 and dist >= 3)
+			"Wildfire Department":
+				is_met = (get_elephants_in_forest() >= 4)
+			"Researcher":
+				is_met = (get_shortest_distance_human_elephant() >= 2)
+				
+		if is_met:
+			met_count += 1
+			
+	return met_count
 
 # --- Piece Tracking ---
 
