@@ -23,7 +23,7 @@ Physical Barriers,Green,1,Immune,,,,,,,,Elephants are immune to cards that move 
 Protected Areas,Green,1,Add,,1,,,,,,
 ,,,Convert,,,Plantation or Human Dominated,Forest,,,1,"Duration: Until Game Ends
 Convert if Forest Tiles < 12"
-Reforestation,Green,3,Convert,,,Human Dominated,Forest,,,2,
+Reforestation,Green,3,Convert,,,Human Dominated or Plantation,Forest,,,2,
 Removal of Agricultural Subsidies,Green,2,Remove,2,,,,,,,
 Smell-Based Repellents,Green,1,Move,,1,,,Plantation or Human Dominated,,1,
 Sound-Based Repellents,Green,1,Move,,1,,,Plantation or Human Dominated,,1,

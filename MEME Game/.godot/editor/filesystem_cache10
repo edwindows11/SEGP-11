@@ -1,5 +1,5 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1774249709
+::res://::1774503916
 README.md::TextFile::-1::1774186608::0::1::::<><><>0<>0<><>::
 Updates.md::TextFile::-1::1774186608::0::1::::<><><>0<>0<><>::
 ::res://assets/::1774186608
@@ -30,7 +30,7 @@ HumanDominatedTile.glb::PackedScene::1675755418352003013::1774186608::1774186632
 HumanDominatedTile_1.png::CompressedTexture2D::5927078993202749137::1774186608::1774186632::1::::<><><>0<>0<>10c763c594b58bb0fd0d1b6cf3124d5f<>res://.godot/imported/HumanDominatedTile_1.png-f22e5c3a31fa4cc3f6dfb8ea70ac8a83.s3tc.ctex::
 PlantationTile.glb::PackedScene::8619284372743211699::1774186608::1774186632::1::::<><><>0<>0<>d59e1d6636171e2a9b05da42518c3d2f<>res://.godot/imported/PlantationTile.glb-b2bbc1a335dc2afa2dd050aec7f3e382.scn::uid://wm2eilf5yedk::::res://assets/Tiles/PlantationTile_2.png
 PlantationTile_2.png::CompressedTexture2D::1570574032513608832::1774186608::1774186632::1::::<><><>0<>0<>6b643d7a0914a7aabda7816204886c46<>res://.godot/imported/PlantationTile_2.png-5e9624a3443d0d05a5af0e3f50f04d47.s3tc.ctex::
-::res://scenes/::1774186608
+::res://scenes/::1774255753
 ActionLog.tscn::PackedScene::-1::1774186608::0::1::::<><><>0<>0<><>::res://scripts/ActionLog.gd
 Card.tscn::PackedScene::-1::1774186608::0::1::::<><><>0<>0<><>::res://scripts/Card.gd
 CardTable.tscn::PackedScene::6986705891419701701::1774186608::0::1::::<><><>0<>0<><>::uid://b5fykedev53t2::::res://scripts/Card Table/card_table.gd<>uid://oti8gk6h0m1r::::res://scripts/Card Table/card_table_ui.gd<>res://scenes/ActionLog.tscn<>uid://cytbbj4ddsi50::::res://scripts/Card Table/card_functions.gd<>res://scripts/Board.gd<>res://scripts/CameraControls.gd<>res://scenes/PauseMenu.tscn
@@ -38,18 +38,18 @@ main.tscn::PackedScene::3291442695496918881::1774186608::0::1::::<><><>0<>0<><>:
 MainMenu.tscn::PackedScene::1448884684200451426::1774186608::0::1::::<><><>0<>0<><>::uid://doxiianmbebdg::::res://assets/MainMenu/background.png<>uid://2re3gb8w87k7::::res://assets/MainMenu/Title.png<>uid://bumw8dy524x60::::res://assets/MainMenu/buttons/Play.png<>uid://86wvpud0j1rp::::res://assets/Pieces/Elephant2D.png<>uid://dm3nxownjha4j::::res://assets/Pieces/Meeple2D.png<>uid://dw47u1s6mrtc5::::res://assets/MainMenu/buttons/Play_Hover.png<>uid://crer7at5wljon::::res://scripts/MainMenu/Buttons/start_button.gd<>uid://tvx8qyhhbhon::::res://assets/MainMenu/buttons/HowToPlay.png<>uid://8ag7viaas37a::::res://assets/MainMenu/buttons/Settings.png<>uid://bogejsg83ufws::::res://assets/MainMenu/buttons/Settings_Hover.png<>uid://d2ipi4thqvaer::::res://assets/MainMenu/buttons/HowToPlay_Hover.png<>uid://crufckq7qphc6::::res://scripts/MainMenu/Buttons/settings_button.gd<>uid://cnhwglppb2ux5::::res://scripts/MainMenu/Buttons/how_to_play_button.gd<>uid://cobya6p65w4jm::::res://assets/MainMenu/MEME logo.png
 PauseMenu.tscn::PackedScene::-1::1774186608::0::1::::<><><>0<>0<><>::res://scripts/PauseMenu.gd
 PlayerDisplay.tscn::PackedScene::-1::1774186608::0::1::::<><><>0<>0<><>::res://scripts/PlayerDisplay.gd
-RoleSelection.tscn::PackedScene::-1::1774186608::0::1::::<><><>0<>0<><>::res://scripts/RoleSelection.gd<>res://assets/safari_background.png
+RoleSelection.tscn::PackedScene::3085309343925659114::1774255753::0::1::::<><><>0<>0<><>::uid://b4kfkrg3hxequ::::res://scripts/RoleSelection.gd
 ScenarioSelect.tscn::PackedScene::-1::1774186608::0::1::::<><><>0<>0<><>::res://scripts/ScenarioSelect.gd
 ::res://scenes/Temp Scenes/::1774186608
 Delete Trial (working).tscn::PackedScene::1600818721673858621::1774186608::0::1::::<><><>0<>0<><>::uid://bbakqa5er2leu::::res://scripts/TEMP/Delete.gd
-::res://scripts/::1774188872
+::res://scripts/::1774250323
 ActionLog.gd::GDScript::5666482020251196246::1774186608::0::1::::<>VBoxContainer<><>0<>0<><>::
 Board.gd::GDScript::7901575964532958119::1774186608::0::1::::<>Node3D<><>0<>0<><>::
 CameraControls.gd::GDScript::7715669217550061510::1774186608::0::1::::<>Camera3D<><>0<>0<><>::
 Card.gd::GDScript::3118029198594064919::1774186608::0::1::::<>Control<><>0<>0<><>::
-CardData.gd::GDScript::8308118792669831157::1774186608::0::1::::CardData<>RefCounted<><>0<>0<><>::
-CardEffects.gd::GDScript::5574388463560760133::1774188872::0::1::::<>Node<><>0<>0<><>::
-GameState.gd::GDScript::8753606182841504797::1774188706::0::1::::<>Node<><>0<>0<><>::
+CardData.gd::GDScript::8308118792669831157::1774250066::0::1::::CardData<>RefCounted<><>0<>0<><>::
+CardEffects.gd::GDScript::5574388463560760133::1774251471::0::1::::<>Node<><>0<>0<><>::
+GameState.gd::GDScript::8753606182841504797::1774251330::0::1::::<>Node<><>0<>0<><>::
 grid_manager.gd::GDScript::6936999167669461023::1774186608::0::1::::<>Node3D<><>0<>0<><>::
 PauseMenu.gd::GDScript::689138363115911362::1774186608::0::1::::<>Control<><>0<>0<><>::
 PlayerDisplay.gd::GDScript::7339365875984792514::1774186608::0::1::::<>Control<><>0<>0<><>::
@@ -59,8 +59,8 @@ ScenarioSelect.gd::GDScript::696421032073165305::1774186608::0::1::::<>Control<>
 ::res://scripts/Actions/::1774186608
 camera.gd::GDScript::9140071614531063616::1774186608::0::1::::<>CharacterBody3D<><>0<>0<><>::
 global.gd::GDScript::3578250104377179340::1774186608::0::1::::Enums<>Node<><>0<>0<><>::
-::res://scripts/Card Table/::1774188872
-card_functions.gd::GDScript::6496659812463298837::1774188706::0::1::::<>Node3D<><>0<>0<><>::
+::res://scripts/Card Table/::1774250323
+card_functions.gd::GDScript::6496659812463298837::1774250491::0::1::::<>Node3D<><>0<>0<><>::
 card_table.gd::GDScript::4503883162308646289::1774188872::0::1::::<>Node3D<><>0<>0<><>::
 card_table_ui.gd::GDScript::1022411987407577293::1774186608::0::1::::<>Control<><>0<>0<><>::
 ::res://scripts/MainMenu/::1774186608
