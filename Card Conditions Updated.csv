@@ -21,7 +21,7 @@ Natural Salt Lick,Green,1,Add,2,,,,,,,
 Organized Crop Protection,Green,1,Move,,2,,,Plantation,,1,
 Physical Barriers,Green,1,Immune,,,,,,,,Elephants are immune to cards that move them closer to plantation or human dominated landscapes for 1 round
 Protected Areas,Green,1,Add,,1,,,,,,
-,,,Convert,,,Plantation or Human Dominated,Forest,,,1,"Duration: Until Game Ends
+,,,Convert,,,Plantation or Human Dominated,Forest,,,1,"
 Convert if Forest Tiles < 12"
 Reforestation,Green,3,Convert,,,Human Dominated or Plantation,Forest,,,2,
 Removal of Agricultural Subsidies,Green,2,Remove,2,,,,,,,
