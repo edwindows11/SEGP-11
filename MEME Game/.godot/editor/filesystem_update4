@@ -1,2 +1,3 @@
 res://scripts/CardEffects.gd
 res://scripts/GameState.gd
+res://scripts/ScenarioSelect.gd
