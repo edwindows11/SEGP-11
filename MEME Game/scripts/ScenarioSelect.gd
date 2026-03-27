@@ -335,8 +335,11 @@ func _show_preset_details(idx: int) -> void:
 	var diff: Dictionary = scenario["difficulty"]
 	difficulty_label.text = ""
 	difficulty_label.append_text("[color=#7ec850]Pro-Elephant:[/color] " + diff["pro_elephant"] + "\n")
+	difficulty_label.append_text("  Wildlife Department, Conservationist, Ecotourism Manager\n\n")
 	difficulty_label.append_text("[color=#c8c850]Neutral:[/color] " + diff["neutral"] + "\n")
-	difficulty_label.append_text("[color=#c85050]Pro-People:[/color] " + diff["pro_people"])
+	difficulty_label.append_text("  Government, Researcher, Environmental Consultant\n\n")
+	difficulty_label.append_text("[color=#c85050]Pro-People:[/color] " + diff["pro_people"] + "\n")
+	difficulty_label.append_text("  Village Head, Plantation Owner, Land Developer")
 
 	# Draw large preview
 	_draw_grid_preview(grid, scenario["elephants"])
@@ -348,7 +351,12 @@ func _show_random_details() -> void:
 	stats_label.text = "Forest: 26  |  Village: 19  |  Oil Palm: 19  |  Elephants: 3  |  Villagers: 6"
 
 	difficulty_label.text = ""
-	difficulty_label.append_text("[color=#c8c850]Varies each game[/color]")
+	difficulty_label.append_text("[color=#7ec850]Pro-Elephant:[/color] Varies\n")
+	difficulty_label.append_text("  Wildlife Department, Conservationist, Ecotourism Manager\n\n")
+	difficulty_label.append_text("[color=#c8c850]Neutral:[/color] Varies\n")
+	difficulty_label.append_text("  Government, Researcher, Environmental Consultant\n\n")
+	difficulty_label.append_text("[color=#c85050]Pro-People:[/color] Varies\n")
+	difficulty_label.append_text("  Village Head, Plantation Owner, Land Developer")
 
 	# Draw a placeholder "?" grid
 	_clear_preview()
