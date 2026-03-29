@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://c6soa4g4ojqjl"]
+[gd_scene load_steps=13 format=3 uid="uid://c6soa4g4ojqjl"]
 
 [ext_resource type="Script" uid="uid://b5fykedev53t2" path="res://scripts/Card Table/card_table.gd" id="1_fbsjb"]
 [ext_resource type="Script" uid="uid://oti8gk6h0m1r" path="res://scripts/Card Table/card_table_ui.gd" id="1_script"]
@@ -21,6 +21,9 @@ background_mode = 2
 sky = SubResource("Sky_yw5gw")
 tonemap_mode = 2
 glow_enabled = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q8tmt"]
+bg_color = Color(0.6431373, 0.44313726, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
 bg_color = Color(0.133333, 0.254902, 0.133333, 0.901961)
@@ -74,6 +77,28 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="Skipped" type="RichTextLabel" parent="CanvasLayer/Control"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.18100001
+anchor_top = 0.38300002
+anchor_right = 0.82600003
+anchor_bottom = 0.69100004
+offset_left = -8.512009
+offset_top = 71.815994
+offset_right = 8.447937
+offset_bottom = -71.768036
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 20
+theme_override_font_sizes/normal_font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_q8tmt")
+bbcode_enabled = true
+text = "[center]This player's turn is skipped[center]"
+vertical_alignment = 1
 
 [node name="TopBar" type="Panel" parent="CanvasLayer/Control"]
 layout_mode = 1

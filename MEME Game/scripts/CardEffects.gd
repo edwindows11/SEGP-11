@@ -86,7 +86,8 @@ func _advance_effect() -> void:
 		"move_e":          _begin_move("elephant", current_effect)
 		"move_v":          _begin_move("villager", current_effect)
 		"move_all_e_to":   _do_move_all_e_auto(current_effect)
-		"return_to_hand": _do_return_card()
+		"return_to_hand":  _do_return_card()
+		"skip"          :  _do_skip()
 		_:
 			push_warning("CardEffects: unknown op: " + op)
 			effect_index += 1
@@ -204,7 +205,15 @@ func _do_return_card() -> void:
 	_log("Return previously played cards",false)
 	effect_index += 1
 	_advance_effect()
-			
+
+func _do_skip() -> void:
+	var next_index = (GameState.current_player_index + 1) % GameState.player_count
+	var SkipText = get_node("/root/CardTable/CanvasLayer/Control/Skipped")
+	SkipText.text = "[center]Player " + str(next_index + 1) + " Turn Skipped![/center]"
+	GameState.skip_next_turn = true
+	_log("Skip Player "+ str(next_index + 1) + "'s Turn", false)
+	effect_index += 1
+	_advance_effect()
 
 # --- Interactive: Move ---
 

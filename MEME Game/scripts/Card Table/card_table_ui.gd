@@ -23,6 +23,7 @@ var time_left = 60
 var cards_played_this_turn = 0
 var pending_card: Control = null
 var instruction_label: Label = null
+var play_card: bool = true
 
 # Conservationist Tracker UI
 var cons_tracker_panel: PanelContainer = null
@@ -760,6 +761,8 @@ func remove_played_card_and_draw_replacement() -> void:
 			call_deferred("reposition_cards")
 
 func _on_card_selected(selected_card) -> void:
+	if not play_card:
+		return
 	if cards_played_this_turn >= 1:
 		print("Cannot play more than 1 card per turn!")
 		return
@@ -793,20 +796,20 @@ func _on_card_selected(selected_card) -> void:
 
 # --- Turn management ---
 
-func _on_turn_changed(player_index: int, role_name: String) -> void:
-	# Update whose-turn label
+func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool) -> void:
+	play_card = not is_skipped
+
+	var skip_label = $Skipped
+	if skip_label:
+		skip_label.visible = is_skipped
+
 	if user_role_label:
 		user_role_label.text = "Player " + str(player_index + 1) + " (" + role_name + ")"
-
-	# Reset timer
 	time_left = 60
 	if timer_label:
 		timer_label.text = str(time_left)
-
 	cards_played_this_turn = 0
 	end_turn_button.disabled = false
-
-	# Redraw hand for new current player
 	spawn_cards()
 
 

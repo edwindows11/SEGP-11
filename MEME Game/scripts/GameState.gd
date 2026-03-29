@@ -35,6 +35,7 @@ var player_stats: Array = [
 	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0, "e_inc_cards": 0, "v_inc_cards": 0, "both_inc_cards": 0}
 ]
 var cards_played_this_turn: int = 0
+var skip_next_turn = false
 
 # Track forest increase
 var initial_forest_count: int = 0
@@ -50,7 +51,7 @@ var player_hands: Array = [[], [], [], []]
 # Expires when turn returns to that same player.
 var elephant_immunity_owner_by_id: Dictionary = {}
 
-signal turn_changed(player_index: int, role_name: String)
+signal turn_changed(player_index: int, role_name: String, is_skipped: bool)
 
 
 # --- Tile Registration ---
@@ -323,8 +324,12 @@ func advance_turn() -> void:
 	_expire_elephant_immunity_for_player(current_player_index)
 	cards_played_this_turn = 0
 	var role_name = player_roles[current_player_index] if current_player_index < player_roles.size() else "Unknown"
-	turn_changed.emit(current_player_index, role_name)
 
+	if skip_next_turn:
+		skip_next_turn = false
+		turn_changed.emit(current_player_index, role_name, true)
+	else:
+		turn_changed.emit(current_player_index, role_name, false)
 
 # --- Elephant Immunity ---
 

@@ -25,7 +25,8 @@ class_name CardData
 #   "condition" : String - optional guard, e.g. "forest_lt_12"
 
 static var ALL_CARDS: Dictionary = {
-
+	
+	
 	# ---- GREEN CARDS ----
 	
 	"green_abandonment_land": {
@@ -398,7 +399,7 @@ static var ALL_CARDS: Dictionary = {
 		"name": "Sabotaging",
 		"color": Color.BLACK,
 		"sub_effects": [
-			#SKIP
+			{"op": "skip"}
 		]
 	},
 	
