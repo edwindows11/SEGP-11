@@ -750,13 +750,14 @@ func remove_played_card_and_draw_replacement() -> void:
 		pending_card = null
 
 	# Draw a replacement card from the deck
-	var new_card_id = GameState.draw_card(GameState.current_player_index)
-	if new_card_id != "":
-		var card = CARD_SCENE.instantiate()
-		cards_container.add_child(card)
-		card.set_card_data(new_card_id)
-		card.card_selected.connect(_on_card_selected)
-		call_deferred("reposition_cards")
+	if GameState.player_hands[GameState.current_player_index].size() < 5:
+		var new_card_id = GameState.draw_card(GameState.current_player_index)
+		if new_card_id != "":
+			var card = CARD_SCENE.instantiate()
+			cards_container.add_child(card)
+			card.set_card_data(new_card_id)
+			card.card_selected.connect(_on_card_selected)
+			call_deferred("reposition_cards")
 
 func _on_card_selected(selected_card) -> void:
 	if cards_played_this_turn >= 1:

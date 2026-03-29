@@ -43,6 +43,7 @@ signal effects_complete()
 signal request_tile_selection(valid_keys: Array, instruction: String)
 signal clear_tile_selection()
 
+var lastCard = [null, null, null, null]
 
 # --- Entry point ---
 
@@ -52,6 +53,8 @@ func execute_card(card_id: String) -> void:
 		push_error("CardEffects: unknown card_id: " + card_id)
 		effects_complete.emit()
 		return
+	if CardData.ALL_CARDS[card_id].get("color", Color.WHITE) != Color.BLACK:
+		lastCard[GameState.current_player_index] = card_id
 	pending_effects = card_def["sub_effects"].duplicate(true)
 	effect_index = 0
 	_advance_effect()
@@ -83,6 +86,7 @@ func _advance_effect() -> void:
 		"move_e":          _begin_move("elephant", current_effect)
 		"move_v":          _begin_move("villager", current_effect)
 		"move_all_e_to":   _do_move_all_e_auto(current_effect)
+		"return_to_hand": _do_return_card()
 		_:
 			push_warning("CardEffects: unknown op: " + op)
 			effect_index += 1
@@ -191,6 +195,16 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 	effect_index += 1
 	_advance_effect()
 
+func _do_return_card() -> void:
+	var owner_player := GameState.current_player_index
+	for player in GameState.player_count:
+		if player != owner_player:
+			var prev_card = lastCard[player]
+			GameState.player_hands[player].append(prev_card)
+	_log("Return previously played cards",false)
+	effect_index += 1
+	_advance_effect()
+			
 
 # --- Interactive: Move ---
 

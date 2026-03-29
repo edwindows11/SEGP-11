@@ -27,7 +27,7 @@ class_name CardData
 static var ALL_CARDS: Dictionary = {
 
 	# ---- GREEN CARDS ----
-
+	
 	"green_abandonment_land": {
 		"name": "Abandonment of Land",
 		"color": Color.GREEN,
@@ -350,7 +350,7 @@ static var ALL_CARDS: Dictionary = {
 		"name": "Disagreement",
 		"color": Color.BLACK,
 		"sub_effects": [
-			# all player except current player return card to hand
+			{"op": "return_to_hand"}
 		]
 	},
 	

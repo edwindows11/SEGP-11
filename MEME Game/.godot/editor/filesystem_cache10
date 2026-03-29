@@ -1,5 +1,5 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1774776966
+::res://::1774808537
 README.md::TextFile::-1::1773367942::0::1::::<><><>0<>0<><>::
 Updates.md::TextFile::-1::1773370009::0::1::::<><><>0<>0<><>::
 ::res://assets/::1773929012
@@ -93,14 +93,14 @@ RoleSelection.tscn::PackedScene::3085309343925659114::1774762768::0::1::::<><><>
 ScenarioSelect.tscn::PackedScene::-1::1773881303::0::1::::<><><>0<>0<><>::res://scripts/ScenarioSelect.gd
 ::res://scenes/Temp Scenes/::1774429603
 Delete Trial (working).tscn::PackedScene::1600818721673858621::1774429603::0::1::::<><><>0<>0<><>::uid://bbakqa5er2leu::::res://scripts/TEMP/Delete.gd
-::res://scripts/::1774772112
+::res://scripts/::1774808480
 ActionLog.gd::GDScript::5666482020251196246::1773367942::0::1::::<>VBoxContainer<><>0<>0<><>::
 Board.gd::GDScript::7901575964532958119::1773373712::0::1::::<>Node3D<><>0<>0<><>::
 CameraControls.gd::GDScript::7715669217550061510::1773370009::0::1::::<>Camera3D<><>0<>0<><>::
-Card.gd::GDScript::3118029198594064919::1774317295::0::1::::<>Control<><>0<>0<><>::
-CardData.gd::GDScript::8308118792669831157::1774771588::0::1::::CardData<>RefCounted<><>0<>0<><>::
-CardEffects.gd::GDScript::5574388463560760133::1774762768::0::1::::<>Node<><>0<>0<><>::
-GameState.gd::GDScript::8753606182841504797::1774775539::0::1::::<>Node<><>0<>0<><>::
+Card.gd::GDScript::3118029198594064919::1774794739::0::1::::<>Control<><>0<>0<><>::
+CardData.gd::GDScript::8308118792669831157::1774808521::0::1::::CardData<>RefCounted<><>0<>0<><>::
+CardEffects.gd::GDScript::5574388463560760133::1774808184::0::1::::<>Node<><>0<>0<><>::
+GameState.gd::GDScript::8753606182841504797::1774777123::0::1::::<>Node<><>0<>0<><>::
 grid_manager.gd::GDScript::6936999167669461023::1774429603::0::1::::<>Node3D<><>0<>0<><>::
 PauseMenu.gd::GDScript::689138363115911362::1773367943::0::1::::<>Control<><>0<>0<><>::
 PlayerDisplay.gd::GDScript::7339365875984792514::1773124674::0::1::::<>Control<><>0<>0<><>::
