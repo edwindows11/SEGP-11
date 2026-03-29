@@ -10,7 +10,7 @@ extends Node
 #   add_child(fx)
 #   fx.execute_card("green_reforestation")
 
-enum State { IDLE, WAITING_SOURCE, WAITING_DEST }
+enum State { IDLE, WAITING_SOURCE, WAITING_DEST, WAITING_CHOICE }
 
 var state: State = State.IDLE
 
@@ -37,6 +37,7 @@ var _interact_type_filter: Array = []
 # For interactive convert operations
 var convert_count_remaining: int = 0
 var _convert_to_type: int = 0
+var _pending_convert_any_key: Vector2i = Vector2i(-1, -1)
 
 signal effects_complete()
 signal request_tile_selection(valid_keys: Array, instruction: String)
@@ -432,14 +433,39 @@ func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 	if entry.is_empty():
 		return
 
-	var current_type: int = entry["type"]
-	var next_type: int = (current_type + 1) % 3  # 0->1->2->0
+	_pending_convert_any_key = tile_key
+	state = State.WAITING_CHOICE
 
 	if board:
-		board.convert_tile(tile_key, next_type)
+		board.clear_all_highlights()
+		board.highlight_tiles([tile_key], Color(1.0, 0.8, 0.0, 0.55))
+
+	request_tile_selection.emit([], "Choose new tile type: [1] Forest  [2] Human  [3] Plantation")
+
+func confirm_convert_any_any_type_selected(new_type: int) -> void:
+	if state != State.WAITING_CHOICE:
+		return
+
+	if _pending_convert_any_key == Vector2i(-1, -1):
+		return
+
+	var entry = GameState.tile_registry.get(_pending_convert_any_key, {})
+	if entry.is_empty():
+		_pending_convert_any_key = Vector2i(-1, -1)
+		_request_convert_any_any_click()
+		return
+
+	var current_type: int = entry["type"]
+	if new_type == current_type:
+		request_tile_selection.emit([], "Tile is already " + _tile_type_name(new_type) + ". Choose [1] Forest  [2] Human  [3] Plantation")
+		return
+
+	if board:
+		board.convert_tile(_pending_convert_any_key, new_type)
 		board.clear_all_highlights()
 
-	_log("Converted tile", true)
+	_log("Converted tile to " + _tile_type_name(new_type), true)
+	_pending_convert_any_key = Vector2i(-1, -1)
 	convert_count_remaining -= 1
 
 	if convert_count_remaining > 0:
@@ -496,6 +522,16 @@ func _min_distance_to_types(origin_key: Vector2i, target_types: Array) -> int:
 		if dist < best_dist:
 			best_dist = dist
 	return best_dist
+
+func _tile_type_name(tile_type: int) -> String:
+	match tile_type:
+		GameState.TileType.FOREST:
+			return "Forest"
+		GameState.TileType.HUMAN:
+			return "Human"
+		GameState.TileType.PLANTATION:
+			return "Plantation"
+	return "Unknown"
 
 func _parse_types(type_strings: Array) -> Array:
 	var result: Array = []

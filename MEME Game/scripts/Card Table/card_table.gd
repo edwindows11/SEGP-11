@@ -71,6 +71,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			pause_menu.toggle_pause()
 			return
 
+	# Land-Use Planning type-choice input (after selecting a tile):
+	# 1 = Forest, 2 = Human, 3 = Plantation
+	if event is InputEventKey and event.pressed and not event.echo:
+		if card_effects and card_effects.state == 3 and card_effects.current_effect.get("op", "") == "convert_any_any":
+			match event.keycode:
+				KEY_1, KEY_KP_1:
+					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.FOREST)
+					return
+				KEY_2, KEY_KP_2:
+					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.HUMAN)
+					return
+				KEY_3, KEY_KP_3:
+					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.PLANTATION)
+					return
+
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 
 		# --- Card effect tile selection mode ---
