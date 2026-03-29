@@ -336,4 +336,78 @@ static var ALL_CARDS: Dictionary = {
 			{"op": "add_v_in", "count": 2, "in": ["HUMAN"]}
 		]
 	},
+	
+	# -- Black --
+	"black_corruption": {
+		"name": "Corruption",
+		"color": Color.BLACK,
+		"sub_effects": [
+			#Steal one card
+		]
+	},
+	
+	"black_disagreement": {
+		"name": "Disagreement",
+		"color": Color.BLACK,
+		"sub_effects": [
+			# all player except current player return card to hand
+		]
+	},
+	
+	"black_diesease_strikes_elephants": {
+		"name": "Disease Strike Elephants",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "remove_e", "count": 3},
+		]
+	},
+	
+	"black_diesease_strikes_human": {
+		"name": "Disease Strike Human",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "remove_v", "count": 3},
+		]
+	},
+	
+	"black_drought": {
+		"name": "Drought",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "move_all_e_to", "to": ["PLANTATION","HUMAN"], "max_dist": 2}
+		]
+	},
+	
+	"black_flood": {
+		"name": "Flood",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "move_all_e_to", "to": ["PLANTATION","HUMAN"], "max_dist": 2}
+		]
+	},
+	
+	"black_forest_burning": {
+		"name": "Forest Burning",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "move_all_e_to", "to": ["PLANTATION","HUMAN"], "max_dist": 2}
+		]
+	},
+	
+	"black_sabotaging": {
+		"name": "Sabotaging",
+		"color": Color.BLACK,
+		"sub_effects": [
+			#SKIP
+		]
+	},
+	
+	"black_wamring": {
+		"name": "Warming",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "remove_v", "count": 1},
+			{"op": "remove_e", "count": 1}
+		]
+	},
 }

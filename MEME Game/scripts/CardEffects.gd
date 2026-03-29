@@ -214,6 +214,8 @@ func _request_source_selection_move(effect: Dictionary) -> void:
 			continue
 		source_piece_count += 1
 		var piece_node = node_list[0]
+		if not is_instance_valid(piece_node):
+			continue
 		var preview_dests := _build_valid_dest_keys_for_source(key, effect, _current_piece_type, piece_node, true)
 		if not preview_dests.is_empty():
 			valid_source_keys.append(key)
@@ -291,7 +293,8 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 	var effect = current_effect
 	var source_entry = GameState.tile_registry.get(selected_source_key, {})
 	var source_node_list = source_entry["elephant_nodes"] if _current_piece_type == "elephant" else source_entry["villager_nodes"]
-	var source_piece_node = source_node_list[0] if source_node_list.size() > 0 else null
+	var raw = source_node_list[0] if source_node_list.size() > 0 else null
+	var source_piece_node = raw if is_instance_valid(raw) else null
 	var valid_dest_keys: Array = _build_valid_dest_keys_for_source(selected_source_key, effect, _current_piece_type, source_piece_node, true)
 
 	if valid_dest_keys.is_empty():
@@ -329,6 +332,15 @@ func confirm_dest_selected(tile_key: Vector2i) -> void:
 		move_count_remaining -= 1
 	else:
 		var piece_node = node_list[0]
+		if not is_instance_valid(piece_node):
+			_log("Source piece no longer exists", false)
+			move_count_remaining -= 1
+			if move_count_remaining <= 0:
+				effect_index += 1
+				_advance_effect()
+			else:
+				_request_source_selection_move(current_effect)
+			return
 		var dest_world_pos = GameState.tile_registry[tile_key]["world_pos"]
 		piece_node.position = dest_world_pos
 		if _current_piece_type == "villager":

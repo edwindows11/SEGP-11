@@ -277,7 +277,7 @@ func build_deck() -> void:
 	# Include all Green, Yellow, and Red card IDs (one copy each)
 	for card_id in CardData.ALL_CARDS:
 		var color = CardData.ALL_CARDS[card_id].get("color", Color.WHITE)
-		if color == Color.GREEN or color == Color.YELLOW or color == Color.RED:
+		if color == Color.GREEN or color == Color.YELLOW or color == Color.RED or color == Color.BLACK:
 			draw_pile.append(card_id)
 	draw_pile.shuffle()
 
@@ -285,9 +285,16 @@ func deal_initial_hands() -> void:
 	player_hands = [[], [], [], []]
 	for i in range(player_count):
 		for _j in range(5):
-			var card = _pop_from_draw_pile()
-			if card != "":
-				player_hands[i].append(card)
+			while true:
+				var card = _pop_from_draw_pile()
+				if card != "":
+					var color = CardData.ALL_CARDS[card].get("color", Color.WHITE)
+					if color == Color.BLACK:
+						draw_pile.insert(0, card)
+						draw_pile.shuffle()
+						continue
+					player_hands[i].append(card)
+					break 
 
 func draw_card(player_index: int) -> String:
 	var card = _pop_from_draw_pile()

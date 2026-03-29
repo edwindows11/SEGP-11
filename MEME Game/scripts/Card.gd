@@ -32,8 +32,16 @@ func set_card_data(id: String) -> void:
 	
 	label.text = card_def.get("name", "Unknown Card")
 	display.texture = load("res://assets/Card/" + label.text + ".png")
-	background.color = card_def.get("color", Color.WHITE)
+	var color = card_def.get("color", Color.WHITE)
+	background.color = color
 	label.add_theme_color_override("font_color", Color.BLACK)
+	
+	if color == Color.BLACK:
+		is_selected = true
+		call_deferred("_emit_card_selected")
+
+func _emit_card_selected() -> void:
+	card_selected.emit(self)
 
 func _on_mouse_entered():
 	if is_selected: return
