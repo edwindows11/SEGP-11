@@ -42,6 +42,8 @@ var _pending_convert_any_key: Vector2i = Vector2i(-1, -1)
 signal effects_complete()
 signal request_tile_selection(valid_keys: Array, instruction: String)
 signal clear_tile_selection()
+signal request_steal_target()
+signal steal_complete()
 
 var lastCard = [null, null, null, null]
 
@@ -86,6 +88,7 @@ func _advance_effect() -> void:
 		"move_e":          _begin_move("elephant", current_effect)
 		"move_v":          _begin_move("villager", current_effect)
 		"move_all_e_to":   _do_move_all_e_auto(current_effect)
+		"steal":           _do_steal()
 		"return_to_hand":  _do_return_card()
 		"skip"          :  _do_skip()
 		_:
@@ -193,6 +196,50 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			_log("Move blocked: elephant immunity prevents moving closer to Human/Plantation", false)
 
 	_log("Moved " + str(moved) + " elephants", true)
+	effect_index += 1
+	_advance_effect()
+
+func _do_steal() -> void:
+	# Check there is at least one other player who has cards to steal
+	var thief := GameState.current_player_index
+	var has_valid_target := false
+	for i in range(GameState.player_count):
+		if i != thief and GameState.player_hands[i].size() > 0:
+			has_valid_target = true
+			break
+
+	if not has_valid_target:
+		_log("No players have cards to steal", false)
+		effect_index += 1
+		_advance_effect()
+		return
+
+	# Pause here — UI will call confirm_steal_target() once the player picks someone
+	state = State.WAITING_CHOICE
+	emit_signal("request_steal_target")
+
+## Called by card_table_ui.gd when the player clicks a name button in the steal popup.
+func confirm_steal_target(target_player_index: int) -> void:
+	if state != State.WAITING_CHOICE:
+		return
+
+	var thief := GameState.current_player_index
+	var hand : Array = GameState.player_hands[target_player_index]
+	if hand.is_empty():
+		_log("Player " + str(target_player_index + 1) + " has no cards!", false)
+		# Stay in WAITING_CHOICE so the UI can try another button
+		return
+
+	# Pick a random card from the target's hand
+	var stolen_card: String = hand[randi() % hand.size()]
+	hand.erase(stolen_card)
+	GameState.player_hands[thief].append(stolen_card)
+
+	var card_name = CardData.ALL_CARDS.get(stolen_card, {}).get("name", stolen_card)
+	_log("Stole \"" + card_name + "\" from Player " + str(target_player_index + 1), true)
+
+	state = State.IDLE
+	emit_signal("steal_complete")
 	effect_index += 1
 	_advance_effect()
 

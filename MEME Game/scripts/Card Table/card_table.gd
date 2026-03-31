@@ -48,6 +48,8 @@ func _ready() -> void:
 	card_effects.effects_complete.connect(_on_card_effects_complete)
 	card_effects.request_tile_selection.connect(_on_request_tile_selection)
 	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
+	card_effects.connect("request_steal_target", _on_request_steal_target)
+	card_effects.connect("steal_complete", func(): UI.reposition_cards())
 
 	# --- Wire UI signals ---
 	UI.card_activated.connect(_on_card_activated)
@@ -204,6 +206,9 @@ func _on_clear_tile_selection() -> void:
 	_current_valid_selection_keys.clear()
 	UI.hide_instruction()
 	$Board.clear_all_highlights()
+
+func _on_request_steal_target() -> void:
+	UI.show_steal_popup(card_effects)
 
 
 # --- End turn ---

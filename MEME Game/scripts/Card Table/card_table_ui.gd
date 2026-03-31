@@ -78,6 +78,9 @@ var win_screen_panel: PanelContainer = null
 var win_screen_label: Label = null
 var is_game_over: bool = false
 
+# Steal popup
+var steal_popup: PanelContainer = null
+
 func _ready():
 	# NOTE: spawn_cards() and spawn_players() are called from card_table.gd
 	# after GameState.player_roles and the deck are initialized.
@@ -94,6 +97,8 @@ func _ready():
 	
 	if placement_options:
 		placement_options.visible = false
+
+	_build_steal_popup()
 
 	# Add instruction banner (shown when player must select a tile)
 	var banner = PanelContainer.new()
@@ -823,6 +828,80 @@ func show_instruction(text: String) -> void:
 func hide_instruction() -> void:
 	if instruction_label:
 		instruction_label.get_parent().visible = false
+
+func _build_steal_popup() -> void:
+	steal_popup = PanelContainer.new()
+	steal_popup.name = "_steal_popup"
+	steal_popup.visible = false
+	steal_popup.z_index = 100
+	steal_popup.set_anchors_preset(Control.PRESET_CENTER)
+	steal_popup.offset_left  = -200
+	steal_popup.offset_right =  200
+	steal_popup.offset_top   = -160
+	steal_popup.offset_bottom = 160
+
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.05, 0.18, 0.95)
+	style.corner_radius_top_left    = 14
+	style.corner_radius_top_right   = 14
+	style.corner_radius_bottom_left = 14
+	style.corner_radius_bottom_right= 14
+	style.content_margin_left   = 24
+	style.content_margin_right  = 24
+	style.content_margin_top    = 20
+	style.content_margin_bottom = 20
+	steal_popup.add_theme_stylebox_override("panel", style)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 14)
+	steal_popup.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "Steal a card from:"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+	vbox.add_child(title)
+
+	# Placeholder — buttons are rebuilt each time the popup is shown
+	# so we store the vbox reference to fill it dynamically.
+	steal_popup.set_meta("_btn_vbox", vbox)
+	add_child(steal_popup)
+
+func show_steal_popup(card_effects_node: Node) -> void:
+	if not steal_popup:
+		return
+
+	var vbox = steal_popup.get_meta("_btn_vbox")
+	# Remove old buttons (keep the title at index 0)
+	while vbox.get_child_count() > 1:
+		vbox.get_child(vbox.get_child_count() - 1).queue_free()
+
+	var thief := GameState.current_player_index
+	for i in range(GameState.player_count):
+		if i == thief:
+			continue
+		var hand_size = GameState.player_hands[i].size()
+		var role = GameState.player_roles[i] if i < GameState.player_roles.size() else "Unknown"
+		var btn = Button.new()
+		btn.text = "Player %d – %s (%d card%s)" % [i + 1, role, hand_size, "s" if hand_size != 1 else ""]
+		btn.disabled = hand_size == 0
+		btn.add_theme_font_size_override("font_size", 17)
+		btn.custom_minimum_size = Vector2(320, 44)
+
+		# Capture loop variable properly
+		var target_index := i
+		btn.pressed.connect(func():
+			hide_steal_popup()
+			card_effects_node.confirm_steal_target(target_index)
+		)
+		vbox.add_child(btn)
+
+	steal_popup.visible = true
+
+func hide_steal_popup() -> void:
+	if steal_popup:
+		steal_popup.visible = false
 
 func _trigger_win(player_index: int, role_name: String) -> void:
 	if is_game_over:

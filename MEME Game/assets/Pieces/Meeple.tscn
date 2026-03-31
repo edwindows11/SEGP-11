@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://chv44r2w6i86d" path="res://assets/Pieces/blend/Meeple2.blend" id="1_vylue"]
 [ext_resource type="Script" uid="uid://bnfbinc8sdors" path="res://scripts/Pieces/meeple.gd" id="2_1ioko"]
-[ext_resource type="Material" uid="uid://p1adtaq8li1b" path="res://assets/Pieces/outline.tres" id="3_4pkg1"]
+[ext_resource type="Material" uid="uid://p1adtaq8li1b" path="res://assets/Pieces/Outline.tres" id="3_4pkg1"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dl854"]
 resource_local_to_scene = true

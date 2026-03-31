@@ -1,5 +1,7 @@
 res://scenes/CardTable.tscn
-res://scripts/CardData.gd
-res://scripts/CardEffects.gd
-res://scripts/GameState.gd
 res://scripts/Card Table/card_table_ui.gd
+res://scenes/MainMenu.tscn
+res://scripts/CardEffects.gd
+res://scripts/CardData.gd
+res://assets/Pieces/Meeple.tscn
+res://scripts/Card Table/card_table.gd

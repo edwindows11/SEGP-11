@@ -234,7 +234,7 @@ static var ALL_CARDS: Dictionary = {
 		]
 	},
 	"yellow_improper_waste": {
-		"name": "Improper Waste Management",
+		"name": "Improper Waste Management102",
 		"color": Color.YELLOW,
 		"sub_effects": [
 			{"op": "move_e", "count": 2, "from": ["ANY"], "to": "HUMAN", "max_dist": -1}
@@ -343,7 +343,7 @@ static var ALL_CARDS: Dictionary = {
 		"name": "Corruption",
 		"color": Color.BLACK,
 		"sub_effects": [
-			#Steal one card
+			{"op": "steal",}
 		]
 	},
 	
