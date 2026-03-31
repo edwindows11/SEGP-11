@@ -144,14 +144,32 @@ func _unhandled_input(event: InputEvent) -> void:
 func _raycast_to_tile_key(screen_pos: Vector2) -> Vector2i:
 	var from = camera.project_ray_origin(screen_pos)
 	var to = from + camera.project_ray_normal(screen_pos) * 1000
+	
 	var space_state = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
 	query.collide_with_areas = true
 	var result = space_state.intersect_ray(query)
-	if result:
-		var tile_root = result.collider.get_parent()
-		if tile_root and tile_root.has_meta("tile_key"):
-			return tile_root.get_meta("tile_key")
+	
+	if not result:
+		return Vector2i(-1, -1)
+
+    # Walk up from the hit collider looking for a tile OR a piece
+	var node = result.collider
+	for _i in range(6):
+		if node == null:
+			break
+		
+		# Direct tile hit
+		if node.has_meta("tile_key"):
+			return node.get_meta("tile_key")
+			
+		# Piece hit — return the tile_key the piece is registered on
+		if node.is_in_group("elephants") or node.is_in_group("meeples"):
+			if node.has_meta("tile_key") or "tile_key" in node:
+				return node.tile_key  # pieces store their tile_key as a var
+				
+		node = node.get_parent()
+		
 	return Vector2i(-1, -1)
 
 func _route_tile_click_to_effects(tile_key: Vector2i) -> void:
