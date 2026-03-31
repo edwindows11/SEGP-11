@@ -99,7 +99,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 		# --- Manual placement / removal mode (dropdown) ---
-		var mode_id = UI.placement_options.get_selected_id()
+		var mode_id = 0
 		if mode_id == 0:
 			pass  # Select mode
 		else:
@@ -174,7 +174,7 @@ func _raycast_to_tile_key(screen_pos: Vector2) -> Vector2i:
 
 	# Walk up from the hit collider looking for a tile OR a piece
 	var node = result.collider
-	for _i in range(6):
+	for _i in range(4): #it is only 2-3 levels deep
 		if node == null:
 			break
 		

@@ -343,7 +343,7 @@ static var ALL_CARDS: Dictionary = {
 		"name": "Corruption",
 		"color": Color.BLACK,
 		"sub_effects": [
-			{"op": "steal",}
+			{"op": "steal"}
 		]
 	},
 	
