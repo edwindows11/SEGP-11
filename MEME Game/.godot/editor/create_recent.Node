@@ -1,5 +1,6 @@
-RichTextLabel
+TextureButton
 TextureRect
+RichTextLabel
 Control
 Camera3D
 Node3D
@@ -12,4 +13,3 @@ Sprite3D
 Panel
 Node2D
 CollisionShape3D
-CharacterBody3D

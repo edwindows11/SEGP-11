@@ -5,3 +5,4 @@ res://scripts/CardEffects.gd
 res://scripts/CardData.gd
 res://assets/Pieces/Meeple.tscn
 res://scripts/Card Table/card_table.gd
+res://scripts/Card.gd

@@ -17,6 +17,7 @@ const PLAYER_DISPLAY_SCENE = preload("res://scenes/PlayerDisplay.tscn")
 @onready var timer_label = $TopBar/TimerLabel
 @onready var turn_timer = $TurnTimer
 @onready var placement_options = $TopBar/PlacementMode
+@onready var play_btn = $PlayCard
 
 var player_role: String = "Unknown"
 var time_left = 60
@@ -24,6 +25,7 @@ var cards_played_this_turn = 0
 var pending_card: Control = null
 var instruction_label: Label = null
 var play_card: bool = true
+var currently_viewing_card: bool = false
 
 # Conservationist Tracker UI
 var cons_tracker_panel: PanelContainer = null
@@ -84,7 +86,8 @@ var steal_popup: PanelContainer = null
 func _ready():
 	# NOTE: spawn_cards() and spawn_players() are called from card_table.gd
 	# after GameState.player_roles and the deck are initialized.
-
+	play_btn.disabled = true
+	play_btn.pressed.connect(_on_play_btn_pressed)
 	if user_role_label:
 		user_role_label.text = "My Role: " + player_role
 
@@ -683,28 +686,25 @@ func _on_window_resize() -> void:
 
 func reposition_cards() -> void:
 	var screen_size = get_viewport_rect().size
-
-	# Exclude nodes already queued for deletion (played card may still be pending free)
 	var cards = []
 	for c in cards_container.get_children():
 		if not c.is_queued_for_deletion():
 			cards.append(c)
 
 	var total_current_cards = cards.size()
-
 	if total_current_cards == 0:
 		return
 
-	var start_x = (screen_size.x - (float(total_current_cards) - 1) * CARD_SPACING) / 2.0
+	var start_x = (screen_size.x - (total_current_cards - 1) * CARD_SPACING) / 2.0
 
 	for i in range(total_current_cards):
 		var card = cards[i]
 		if card == pending_card:
 			continue
 
-		var card_width = card.custom_minimum_size.x
-		var x_pos = start_x + (i * CARD_SPACING) - (card_width / 2.0)
-		var y_pos = screen_size.y - card.custom_minimum_size.y - BOTTOM_MARGIN
+		var card_size = card.get_size()
+		var x_pos = start_x + (i * CARD_SPACING) - (card_size.x / 2.0)
+		var y_pos = screen_size.y - card_size.y - BOTTOM_MARGIN
 
 		card.position = Vector2(x_pos, y_pos)
 		card.original_position = card.position
@@ -750,36 +750,77 @@ func spawn_cards() -> void:
 
 	call_deferred("reposition_cards")
 
+func spawn_stolen_card() -> void:
+	# Count how many cards are already displayed (excluding the pending/played card)
+	var displayed_ids: Array = []
+	for child in cards_container.get_children():
+		if not child.is_queued_for_deletion() and child != pending_card:
+			displayed_ids.append(child.card_id)
+
+	# Find which card in the hand isn't displayed yet
+	var hand = GameState.player_hands[GameState.current_player_index]
+	for card_id in hand:
+		if not (card_id in displayed_ids):
+			var card = CARD_SCENE.instantiate()
+			cards_container.add_child(card)
+			card.set_card_data(card_id)
+			card.card_selected.connect(_on_card_selected)
+			break
+
+	call_deferred("reposition_cards")
+
 func remove_played_card_and_draw_replacement() -> void:
 	if pending_card:
 		pending_card.queue_free()
 		pending_card = null
 
-	# Draw a replacement card from the deck
-	if GameState.player_hands[GameState.current_player_index].size() < 5:
+	# Draw a replacement card if hand size is below 5
+	if GameState.player_hands[GameState.current_player_index].size() < TOTAL_CARDS:
 		var new_card_id = GameState.draw_card(GameState.current_player_index)
 		if new_card_id != "":
 			var card = CARD_SCENE.instantiate()
 			cards_container.add_child(card)
 			card.set_card_data(new_card_id)
 			card.card_selected.connect(_on_card_selected)
-			call_deferred("reposition_cards")
+
+	call_deferred("reposition_cards")
 
 func _on_card_selected(selected_card) -> void:
 	if not play_card:
 		return
+	
 	if cards_played_this_turn >= 1:
-		print("Cannot play more than 1 card per turn!")
+		if pending_card:
+			pass
 		return
+		
+	if currently_viewing_card == true:
+		var card_to_return = pending_card
+		card_to_return.is_selected = false
+		card_to_return.z_index = 0
+		pending_card = null
+		end_turn_button.disabled = false
+		var old_btn = get_node_or_null("_play_card_btn")
+		if old_btn:
+			old_btn.queue_free()
+		for c in cards_container.get_children():
+			c.z_index = 0
+		var tween_back = create_tween()
+		tween_back.set_parallel(true)
+		tween_back.set_ease(Tween.EASE_OUT)
+		tween_back.set_trans(Tween.TRANS_BACK)
+		tween_back.tween_property(card_to_return, "position", card_to_return.original_position, 0.5)
+		tween_back.tween_property(card_to_return, "scale", Vector2(1.0, 1.0), 0.5)
+	currently_viewing_card = true
+	
 
-	# Verify card is still in this player's hand
 	if not (selected_card.card_id in GameState.player_hands[GameState.current_player_index]):
 		return
 
-	cards_played_this_turn += 1
+	# Snapshot position before tween moves it
+	selected_card.original_position = selected_card.position
 	pending_card = selected_card
 
-	# Move selected card to center
 	var screen_size = get_viewport_rect().size
 	var target_pos = (screen_size - selected_card.custom_minimum_size) / 2.0
 
@@ -790,14 +831,23 @@ func _on_card_selected(selected_card) -> void:
 	tween.set_ease(Tween.EASE_OUT)
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.tween_property(selected_card, "position", target_pos, 0.5)
-	tween.tween_property(selected_card, "scale", Vector2(1.5, 1.5), 0.5)
+	tween.tween_property(selected_card, "scale", Vector2(3, 3), 0.5)
 
-	# Disable end turn until effects resolve
 	end_turn_button.disabled = true
-
-	# Trigger effect execution in card_table.gd
-	card_activated.emit(selected_card.card_id)
-
+	
+	play_btn.disabled = false
+	
+func _on_play_btn_pressed():
+	if play_btn.disabled:
+		return
+		
+	if pending_card:
+		play_btn.disabled = true
+		var card_id = pending_card.card_id   
+		pending_card.queue_free()
+		pending_card = null
+		cards_played_this_turn += 1
+		card_activated.emit(card_id)
 
 # --- Turn management ---
 
@@ -808,8 +858,6 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool) ->
 	if skip_label:
 		skip_label.visible = is_skipped
 
-	if user_role_label:
-		user_role_label.text = "Player " + str(player_index + 1) + " (" + role_name + ")"
 	time_left = 60
 	if timer_label:
 		timer_label.text = str(time_left)
@@ -833,7 +881,6 @@ func _build_steal_popup() -> void:
 	steal_popup = PanelContainer.new()
 	steal_popup.name = "_steal_popup"
 	steal_popup.visible = false
-	steal_popup.z_index = 100
 	steal_popup.set_anchors_preset(Control.PRESET_CENTER)
 	steal_popup.offset_left  = -200
 	steal_popup.offset_right =  200

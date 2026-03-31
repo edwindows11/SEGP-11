@@ -249,7 +249,7 @@ func _on_end_turn_button_pressed() -> void:
 		GameState.discard_card(GameState.current_player_index, UI.pending_card.card_id)
 		UI.remove_played_card_and_draw_replacement()
 	GameState.advance_turn()
-
+	UI.currently_viewing_card = false
 
 # --- Initial board setup ---
 
