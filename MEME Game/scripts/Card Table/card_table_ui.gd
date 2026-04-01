@@ -794,6 +794,8 @@ func _on_card_selected(selected_card) -> void:
 		return
 		
 	if currently_viewing_card == true && pending_card != null:
+		if pending_card.background.color == Color.BLACK:
+			return
 		var card_to_return = pending_card
 		card_to_return.is_selected = false
 		card_to_return.z_index = 0
@@ -878,10 +880,12 @@ func hide_instruction() -> void:
 		instruction_label.get_parent().visible = false
 
 func show_steal_popup(card_effects_node: Node) -> void:
+	pending_card.queue_free()
+	pending_card = null
 	var steal_node = get_node_or_null("Steal")
 		
-	if not steal_popup:
-		return
+	if not steal_node:
+		print("Steal popup not working")
 	
 	var player_buttons = [
 		steal_node.get_node("Player1"),
@@ -890,11 +894,6 @@ func show_steal_popup(card_effects_node: Node) -> void:
 		steal_node.get_node("Player4"),
 	]
 
-	for btn in player_buttons:
-		for sig in btn.get_signal_connection_list("pressed"):
-			btn.disconnect("pressed", sig["callable"])
-		btn.visible = false
-	
 	var thief := GameState.current_player_index
 	var btn_index := 0
 
@@ -908,25 +907,25 @@ func show_steal_popup(card_effects_node: Node) -> void:
 		var role = GameState.player_roles[i] if i < GameState.player_roles.size() else "Unknown"
 
 		var btn = player_buttons[btn_index]
-		btn.visible = true
+		steal_node.visible = true
 		btn.disabled = hand_size == 0
+		btn_index += 1
 
   
 		var label = btn.get_node("Label")
-		label.text = "Player %d – %s\n(%d card%s)" % [i + 1, role, hand_size, "s" if hand_size != 1 else ""]
+		label.text = "Player %d (%d card%s)" % [i + 1, hand_size, "s" if hand_size != 1 else ""]
 
 		var target_index := i
 		btn.pressed.connect(func():
-			hide_steal_popup()
+			hide_steal_popup(steal_node)
 			card_effects_node.confirm_steal_target(target_index)
 		)
 		
-		btn_index += 1
-		steal_popup.visible = true
+		steal_node.visible = true
 
-func hide_steal_popup() -> void:
-	if steal_popup:
-		steal_popup.visible = false
+func hide_steal_popup(steal_node) -> void:
+	if steal_node:
+		steal_node.visible = false
 
 func _trigger_win(player_index: int, role_name: String) -> void:
 	if is_game_over:

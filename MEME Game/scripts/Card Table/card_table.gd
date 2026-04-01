@@ -48,9 +48,9 @@ func _ready() -> void:
 	card_effects.effects_complete.connect(_on_card_effects_complete)
 	card_effects.request_tile_selection.connect(_on_request_tile_selection)
 	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
-	card_effects.connect("request_steal_target", _on_request_steal_target)
-	card_effects.connect("steal_complete", func(): UI.reposition_cards())
-
+	card_effects.connect("request_steal_popup", _on_request_steal_popup)
+	card_effects.connect("steal_complete", _on_steal_complete)
+	
 	# --- Wire UI signals ---
 	UI.card_activated.connect(_on_card_activated)
 	UI.end_turn_requested.connect(_on_end_turn_button_pressed)
@@ -226,7 +226,7 @@ func _on_clear_tile_selection() -> void:
 	UI.hide_instruction()
 	$Board.clear_all_highlights()
 
-func _on_request_steal_target() -> void:
+func _on_request_steal_popup() -> void:
 	UI.show_steal_popup(card_effects)
 
 
@@ -338,3 +338,7 @@ func _on_play_reduce_total_elephant() -> void:
 func _on_play_reduce_total_meeple() -> void:
 	totalMeeple -= 1
 	print("meeple total: %d" % totalMeeple)
+	
+func _on_steal_complete() -> void:
+	UI.reposition_cards()
+	UI.spawn_cards()   # re-renders the current player's hand so the stolen card appears

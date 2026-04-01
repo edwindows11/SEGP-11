@@ -42,7 +42,7 @@ var _pending_convert_any_key: Vector2i = Vector2i(-1, -1)
 signal effects_complete()
 signal request_tile_selection(valid_keys: Array, instruction: String)
 signal clear_tile_selection()
-signal request_steal_target()
+signal request_steal_popup()
 signal steal_complete()
 
 var lastCard = [null, null, null, null]
@@ -202,6 +202,7 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 func _do_steal() -> void:
 	# Check there is at least one other player who has cards to steal
 	var thief := GameState.current_player_index
+	GameState.discard_card(thief, "black_corruption")
 	var has_valid_target := false
 	for i in range(GameState.player_count):
 		if i != thief and GameState.player_hands[i].size() > 0:
@@ -216,7 +217,7 @@ func _do_steal() -> void:
 
 	# Pause here — UI will call confirm_steal_target() once the player picks someone
 	state = State.WAITING_CHOICE
-	emit_signal("request_steal_target")
+	emit_signal("request_steal_popup")
 
 ## Called by card_table_ui.gd when the player clicks a name button in the steal popup.
 func confirm_steal_target(target_player_index: int) -> void:
@@ -256,7 +257,6 @@ func _do_return_card() -> void:
 func _do_skip() -> void:
 	var next_index = (GameState.current_player_index + 1) % GameState.player_count
 	var SkipText = get_node("/root/CardTable/CanvasLayer/Control/Skipped")
-	SkipText.text = "[center]Player " + str(next_index + 1) + " Turn Skipped![/center]"
 	GameState.skip_next_turn = true
 	_log("Skip Player "+ str(next_index + 1) + "'s Turn", false)
 	effect_index += 1
