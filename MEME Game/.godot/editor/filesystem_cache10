@@ -1,5 +1,5 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1775032748
+::res://::1775041975
 README.md::TextFile::-1::1773367942::0::1::::<><><>0<>0<><>::
 Updates.md::TextFile::-1::1773370009::0::1::::<><><>0<>0<><>::
 ::res://assets/::1775032705
@@ -67,7 +67,7 @@ Elephant pointer.png::CompressedTexture2D::2086805527150362428::1774979468::1774
 Player container hover.png::CompressedTexture2D::4603938777832069999::1774980492::1774980492::1::::<><><>0<>0<>de66b498ae3259410a2877d5278cd3e2<>res://.godot/imported/Player container hover.png-ee605f9ee2266c60f57438ee9db2fa05.ctex::
 Player container.png::CompressedTexture2D::8497748209750203033::1774979468::1774979504::1::::<><><>0<>0<>878b11d95bd664218573ca37bd59ecd4<>res://.godot/imported/Player container.png-7f6277840189ebd795915f617a06398c.ctex::
 Steal container.png::CompressedTexture2D::3721059629418763017::1774979468::1774979494::1::::<><><>0<>0<>07e54e46a77e527ef84d3ae23c4f0beb<>res://.godot/imported/Steal container.png-3909072b7d19ab7bd1c56fbbd206974b.ctex::
-::res://assets/Font/::1775032714
+::res://assets/Font/::1775032749
 IntroHeadR-Base.otf::FontFile::4799054761426206219::1775032714::1775032749::1::::<><><>0<>0<>efa89c27b71afaf979d59942e94bad9c<>res://.godot/imported/IntroHeadR-Base.otf-494805758e191d6cc568dc388a817c82.fontdata::
 IntroRustG-Base2Line.otf::FontFile::8756107306885364450::1775032714::1775032749::1::::<><><>0<>0<>79a78015000b8da33842713192a30514<>res://.godot/imported/IntroRustG-Base2Line.otf-84b0b2fc41c7a81c390463470c4d7a88.fontdata::
 IntroScriptR-H2Base.otf::FontFile::1052930605542573473::1775032714::1775032749::1::::<><><>0<>0<>24a999407ded279a653abeb2a149821f<>res://.godot/imported/IntroScriptR-H2Base.otf-e48ccef969d8ac421d9d5037d72f5c3e.fontdata::
@@ -97,10 +97,10 @@ HumanDominatedTile.glb::PackedScene::1675755418352003013::1773367942::1773890196
 HumanDominatedTile_1.png::CompressedTexture2D::5927078993202749137::1773367942::1774765844::1::::<><><>0<>0<>10c763c594b58bb0fd0d1b6cf3124d5f<>res://.godot/imported/HumanDominatedTile_1.png-f22e5c3a31fa4cc3f6dfb8ea70ac8a83.s3tc.ctex::
 PlantationTile.glb::PackedScene::8619284372743211699::1773367942::1773890197::1::::<><><>0<>0<>d59e1d6636171e2a9b05da42518c3d2f<>res://.godot/imported/PlantationTile.glb-b2bbc1a335dc2afa2dd050aec7f3e382.scn::uid://wm2eilf5yedk::::res://assets/Tiles/PlantationTile_2.png
 PlantationTile_2.png::CompressedTexture2D::1570574032513608832::1773367942::1773890191::1::::<><><>0<>0<>6b643d7a0914a7aabda7816204886c46<>res://.godot/imported/PlantationTile_2.png-5e9624a3443d0d05a5af0e3f50f04d47.s3tc.ctex::
-::res://scenes/::1775032260
+::res://scenes/::1775032812
 ActionLog.tscn::PackedScene::-1::1773367942::0::1::::<><><>0<>0<><>::res://scripts/ActionLog.gd
 Card.tscn::PackedScene::3774748604761572987::1774317131::0::1::::<><><>0<>0<><>::uid://bkonqrcid8iyp::::res://scripts/Card.gd
-CardTable.tscn::PackedScene::6986705891419701701::1775032260::0::1::::<><><>0<>0<><>::uid://b5fykedev53t2::::res://scripts/Card Table/card_table.gd<>uid://oti8gk6h0m1r::::res://scripts/Card Table/card_table_ui.gd<>res://scenes/ActionLog.tscn<>uid://cytbbj4ddsi50::::res://scripts/Card Table/card_functions.gd<>uid://dktt2i1ceg3ah::::res://scripts/Board.gd<>uid://btarkqtbmpr2x::::res://assets/CardTable/Steal/Steal container.png<>uid://cgqxld4isd01::::res://assets/CardTable/Skipped.png<>uid://dtcmw3h1jhbnt::::res://assets/CardTable/Steal/Player container.png<>uid://dh6r7eebvovxe::::res://scripts/CameraControls.gd<>uid://b6ugg1cs8clv0::::res://assets/CardTable/Steal/Player container hover.png<>uid://c1aemo1creo1i::::res://assets/CardTable/PLAY (1).png<>res://scenes/PauseMenu.tscn<>uid://s6nbqxu400wx::::res://assets/CardTable/PLAY (1) Hover.png<>uid://ckhos8y525rsj::::res://assets/CardTable/PLAY Disable.png
+CardTable.tscn::PackedScene::6986705891419701701::1775032812::0::1::::<><><>0<>0<><>::uid://b5fykedev53t2::::res://scripts/Card Table/card_table.gd<>uid://oti8gk6h0m1r::::res://scripts/Card Table/card_table_ui.gd<>res://scenes/ActionLog.tscn<>uid://cytbbj4ddsi50::::res://scripts/Card Table/card_functions.gd<>uid://dktt2i1ceg3ah::::res://scripts/Board.gd<>uid://btarkqtbmpr2x::::res://assets/CardTable/Steal/Steal container.png<>uid://cgqxld4isd01::::res://assets/CardTable/Skipped.png<>uid://dtcmw3h1jhbnt::::res://assets/CardTable/Steal/Player container.png<>uid://dh6r7eebvovxe::::res://scripts/CameraControls.gd<>uid://b6ugg1cs8clv0::::res://assets/CardTable/Steal/Player container hover.png<>uid://c1aemo1creo1i::::res://assets/CardTable/PLAY (1).png<>res://scenes/PauseMenu.tscn<>uid://camxy31gjo2vv::::res://assets/Font/IntroHeadR-Base.otf<>uid://s6nbqxu400wx::::res://assets/CardTable/PLAY (1) Hover.png<>uid://ckhos8y525rsj::::res://assets/CardTable/PLAY Disable.png
 main.tscn::PackedScene::3291442695496918881::1765543160::0::1::::<><><>0<>0<><>::uid://c53lmlm3k7fop::::res://scripts/grid_manager.gd<>uid://c8q4j5k6l7m8::::res://scenes/elephant.tscn
 MainMenu.tscn::PackedScene::1448884684200451426::1774935278::0::1::::<><><>0<>0<><>::uid://doxiianmbebdg::::res://assets/MainMenu/background.png<>uid://2re3gb8w87k7::::res://assets/MainMenu/Title.png<>uid://bumw8dy524x60::::res://assets/MainMenu/buttons/Play.png<>uid://86wvpud0j1rp::::res://assets/Pieces/Elephant2D.png<>uid://dm3nxownjha4j::::res://assets/Pieces/Meeple2D.png<>uid://dw47u1s6mrtc5::::res://assets/MainMenu/buttons/Play_Hover.png<>uid://crer7at5wljon::::res://scripts/MainMenu/Buttons/start_button.gd<>uid://tvx8qyhhbhon::::res://assets/MainMenu/buttons/HowToPlay.png<>uid://8ag7viaas37a::::res://assets/MainMenu/buttons/Settings.png<>uid://bogejsg83ufws::::res://assets/MainMenu/buttons/Settings_Hover.png<>uid://d2ipi4thqvaer::::res://assets/MainMenu/buttons/HowToPlay_Hover.png<>uid://crufckq7qphc6::::res://scripts/MainMenu/Buttons/settings_button.gd<>uid://cnhwglppb2ux5::::res://scripts/MainMenu/Buttons/how_to_play_button.gd<>uid://cobya6p65w4jm::::res://assets/MainMenu/MEME logo.png
 PauseMenu.tscn::PackedScene::-1::1773367942::0::1::::<><><>0<>0<><>::res://scripts/PauseMenu.gd
@@ -126,10 +126,10 @@ ScenarioSelect.gd::GDScript::696421032073165305::1774762768::0::1::::<>Control<>
 ::res://scripts/Actions/::1774429603
 camera.gd::GDScript::9140071614531063616::1774429603::0::1::::<>CharacterBody3D<><>0<>0<><>::
 global.gd::GDScript::3578250104377179340::1774429603::0::1::::Enums<>Node<><>0<>0<><>::
-::res://scripts/Card Table/::1775032252
+::res://scripts/Card Table/::1775033093
 card_functions.gd::GDScript::6496659812463298837::1774429603::0::1::::<>Node3D<><>0<>0<><>::
 card_table.gd::GDScript::4503883162308646289::1775032252::0::1::::<>Node3D<><>0<>0<><>::
-card_table_ui.gd::GDScript::1022411987407577293::1775030634::0::1::::<>Control<><>0<>0<><>::
+card_table_ui.gd::GDScript::1022411987407577293::1775033093::0::1::::<>Control<><>0<>0<><>::
 ::res://scripts/MainMenu/::1772647032
 ::res://scripts/MainMenu/Buttons/::1773370009
 how_to_play_button.gd::GDScript::5701094069176203780::1773124674::0::1::::<>Button<><>0<>0<><>::

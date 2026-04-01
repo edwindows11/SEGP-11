@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://c6soa4g4ojqjl"]
+[gd_scene load_steps=19 format=3 uid="uid://c6soa4g4ojqjl"]
 
 [ext_resource type="Script" uid="uid://b5fykedev53t2" path="res://scripts/Card Table/card_table.gd" id="1_fbsjb"]
 [ext_resource type="Script" uid="uid://oti8gk6h0m1r" path="res://scripts/Card Table/card_table_ui.gd" id="1_script"]
@@ -14,7 +14,6 @@
 [ext_resource type="PackedScene" path="res://scenes/PauseMenu.tscn" id="6_pause"]
 [ext_resource type="FontFile" uid="uid://camxy31gjo2vv" path="res://assets/Font/IntroHeadR-Base.otf" id="7_06q53"]
 [ext_resource type="Texture2D" uid="uid://s6nbqxu400wx" path="res://assets/CardTable/PLAY (1) Hover.png" id="7_oadbx"]
-[ext_resource type="Texture2D" uid="uid://ckhos8y525rsj" path="res://assets/CardTable/PLAY Disable.png" id="8_i6iax"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fbsjb"]
 sky_top_color = Color(0.29079154, 0.43925896, 0.73398376, 1)
@@ -286,7 +285,7 @@ disabled = true
 texture_normal = ExtResource("6_hreq3")
 texture_pressed = ExtResource("6_hreq3")
 texture_hover = ExtResource("7_oadbx")
-texture_disabled = ExtResource("8_i6iax")
+texture_disabled = ExtResource("6_hreq3")
 texture_focused = ExtResource("6_hreq3")
 ignore_texture_size = true
 stretch_mode = 4
