@@ -793,7 +793,9 @@ func _on_card_selected(selected_card) -> void:
 			pass
 		return
 		
-	if currently_viewing_card == true && pending_card != null && selected_card.card_color != Color.BLACK:
+	if currently_viewing_card == true && pending_card != null:
+		if pending_card.background.color == Color.BLACK:
+			return
 		var card_to_return = pending_card
 		card_to_return.is_selected = false
 		card_to_return.z_index = 0
@@ -886,8 +888,7 @@ func show_steal_popup(card_effects_node: Node) -> void:
 	var player_buttons = [
 		steal_node.get_node("Player1"),
 		steal_node.get_node("Player2"),
-		steal_node.get_node("Player3"),
-		steal_node.get_node("Player4"),
+		steal_node.get_node("Player3")
 	]
 
 	for btn in player_buttons:
@@ -909,10 +910,11 @@ func show_steal_popup(card_effects_node: Node) -> void:
 		var btn = player_buttons[btn_index]
 		steal_node.visible = true
 		btn.disabled = hand_size == 0
+		btn_index +=1
 
   
 		var label = btn.get_node("Label")
-		label.text = "Player %d – %s\n(%d card%s)" % [i + 1, role, hand_size, "s" if hand_size != 1 else ""]
+		label.text = "Player %d (%d card%s)" % [i + 1, hand_size, "s" if hand_size != 1 else ""]
 
 		var target_index := i
 		btn.pressed.connect(func():
