@@ -1,2 +1,10 @@
 res://scenes/RoleSelection.tscn
 res://scenes/role_selection.gd
+res://scenes/MainMenu.tscn
+res://new_atlas_texture.tres
+res://scenes/texture_rect.gd
+res://scenes/htp.gd
+res://scenes/button.gd
+res://scripts/MainMenu/Buttons/start_button.gd
+res://scripts/MainMenu/Buttons/how_to_play_button.gd
+res://scenes/main_menu.gd

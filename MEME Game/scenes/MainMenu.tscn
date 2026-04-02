@@ -1,5 +1,6 @@
-[gd_scene load_steps=27 format=3 uid="uid://uv36io5ofeec"]
+[gd_scene load_steps=34 format=3 uid="uid://uv36io5ofeec"]
 
+[ext_resource type="Script" uid="uid://cuc7ry6evjela" path="res://scenes/main_menu.gd" id="1_viowm"]
 [ext_resource type="Texture2D" uid="uid://doxiianmbebdg" path="res://assets/MainMenu/background.png" id="2_0ykhv"]
 [ext_resource type="Texture2D" uid="uid://2re3gb8w87k7" path="res://assets/MainMenu/Title.png" id="2_2wh52"]
 [ext_resource type="Texture2D" uid="uid://bumw8dy524x60" path="res://assets/MainMenu/buttons/Play.png" id="3_2wh52"]
@@ -14,6 +15,12 @@
 [ext_resource type="Script" uid="uid://crufckq7qphc6" path="res://scripts/MainMenu/Buttons/settings_button.gd" id="8_2nypq"]
 [ext_resource type="Script" uid="uid://cnhwglppb2ux5" path="res://scripts/MainMenu/Buttons/how_to_play_button.gd" id="11_bky6r"]
 [ext_resource type="Texture2D" uid="uid://cobya6p65w4jm" path="res://assets/MainMenu/MEME logo.png" id="14_5faoh"]
+[ext_resource type="Texture2D" uid="uid://b487wk7vtqo4y" path="res://assets/HTPCards/12.png" id="15_hubol"]
+[ext_resource type="Texture2D" uid="uid://bryahv07t0eoa" path="res://assets/HTPCards/4.png" id="16_7shrw"]
+[ext_resource type="Texture2D" uid="uid://qrasi5axe122" path="res://assets/HTPCards/6.png" id="17_viowm"]
+[ext_resource type="Texture2D" uid="uid://csdyafakvah0f" path="res://assets/HTPCards/14.png" id="18_1n6yq"]
+[ext_resource type="Texture2D" uid="uid://cvh4uwkwfhy6f" path="res://assets/HTPCards/8.png" id="19_yovvs"]
+[ext_resource type="Texture2D" uid="uid://ctuo7ansnxujy" path="res://assets/HTPCards/10.png" id="20_2axsc"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_l72w3"]
 texture = ExtResource("3_2wh52")
@@ -67,6 +74,7 @@ grow_vertical = 2
 pivot_offset = Vector2(303, 283)
 size_flags_horizontal = 3
 size_flags_vertical = 3
+script = ExtResource("1_viowm")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 clip_contents = true
@@ -215,3 +223,74 @@ offset_bottom = -0.23199463
 grow_horizontal = 0
 texture = ExtResource("14_5faoh")
 expand_mode = 1
+
+[node name="HowToPlay" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="DimBG" type="ColorRect" parent="HowToPlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -60.0
+offset_top = -115.0
+offset_right = 1906.0
+offset_bottom = 1107.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.47843137)
+
+[node name="GridContainer" type="GridContainer" parent="HowToPlay"]
+layout_mode = 0
+offset_top = 122.0
+offset_right = 3182.0
+offset_bottom = 1642.0
+rotation = 6.2831855
+scale = Vector2(0.6, 0.6)
+columns = 3
+
+[node name="Button" type="Button" parent="HowToPlay/GridContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+icon = ExtResource("15_hubol")
+
+[node name="Button2" type="Button" parent="HowToPlay/GridContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+icon = ExtResource("16_7shrw")
+
+[node name="Button3" type="Button" parent="HowToPlay/GridContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+icon = ExtResource("17_viowm")
+
+[node name="Button4" type="Button" parent="HowToPlay/GridContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+icon = ExtResource("18_1n6yq")
+
+[node name="Button5" type="Button" parent="HowToPlay/GridContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+icon = ExtResource("19_yovvs")
+
+[node name="Button6" type="Button" parent="HowToPlay/GridContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+icon = ExtResource("20_2axsc")
+
+[connection signal="pressed" from="MarginContainer/Background/HowToPlayButton" to="MarginContainer/Background/StartButton" method="_on_how_to_play_button_pressed"]
+[connection signal="mouse_entered" from="HowToPlay/GridContainer/Button" to="MarginContainer/Background/StartButton" method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="HowToPlay/GridContainer/Button" to="MarginContainer/Background/StartButton" method="_on_button_mouse_exited"]
+[connection signal="mouse_entered" from="HowToPlay/GridContainer/Button2" to="MarginContainer/Background/StartButton" method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="HowToPlay/GridContainer/Button2" to="MarginContainer/Background/StartButton" method="_on_button_mouse_exited"]
+[connection signal="mouse_entered" from="HowToPlay/GridContainer/Button3" to="MarginContainer/Background/StartButton" method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="HowToPlay/GridContainer/Button3" to="MarginContainer/Background/StartButton" method="_on_button_mouse_exited"]
+[connection signal="mouse_entered" from="HowToPlay/GridContainer/Button4" to="MarginContainer/Background/StartButton" method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="HowToPlay/GridContainer/Button4" to="MarginContainer/Background/StartButton" method="_on_button_mouse_exited"]
+[connection signal="mouse_entered" from="HowToPlay/GridContainer/Button5" to="MarginContainer/Background/StartButton" method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="HowToPlay/GridContainer/Button5" to="MarginContainer/Background/StartButton" method="_on_button_mouse_exited"]
+[connection signal="mouse_entered" from="HowToPlay/GridContainer/Button6" to="MarginContainer/Background/StartButton" method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="HowToPlay/GridContainer/Button6" to="MarginContainer/Background/StartButton" method="_on_button_mouse_exited"]

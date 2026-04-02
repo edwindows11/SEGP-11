@@ -1,14 +1,14 @@
 Button
+TextureRect
+GridContainer
+HScrollBar
 RichTextLabel
 Label
 NavigationObstacle2D
 Panel
 ColorRect
 Control
-TextureRect
 TextureButton
 HBoxContainer
-GridContainer
 PopupPanel
 MarginContainer
-PanelContainer

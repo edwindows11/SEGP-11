@@ -1,9 +1,17 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1773645463
-new_atlas_texture.tres::AtlasTexture::3244318233243759544::1773110572::0::1::::<><><>0<>0<><>::uid://dk02wyqloxymv::::res://assets/ui/freeversion.png
+::res://::1774706525
+new_atlas_texture.tres::AtlasTexture::3244318233243759544::1774373100::0::1::::<><><>0<>0<><>::uid://dk02wyqloxymv::::res://assets/ui/freeversion.png
 README.md::TextFile::-1::1770270282::0::1::::<><><>0<>0<><>::
-::res://assets/::1773108655
+::res://assets/::1774708644
 Ahkio-Thin.otf::FontFile::5651081650917504040::1773108650::1773108650::1::::<><><>0<>0<>c5cd121139d6db9d570691e005ca1579<>res://.godot/imported/Ahkio-Thin.otf-73240750a4104a0b060d94bee81459be.fontdata::
+::res://assets/HTPCards/::1774708655
+4.png::CompressedTexture2D::3629189735285195556::1774708655::1774708656::1::::<><><>0<>0<>9068c675489a7abb7963d2781ce7e537<>res://.godot/imported/4.png-6d6fb73beefce6f3d9ec86f33e8e141a.ctex::
+6.png::CompressedTexture2D::1158148530879680041::1774708655::1774708655::1::::<><><>0<>0<>ce981611dea64a7b0fe883f6aa1b4516<>res://.godot/imported/6.png-623f16ebbf831f90c71aadd4287ad49b.ctex::
+8.png::CompressedTexture2D::6263055408699938251::1774708655::1774708655::1::::<><><>0<>0<>7981f3d0c5d35e77ff31eaa9425d2781<>res://.godot/imported/8.png-2aeb12d3e974fc419ac385ea46d0dbdc.ctex::
+10.png::CompressedTexture2D::6148624155812294946::1774708655::1774708655::1::::<><><>0<>0<>dcbcd55bb97b4018b9cb3e1e7fc0949f<>res://.godot/imported/10.png-9566a5c75ce0e8c31d6886ef175b8853.ctex::
+12.png::CompressedTexture2D::4492004421961870458::1774708655::1774708655::1::::<><><>0<>0<>975d48b439843e8e9dac114cccc796f9<>res://.godot/imported/12.png-b6ead6dc5c13cea629d04b672bf6f557.ctex::
+14.png::CompressedTexture2D::6043891157058536451::1774708655::1774708656::1::::<><><>0<>0<>5e734557b3bdf168d3a17a5c7bfa0d1d<>res://.godot/imported/14.png-a4eb72bb1fc62cb0e380ccc1c7c56433.ctex::
+16.png::CompressedTexture2D::498124708621770644::1774708655::1774708655::1::::<><><>0<>0<>876d35905d552323c38ffd2f939c5ac5<>res://.godot/imported/16.png-35ecfab847779134d91b05a57d0823c9.ctex::
 ::res://assets/MainMenu/::1770270471
 background.png::CompressedTexture2D::8189886593277679584::1770270282::1770270282::1::::<><><>0<>0<>3fa6725b8edce7968e948ce4f9297baf<>res://.godot/imported/background.png-02aa4f8d08fe9d58d5222d72e208b249.ctex::
 MEME logo.png::CompressedTexture2D::5759008416744517858::1770270282::1770270282::1::::<><><>0<>0<>76f7ceebcb78f0400df8a7e70a3157d6<>res://.godot/imported/MEME logo.png-689333c34e353a71f963c93a43642c6f.ctex::
@@ -46,7 +54,7 @@ PlantationTile_2.png::CompressedTexture2D::1570574032513608832::1770270282::1770
 ::res://assets/ui/::1771071071
 Board Background.tres::AtlasTexture::4803947991266710902::1771071066::0::1::::<><><>0<>0<><>::uid://dk02wyqloxymv::::res://assets/ui/freeversion.png
 freeversion.png::CompressedTexture2D::7914439863378428293::1758178758::1771070751::1::::<><><>0<>0<>20b4372ef6feaba83af0e5f6b6a27550<>res://.godot/imported/freeversion.png-4f223c34b98c378a9cc005c5c52c53e3.ctex::
-::res://scenes/::1773603869
+::res://scenes/::1774706531
 ActionLog.tscn::PackedScene::-1::1770270282::0::1::::<><><>0<>0<><>::res://scripts/ActionLog.gd
 button_2.gd::GDScript::4010264190631416358::1770875292::0::1::::<>Button<><>0<>0<><>::
 Card.tscn::PackedScene::-1::1770270282::0::1::::<><><>0<>0<><>::res://scripts/Card.gd
@@ -57,12 +65,12 @@ environmental_consultant.gd::GDScript::7369539109332503342::1773114007::0::1::::
 government.gd::GDScript::1190565256127389709::1773114007::0::1::::<>TextureButton<><>0<>0<><>::
 land_developer.gd::GDScript::8091308855453186825::1773114007::0::1::::<>TextureButton<><>0<>0<><>::
 main.tscn::PackedScene::3291442695496918881::1770270282::0::1::::<><><>0<>0<><>::uid://c53lmlm3k7fop::::res://scripts/grid_manager.gd<>uid://c8q4j5k6l7m8::::res://scenes/elephant.tscn
-MainMenu.tscn::PackedScene::1448884684200451426::1772629700::0::1::::<><><>0<>0<><>::uid://doxiianmbebdg::::res://assets/MainMenu/background.png<>uid://2re3gb8w87k7::::res://assets/MainMenu/Title.png<>uid://bumw8dy524x60::::res://assets/MainMenu/buttons/Play.png<>uid://86wvpud0j1rp::::res://assets/Pieces/Elephant2D.png<>uid://dm3nxownjha4j::::res://assets/Pieces/Meeple2D.png<>uid://dw47u1s6mrtc5::::res://assets/MainMenu/buttons/Play_Hover.png<>uid://crer7at5wljon::::res://scripts/MainMenu/Buttons/start_button.gd<>uid://tvx8qyhhbhon::::res://assets/MainMenu/buttons/HowToPlay.png<>uid://8ag7viaas37a::::res://assets/MainMenu/buttons/Settings.png<>uid://bogejsg83ufws::::res://assets/MainMenu/buttons/Settings_Hover.png<>uid://d2ipi4thqvaer::::res://assets/MainMenu/buttons/HowToPlay_Hover.png<>uid://crufckq7qphc6::::res://scripts/MainMenu/Buttons/settings_button.gd<>uid://cnhwglppb2ux5::::res://scripts/MainMenu/Buttons/how_to_play_button.gd<>uid://cobya6p65w4jm::::res://assets/MainMenu/MEME logo.png
+MainMenu.tscn::PackedScene::1448884684200451426::1774372882::0::1::::<><><>0<>0<><>::uid://doxiianmbebdg::::res://assets/MainMenu/background.png<>uid://2re3gb8w87k7::::res://assets/MainMenu/Title.png<>uid://bumw8dy524x60::::res://assets/MainMenu/buttons/Play.png<>uid://86wvpud0j1rp::::res://assets/Pieces/Elephant2D.png<>uid://dm3nxownjha4j::::res://assets/Pieces/Meeple2D.png<>uid://dw47u1s6mrtc5::::res://assets/MainMenu/buttons/Play_Hover.png<>uid://crer7at5wljon::::res://scripts/MainMenu/Buttons/start_button.gd<>uid://tvx8qyhhbhon::::res://assets/MainMenu/buttons/HowToPlay.png<>uid://8ag7viaas37a::::res://assets/MainMenu/buttons/Settings.png<>uid://bogejsg83ufws::::res://assets/MainMenu/buttons/Settings_Hover.png<>uid://d2ipi4thqvaer::::res://assets/MainMenu/buttons/HowToPlay_Hover.png<>uid://crufckq7qphc6::::res://scripts/MainMenu/Buttons/settings_button.gd<>uid://cnhwglppb2ux5::::res://scripts/MainMenu/Buttons/how_to_play_button.gd<>uid://cobya6p65w4jm::::res://assets/MainMenu/MEME logo.png<>uid://cmroqvp3pa21y::::res://assets/Ahkio-Thin.otf
 plantation_owner.gd::GDScript::1383006915920280432::1773114007::0::1::::<>TextureButton<><>0<>0<><>::
 PlayerDisplay.tscn::PackedScene::-1::1770270282::0::1::::<><><>0<>0<><>::res://scripts/PlayerDisplay.gd
 researcher.gd::GDScript::6824155191227657340::1773124384::0::1::::<>TextureButton<><>0<>0<><>::
-RoleSelection.tscn::PackedScene::4264300225175984916::1773603865::0::1::::<><><>0<>0<><>::uid://bgjoas2k4a4wu::::res://scenes/role_selection.gd<>uid://capck6yhu24lu::::res://assets/ui/Board Background.tres<>uid://bmhtphcya5wsm::::res://new_atlas_texture.tres<>uid://doxiianmbebdg::::res://assets/MainMenu/background.png<>uid://cu3mdjxvgwvu7::::res://scenes/conservationist.gd<>uid://ckh8k87alxnpb::::res://scenes/start_game_button.gd<>uid://cmroqvp3pa21y::::res://assets/Ahkio-Thin.otf<>uid://dg0klja54lkcj::::res://scenes/ecotourism_manager.gd<>uid://dc84h5xllcxso::::res://scenes/environmental_consultant.gd<>uid://q7yo22wgdf1n::::res://scenes/government.gd<>uid://dnjqw67gjngjh::::res://scenes/land_developer.gd<>uid://tx66lwhffc13::::res://scenes/plantation_owner.gd<>uid://c4hw3r4gpyoxg::::res://scenes/researcher.gd<>uid://b2qku3tv52mrv::::res://scenes/village_head.gd<>uid://dr6wn8cocj270::::res://scenes/wildlife_department.gd
-role_selection.gd::GDScript::2826984170829727940::1773126224::0::1::::<>Control<><>0<>0<><>::
+RoleSelection.tscn::PackedScene::4264300225175984916::1774706531::0::1::::<><><>0<>0<><>::uid://bgjoas2k4a4wu::::res://scenes/role_selection.gd<>uid://capck6yhu24lu::::res://assets/ui/Board Background.tres<>uid://bmhtphcya5wsm::::res://new_atlas_texture.tres<>uid://doxiianmbebdg::::res://assets/MainMenu/background.png<>uid://cu3mdjxvgwvu7::::res://scenes/conservationist.gd<>uid://ckh8k87alxnpb::::res://scenes/start_game_button.gd<>uid://cmroqvp3pa21y::::res://assets/Ahkio-Thin.otf<>uid://dg0klja54lkcj::::res://scenes/ecotourism_manager.gd<>uid://dc84h5xllcxso::::res://scenes/environmental_consultant.gd<>uid://q7yo22wgdf1n::::res://scenes/government.gd<>uid://dnjqw67gjngjh::::res://scenes/land_developer.gd<>uid://tx66lwhffc13::::res://scenes/plantation_owner.gd<>uid://c4hw3r4gpyoxg::::res://scenes/researcher.gd<>uid://b2qku3tv52mrv::::res://scenes/village_head.gd<>uid://dr6wn8cocj270::::res://scenes/wildlife_department.gd
+role_selection.gd::GDScript::2826984170829727940::1773651749::0::1::::<>Control<><>0<>0<><>::
 role_slot.gd::GDScript::9075281376723061246::1770624081::0::1::::<>Panel<><>0<>0<><>::
 start_game_button.gd::GDScript::5491203749465201947::1773125910::0::1::::<>TextureButton<><>0<>0<><>::
 village_head.gd::GDScript::4315193892791091999::1773124384::0::1::::<>TextureButton<><>0<>0<><>::
