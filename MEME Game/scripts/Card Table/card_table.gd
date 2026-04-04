@@ -48,7 +48,14 @@ func _ready() -> void:
 	card_effects.effects_complete.connect(_on_card_effects_complete)
 	card_effects.request_tile_selection.connect(_on_request_tile_selection)
 	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
+<<<<<<< Updated upstream
 
+=======
+	card_effects.connect("request_steal_popup", _on_request_steal_popup)
+	card_effects.connect("request_convert_type_popup", _on_request_convert_type_popup)
+	card_effects.connect("steal_complete", _on_steal_complete)
+	
+>>>>>>> Stashed changes
 	# --- Wire UI signals ---
 	UI.card_activated.connect(_on_card_activated)
 	UI.end_turn_requested.connect(_on_end_turn_button_pressed)
@@ -70,21 +77,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if pause_menu:
 			pause_menu.toggle_pause()
 			return
-
-	# Land-Use Planning type-choice input (after selecting a tile):
-	# 1 = Forest, 2 = Human, 3 = Plantation
-	if event is InputEventKey and event.pressed and not event.echo:
-		if card_effects and card_effects.state == 3 and card_effects.current_effect.get("op", "") == "convert_any_any":
-			match event.keycode:
-				KEY_1, KEY_KP_1:
-					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.FOREST)
-					return
-				KEY_2, KEY_KP_2:
-					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.HUMAN)
-					return
-				KEY_3, KEY_KP_3:
-					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.PLANTATION)
-					return
 
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 
@@ -203,8 +195,18 @@ func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void
 func _on_clear_tile_selection() -> void:
 	_current_valid_selection_keys.clear()
 	UI.hide_instruction()
+	UI.hide_convert_type_popup()
 	$Board.clear_all_highlights()
 
+<<<<<<< Updated upstream
+=======
+func _on_request_steal_popup() -> void:
+	UI.show_steal_popup(card_effects)
+
+func _on_request_convert_type_popup(current_type: int) -> void:
+	UI.show_convert_type_popup(card_effects, current_type)
+
+>>>>>>> Stashed changes
 
 # --- End turn ---
 

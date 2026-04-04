@@ -42,6 +42,12 @@ var _pending_convert_any_key: Vector2i = Vector2i(-1, -1)
 signal effects_complete()
 signal request_tile_selection(valid_keys: Array, instruction: String)
 signal clear_tile_selection()
+<<<<<<< Updated upstream
+=======
+signal request_steal_popup()
+signal request_convert_type_popup(current_type: int)
+signal steal_complete()
+>>>>>>> Stashed changes
 
 
 # --- Entry point ---
@@ -432,6 +438,7 @@ func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 	var entry = GameState.tile_registry.get(tile_key, {})
 	if entry.is_empty():
 		return
+	var current_type: int = entry["type"]
 
 	_pending_convert_any_key = tile_key
 	state = State.WAITING_CHOICE
@@ -440,7 +447,8 @@ func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 		board.clear_all_highlights()
 		board.highlight_tiles([tile_key], Color(1.0, 0.8, 0.0, 0.55))
 
-	request_tile_selection.emit([], "Choose new tile type: [1] Forest  [2] Human  [3] Plantation")
+	request_tile_selection.emit([], "Choose the new tile type from the popup")
+	request_convert_type_popup.emit(current_type)
 
 func confirm_convert_any_any_type_selected(new_type: int) -> void:
 	if state != State.WAITING_CHOICE:
