@@ -390,6 +390,15 @@ func confirm_dest_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_DEST:
 		return
 
+	# Re-check destination validity at click time so invalid clicks never consume this move.
+	var source_entry_for_validation = GameState.tile_registry.get(selected_source_key, {})
+	var source_nodes_for_validation = source_entry_for_validation["elephant_nodes"] if _current_piece_type == "elephant" else source_entry_for_validation["villager_nodes"]
+	var raw_piece_for_validation = source_nodes_for_validation[0] if source_nodes_for_validation.size() > 0 else null
+	var source_piece_for_validation = raw_piece_for_validation if is_instance_valid(raw_piece_for_validation) else null
+	var valid_dest_now: Array = _build_valid_dest_keys_for_source(selected_source_key, current_effect, _current_piece_type, source_piece_for_validation, true)
+	if not valid_dest_now.has(tile_key):
+		return
+
 	var source_entry = GameState.tile_registry.get(selected_source_key, {})
 	if source_entry.is_empty():
 		effect_index += 1
@@ -570,10 +579,8 @@ func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary,
 		var entry = GameState.tile_registry[key]
 		if to_types != null and not (entry["type"] in to_types):
 			continue
-		# Occupancy check
-		if piece_type == "elephant" and entry["elephant_nodes"].size() >= 1:
-			continue
-		if piece_type == "villager" and entry["villager_nodes"].size() >= 2:
+		# Occupancy + coexistence check
+		if not GameState.can_place_piece(key, piece_type):
 			continue
 		# Distance check
 		if max_dist > 0:
