@@ -162,7 +162,7 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			var entry = GameState.tile_registry[key]
 			if to_types != null and not (entry["type"] in to_types):
 				continue
-			if entry["elephant_nodes"].size() >= 1:
+			if not GameState.can_place_piece(key, "elephant"):
 				continue
 			var dist = abs(key.x - from_key.x) + abs(key.y - from_key.y)
 			if max_dist > 0 and dist > max_dist:
@@ -443,6 +443,63 @@ func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 
 # --- Helpers ---
 
+<<<<<<< Updated upstream
+=======
+func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary, piece_type: String, piece_node: Node = null, enforce_immunity: bool = true) -> Array:
+	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
+	var max_dist: int = effect.get("max_dist", -1)
+
+	var valid_dest_keys: Array = []
+	for key in GameState.tile_registry:
+		if key == source_key:
+			continue
+		var entry = GameState.tile_registry[key]
+		if to_types != null and not (entry["type"] in to_types):
+			continue
+		# Occupancy / coexistence check
+		if not GameState.can_place_piece(key, piece_type):
+			continue
+		# Distance check
+		if max_dist > 0:
+			var dist = abs(key.x - source_key.x) + abs(key.y - source_key.y)
+			if dist > max_dist:
+				continue
+		# Immune elephants cannot be moved to tiles that are closer to Human/Plantation.
+		if enforce_immunity and piece_type == "elephant" and piece_node != null and GameState.is_elephant_immune(piece_node):
+			if _is_move_closer_to_human_or_plantation(source_key, key):
+				continue
+		valid_dest_keys.append(key)
+
+	return valid_dest_keys
+
+func _is_move_closer_to_human_or_plantation(from_key: Vector2i, to_key: Vector2i) -> bool:
+	var threat_types = [GameState.TileType.HUMAN, GameState.TileType.PLANTATION]
+	var from_dist := _min_distance_to_types(from_key, threat_types)
+	var to_dist := _min_distance_to_types(to_key, threat_types)
+	return to_dist < from_dist
+
+func _min_distance_to_types(origin_key: Vector2i, target_types: Array) -> int:
+	var best_dist := 999999
+	for key in GameState.tile_registry:
+		var entry = GameState.tile_registry[key]
+		if not (entry["type"] in target_types):
+			continue
+		var dist = abs(key.x - origin_key.x) + abs(key.y - origin_key.y)
+		if dist < best_dist:
+			best_dist = dist
+	return best_dist
+
+func _tile_type_name(tile_type: int) -> String:
+	match tile_type:
+		GameState.TileType.FOREST:
+			return "Forest"
+		GameState.TileType.HUMAN:
+			return "Human"
+		GameState.TileType.PLANTATION:
+			return "Plantation"
+	return "Unknown"
+
+>>>>>>> Stashed changes
 func _parse_types(type_strings: Array) -> Array:
 	var result: Array = []
 	for s in type_strings:
