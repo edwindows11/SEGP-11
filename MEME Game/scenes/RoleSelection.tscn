@@ -1,0 +1,214 @@
+[gd_scene format=3 uid="uid://bj7sug2q1xuww"]
+
+[ext_resource type="Script" uid="uid://b4kfkrg3hxequ" path="res://scripts/RoleSelection.gd" id="1_script"]
+
+[node name="RoleSelection" type="Control" unique_id=208036047]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="TextureRect" parent="." unique_id=1274489359]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=579313265]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = 50.0
+offset_right = -50.0
+offset_bottom = -50.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer" unique_id=1694563784]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.933333, 0.909804, 0.835294, 1)
+theme_override_font_sizes/font_size = 48
+text = "Select Your Roles"
+horizontal_alignment = 1
+
+[node name="PlayerSlots" type="HBoxContainer" parent="VBoxContainer" unique_id=360108341]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Player1" type="Panel" parent="VBoxContainer/PlayerSlots" unique_id=1485518380]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/PlayerSlots/Player1" unique_id=1406001511]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 30.0
+grow_horizontal = 2
+text = "Player 1"
+horizontal_alignment = 1
+
+[node name="RoleDisplay" type="Label" parent="VBoxContainer/PlayerSlots/Player1" unique_id=1398070571]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -11.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.8, 0.5, 0, 1)
+text = "Select Role..."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SelectButton" type="Button" parent="VBoxContainer/PlayerSlots/Player1" unique_id=2095206906]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 0
+flat = true
+
+[node name="Player2" type="Panel" parent="VBoxContainer/PlayerSlots" unique_id=133659031]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/PlayerSlots/Player2" unique_id=1855165913]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 30.0
+grow_horizontal = 2
+text = "Player 2"
+horizontal_alignment = 1
+
+[node name="RoleDisplay" type="Label" parent="VBoxContainer/PlayerSlots/Player2" unique_id=1236885808]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -11.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.8, 0.5, 0, 1)
+text = "..."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SelectButton" type="Button" parent="VBoxContainer/PlayerSlots/Player2" unique_id=2138604293]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 0
+flat = true
+
+[node name="Player3" type="Panel" parent="VBoxContainer/PlayerSlots" unique_id=612543814]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/PlayerSlots/Player3" unique_id=529430222]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 30.0
+grow_horizontal = 2
+text = "Player 3"
+horizontal_alignment = 1
+
+[node name="RoleDisplay" type="Label" parent="VBoxContainer/PlayerSlots/Player3" unique_id=205420643]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -11.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.8, 0.5, 0, 1)
+text = "..."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SelectButton" type="Button" parent="VBoxContainer/PlayerSlots/Player3" unique_id=1297501498]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 0
+flat = true
+
+[node name="Player4" type="Panel" parent="VBoxContainer/PlayerSlots" unique_id=185824476]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/PlayerSlots/Player4" unique_id=1022655917]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 30.0
+grow_horizontal = 2
+text = "Player 4"
+horizontal_alignment = 1
+
+[node name="RoleDisplay" type="Label" parent="VBoxContainer/PlayerSlots/Player4" unique_id=394239879]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -11.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.8, 0.5, 0, 1)
+text = "..."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SelectButton" type="Button" parent="VBoxContainer/PlayerSlots/Player4" unique_id=1433344692]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 0
+flat = true
+
+[node name="RoleGrid" type="GridContainer" parent="VBoxContainer" unique_id=377128263]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 3
+
+[node name="StartGameButton" type="Button" parent="VBoxContainer" unique_id=1418369072]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+disabled = true
+text = "Start Game"
