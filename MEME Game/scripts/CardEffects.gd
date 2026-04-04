@@ -123,14 +123,6 @@ func _do_add(piece_type: String, count: int, type_filter: Array) -> void:
 	request_tile_selection.emit(valid_tiles, "Place " + piece_type + " — " + str(count) + " left")
 
 func _do_remove(piece_type: String, count: int) -> void:
-	var group = "elephants" if piece_type == "elephant" else "meeples"
-	var pieces = get_tree().get_nodes_in_group(group)
-	if pieces.is_empty():
-		_log("No " + piece_type + " to remove", false)
-		effect_index += 1
-		_advance_effect()
-		return
-
 	# Build a list of tile keys that have at least one of this piece type
 	var valid_tiles: Array = []
 	for key in GameState.tile_registry:
@@ -138,6 +130,12 @@ func _do_remove(piece_type: String, count: int) -> void:
 		var node_list = entry["elephant_nodes"] if piece_type == "elephant" else entry["villager_nodes"]
 		if node_list.size() > 0:
 			valid_tiles.append(key)
+
+	if valid_tiles.is_empty():
+		_log("No " + piece_type + " to remove", false)
+		effect_index += 1
+		_advance_effect()
+		return
 
 	_interact_piece_type = piece_type
 	_interact_count_remaining = count
