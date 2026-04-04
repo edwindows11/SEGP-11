@@ -1,4 +1,3 @@
-res://scripts/CardEffects.gd
+res://scripts/Card Table/card_table_ui.gd
+res://scenes/CardTable.tscn
 res://scripts/Card Table/card_table.gd
-res://scripts/GameState.gd
-res://scripts/Card Table/card_functions.gd

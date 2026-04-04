@@ -10,7 +10,7 @@ extends Node
 #   add_child(fx)
 #   fx.execute_card("green_reforestation")
 
-enum State { IDLE, WAITING_SOURCE, WAITING_DEST }
+enum State { IDLE, WAITING_SOURCE, WAITING_DEST, WAITING_CHOICE }
 
 var state: State = State.IDLE
 
@@ -37,11 +37,15 @@ var _interact_type_filter: Array = []
 # For interactive convert operations
 var convert_count_remaining: int = 0
 var _convert_to_type: int = 0
+var _pending_convert_any_key: Vector2i = Vector2i(-1, -1)
 
 signal effects_complete()
 signal request_tile_selection(valid_keys: Array, instruction: String)
 signal clear_tile_selection()
+signal request_steal_popup()
+signal steal_complete()
 
+var lastCard = [null, null, null, null]
 
 # --- Entry point ---
 
@@ -51,6 +55,8 @@ func execute_card(card_id: String) -> void:
 		push_error("CardEffects: unknown card_id: " + card_id)
 		effects_complete.emit()
 		return
+	if CardData.ALL_CARDS[card_id].get("color", Color.WHITE) != Color.BLACK:
+		lastCard[GameState.current_player_index] = card_id
 	pending_effects = card_def["sub_effects"].duplicate(true)
 	effect_index = 0
 	_advance_effect()
@@ -82,6 +88,9 @@ func _advance_effect() -> void:
 		"move_e":          _begin_move("elephant", current_effect)
 		"move_v":          _begin_move("villager", current_effect)
 		"move_all_e_to":   _do_move_all_e_auto(current_effect)
+		"steal":           _do_steal()
+		"return_to_hand":  _do_return_card()
+		"skip"          :  _do_skip()
 		_:
 			push_warning("CardEffects: unknown op: " + op)
 			effect_index += 1
@@ -140,7 +149,9 @@ func _do_remove(piece_type: String, count: int) -> void:
 	request_tile_selection.emit(valid_tiles, "Remove " + piece_type + " — " + str(count) + " left")
 
 func _do_immune() -> void:
-	_log("Immune effect applied", true)
+	var owner_player := GameState.current_player_index
+	var affected_count := GameState.apply_elephant_immunity_for_round(owner_player)
+	_log("Immune effect applied to " + str(affected_count) + " elephant(s) until this turn comes back to Player " + str(owner_player + 1), true)
 	effect_index += 1
 	_advance_effect()
 
@@ -156,6 +167,7 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 		# Find nearest valid destination
 		var best_key = Vector2i(-1, -1)
 		var best_dist = INF
+		var blocked_by_immunity := false
 		for key in GameState.tile_registry:
 			if key == from_key:
 				continue
@@ -167,6 +179,9 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			var dist = abs(key.x - from_key.x) + abs(key.y - from_key.y)
 			if max_dist > 0 and dist > max_dist:
 				continue
+			if GameState.is_elephant_immune(elephant) and _is_move_closer_to_human_or_plantation(from_key, key):
+				blocked_by_immunity = true
+				continue
 			if dist < best_dist:
 				best_dist = dist
 				best_key = key
@@ -177,11 +192,75 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			GameState.piece_moved(elephant, from_key, best_key, "elephant")
 			elephant.tile_key = best_key
 			moved += 1
+		elif blocked_by_immunity:
+			_log("Move blocked: elephant immunity prevents moving closer to Human/Plantation", false)
 
 	_log("Moved " + str(moved) + " elephants", true)
 	effect_index += 1
 	_advance_effect()
 
+func _do_steal() -> void:
+	# Check there is at least one other player who has cards to steal
+	var thief := GameState.current_player_index
+	GameState.discard_card(thief, "black_corruption")
+	var has_valid_target := false
+	for i in range(GameState.player_count):
+		if i != thief and GameState.player_hands[i].size() > 0:
+			has_valid_target = true
+			break
+
+	if not has_valid_target:
+		_log("No players have cards to steal", false)
+		effect_index += 1
+		_advance_effect()
+		return
+
+	# Pause here — UI will call confirm_steal_target() once the player picks someone
+	state = State.WAITING_CHOICE
+	emit_signal("request_steal_popup")
+
+## Called by card_table_ui.gd when the player clicks a name button in the steal popup.
+func confirm_steal_target(target_player_index: int) -> void:
+	if state != State.WAITING_CHOICE:
+		return
+
+	var thief := GameState.current_player_index
+	var hand : Array = GameState.player_hands[target_player_index]
+	if hand.is_empty():
+		_log("Player " + str(target_player_index + 1) + " has no cards!", false)
+		# Stay in WAITING_CHOICE so the UI can try another button
+		return
+
+	# Pick a random card from the target's hand
+	var stolen_card: String = hand[randi() % hand.size()]
+	hand.erase(stolen_card)
+	GameState.player_hands[thief].append(stolen_card)
+
+	var card_name = CardData.ALL_CARDS.get(stolen_card, {}).get("name", stolen_card)
+	_log("Stole \"" + card_name + "\" from Player " + str(target_player_index + 1), true)
+
+	state = State.IDLE
+	emit_signal("steal_complete")
+	effect_index += 1
+	_advance_effect()
+
+func _do_return_card() -> void:
+	var owner_player := GameState.current_player_index
+	for player in GameState.player_count:
+		if player != owner_player:
+			var prev_card = lastCard[player]
+			GameState.player_hands[player].append(prev_card)
+	_log("Return previously played cards",false)
+	effect_index += 1
+	_advance_effect()
+
+func _do_skip() -> void:
+	var next_index = (GameState.current_player_index + 1) % GameState.player_count
+	var SkipText = get_node("/root/CardTable/CanvasLayer/Control/Skipped")
+	GameState.skip_next_turn = true
+	_log("Skip Player "+ str(next_index + 1) + "'s Turn", false)
+	effect_index += 1
+	_advance_effect()
 
 # --- Interactive: Move ---
 
@@ -194,15 +273,30 @@ func _request_source_selection_move(effect: Dictionary) -> void:
 	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
 
 	var valid_source_keys: Array = []
+	var source_piece_count := 0
+	var immunity_blocked_sources := 0
 	for key in GameState.tile_registry:
 		var entry = GameState.tile_registry[key]
 		if from_types != null and not (entry["type"] in from_types):
 			continue
 		var node_list = entry["elephant_nodes"] if _current_piece_type == "elephant" else entry["villager_nodes"]
-		if node_list.size() > 0:
+		if node_list.is_empty():
+			continue
+		source_piece_count += 1
+		var piece_node = node_list[0]
+		if not is_instance_valid(piece_node):
+			continue
+		var preview_dests := _build_valid_dest_keys_for_source(key, effect, _current_piece_type, piece_node, true)
+		if not preview_dests.is_empty():
 			valid_source_keys.append(key)
+		elif _current_piece_type == "elephant" and GameState.is_elephant_immune(piece_node):
+			var preview_without_immunity := _build_valid_dest_keys_for_source(key, effect, _current_piece_type, piece_node, false)
+			if not preview_without_immunity.is_empty():
+				immunity_blocked_sources += 1
 
 	if valid_source_keys.is_empty():
+		if _current_piece_type == "elephant" and source_piece_count > 0 and immunity_blocked_sources > 0:
+			_log("Move blocked: elephant immunity prevents moving closer to Human/Plantation", false)
 		_log("No " + _current_piece_type + " to move", false)
 		effect_index += 1
 		_advance_effect()
@@ -267,29 +361,17 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 
 	# Build valid destinations
 	var effect = current_effect
-	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
-	var max_dist: int = effect.get("max_dist", -1)
-
-	var valid_dest_keys: Array = []
-	for key in GameState.tile_registry:
-		if key == selected_source_key:
-			continue
-		var entry = GameState.tile_registry[key]
-		if to_types != null and not (entry["type"] in to_types):
-			continue
-		# Occupancy check
-		if _current_piece_type == "elephant" and entry["elephant_nodes"].size() >= 1:
-			continue
-		if _current_piece_type == "villager" and entry["villager_nodes"].size() >= 2:
-			continue
-		# Distance check
-		if max_dist > 0:
-			var dist = abs(key.x - selected_source_key.x) + abs(key.y - selected_source_key.y)
-			if dist > max_dist:
-				continue
-		valid_dest_keys.append(key)
+	var source_entry = GameState.tile_registry.get(selected_source_key, {})
+	var source_node_list = source_entry["elephant_nodes"] if _current_piece_type == "elephant" else source_entry["villager_nodes"]
+	var raw = source_node_list[0] if source_node_list.size() > 0 else null
+	var source_piece_node = raw if is_instance_valid(raw) else null
+	var valid_dest_keys: Array = _build_valid_dest_keys_for_source(selected_source_key, effect, _current_piece_type, source_piece_node, true)
 
 	if valid_dest_keys.is_empty():
+		if _current_piece_type == "elephant" and source_piece_node != null and GameState.is_elephant_immune(source_piece_node):
+			var valid_without_immunity := _build_valid_dest_keys_for_source(selected_source_key, effect, _current_piece_type, source_piece_node, false)
+			if not valid_without_immunity.is_empty():
+				_log("Move blocked: elephant immunity prevents moving closer to Human/Plantation", false)
 		_log("No valid destination for move", false)
 		move_count_remaining -= 1
 		if move_count_remaining <= 0:
@@ -320,6 +402,15 @@ func confirm_dest_selected(tile_key: Vector2i) -> void:
 		move_count_remaining -= 1
 	else:
 		var piece_node = node_list[0]
+		if not is_instance_valid(piece_node):
+			_log("Source piece no longer exists", false)
+			move_count_remaining -= 1
+			if move_count_remaining <= 0:
+				effect_index += 1
+				_advance_effect()
+			else:
+				_request_source_selection_move(current_effect)
+			return
 		var dest_world_pos = GameState.tile_registry[tile_key]["world_pos"]
 		piece_node.position = dest_world_pos
 		if _current_piece_type == "villager":
@@ -424,14 +515,39 @@ func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 	if entry.is_empty():
 		return
 
-	var current_type: int = entry["type"]
-	var next_type: int = (current_type + 1) % 3  # 0->1->2->0
+	_pending_convert_any_key = tile_key
+	state = State.WAITING_CHOICE
 
 	if board:
-		board.convert_tile(tile_key, next_type)
+		board.clear_all_highlights()
+		board.highlight_tiles([tile_key], Color(1.0, 0.8, 0.0, 0.55))
+
+	request_tile_selection.emit([], "Choose new tile type: [1] Forest  [2] Human  [3] Plantation")
+
+func confirm_convert_any_any_type_selected(new_type: int) -> void:
+	if state != State.WAITING_CHOICE:
+		return
+
+	if _pending_convert_any_key == Vector2i(-1, -1):
+		return
+
+	var entry = GameState.tile_registry.get(_pending_convert_any_key, {})
+	if entry.is_empty():
+		_pending_convert_any_key = Vector2i(-1, -1)
+		_request_convert_any_any_click()
+		return
+
+	var current_type: int = entry["type"]
+	if new_type == current_type:
+		request_tile_selection.emit([], "Tile is already " + _tile_type_name(new_type) + ". Choose [1] Forest  [2] Human  [3] Plantation")
+		return
+
+	if board:
+		board.convert_tile(_pending_convert_any_key, new_type)
 		board.clear_all_highlights()
 
-	_log("Converted tile", true)
+	_log("Converted tile to " + _tile_type_name(new_type), true)
+	_pending_convert_any_key = Vector2i(-1, -1)
 	convert_count_remaining -= 1
 
 	if convert_count_remaining > 0:
@@ -443,8 +559,6 @@ func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 
 # --- Helpers ---
 
-<<<<<<< Updated upstream
-=======
 func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary, piece_type: String, piece_node: Node = null, enforce_immunity: bool = true) -> Array:
 	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
 	var max_dist: int = effect.get("max_dist", -1)
@@ -456,8 +570,10 @@ func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary,
 		var entry = GameState.tile_registry[key]
 		if to_types != null and not (entry["type"] in to_types):
 			continue
-		# Occupancy / coexistence check
-		if not GameState.can_place_piece(key, piece_type):
+		# Occupancy check
+		if piece_type == "elephant" and entry["elephant_nodes"].size() >= 1:
+			continue
+		if piece_type == "villager" and entry["villager_nodes"].size() >= 2:
 			continue
 		# Distance check
 		if max_dist > 0:
@@ -499,7 +615,6 @@ func _tile_type_name(tile_type: int) -> String:
 			return "Plantation"
 	return "Unknown"
 
->>>>>>> Stashed changes
 func _parse_types(type_strings: Array) -> Array:
 	var result: Array = []
 	for s in type_strings:

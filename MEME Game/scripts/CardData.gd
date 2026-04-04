@@ -25,9 +25,10 @@ class_name CardData
 #   "condition" : String - optional guard, e.g. "forest_lt_12"
 
 static var ALL_CARDS: Dictionary = {
-
+	
+	
 	# ---- GREEN CARDS ----
-
+	
 	"green_abandonment_land": {
 		"name": "Abandonment of Land",
 		"color": Color.GREEN,
@@ -173,7 +174,7 @@ static var ALL_CARDS: Dictionary = {
 		"name": "Reforestation",
 		"color": Color.GREEN,
 		"sub_effects": [
-			{"op": "convert", "count": 2, "from": ["HUMAN"], "to": "FOREST"}
+			{"op": "convert", "count": 2, "from": ["HUMAN", "PLANTATION"], "to": "FOREST"}
 		]
 	},
 	"green_removal_subsidies": {
@@ -233,7 +234,7 @@ static var ALL_CARDS: Dictionary = {
 		]
 	},
 	"yellow_improper_waste": {
-		"name": "Improper Waste Management",
+		"name": "Improper Waste Management102",
 		"color": Color.YELLOW,
 		"sub_effects": [
 			{"op": "move_e", "count": 2, "from": ["ANY"], "to": "HUMAN", "max_dist": -1}
@@ -334,6 +335,80 @@ static var ALL_CARDS: Dictionary = {
 		"sub_effects": [
 			{"op": "convert", "count": 1, "from": ["PLANTATION"], "to": "HUMAN"},
 			{"op": "add_v_in", "count": 2, "in": ["HUMAN"]}
+		]
+	},
+	
+	# -- Black --
+	"black_corruption": {
+		"name": "Corruption",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "steal"}
+		]
+	},
+	
+	"black_disagreement": {
+		"name": "Disagreement",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "return_to_hand"}
+		]
+	},
+	
+	"black_diesease_strikes_elephants": {
+		"name": "Disease Strike Elephants",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "remove_e", "count": 3},
+		]
+	},
+	
+	"black_diesease_strikes_human": {
+		"name": "Disease Strike Human",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "remove_v", "count": 3},
+		]
+	},
+	
+	"black_drought": {
+		"name": "Drought",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "move_all_e_to", "to": ["PLANTATION","HUMAN"], "max_dist": 2}
+		]
+	},
+	
+	"black_flood": {
+		"name": "Flood",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "move_all_e_to", "to": ["PLANTATION","HUMAN"], "max_dist": 2}
+		]
+	},
+	
+	"black_forest_burning": {
+		"name": "Forest Burning",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "move_all_e_to", "to": ["PLANTATION","HUMAN"], "max_dist": 2}
+		]
+	},
+	
+	"black_sabotaging": {
+		"name": "Sabotaging",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "skip"}
+		]
+	},
+	
+	"black_wamring": {
+		"name": "Warming",
+		"color": Color.BLACK,
+		"sub_effects": [
+			{"op": "remove_v", "count": 1},
+			{"op": "remove_e", "count": 1}
 		]
 	},
 }

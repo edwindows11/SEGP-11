@@ -48,7 +48,9 @@ func _ready() -> void:
 	card_effects.effects_complete.connect(_on_card_effects_complete)
 	card_effects.request_tile_selection.connect(_on_request_tile_selection)
 	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
-
+	card_effects.connect("request_steal_popup", _on_request_steal_popup)
+	card_effects.connect("steal_complete", _on_steal_complete)
+	
 	# --- Wire UI signals ---
 	UI.card_activated.connect(_on_card_activated)
 	UI.end_turn_requested.connect(_on_end_turn_button_pressed)
@@ -71,6 +73,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			pause_menu.toggle_pause()
 			return
 
+	# Land-Use Planning type-choice input (after selecting a tile):
+	# 1 = Forest, 2 = Human, 3 = Plantation
+	if event is InputEventKey and event.pressed and not event.echo:
+		if card_effects and card_effects.state == 3 and card_effects.current_effect.get("op", "") == "convert_any_any":
+			match event.keycode:
+				KEY_1, KEY_KP_1:
+					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.FOREST)
+					return
+				KEY_2, KEY_KP_2:
+					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.HUMAN)
+					return
+				KEY_3, KEY_KP_3:
+					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.PLANTATION)
+					return
+
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 
 		# --- Card effect tile selection mode ---
@@ -82,7 +99,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 		# --- Manual placement / removal mode (dropdown) ---
-		var mode_id = UI.placement_options.get_selected_id()
+		var mode_id = 0
 		if mode_id == 0:
 			pass  # Select mode
 		else:
@@ -142,16 +159,35 @@ func _unhandled_input(event: InputEvent) -> void:
 # --- Tile selection helpers ---
 
 func _raycast_to_tile_key(screen_pos: Vector2) -> Vector2i:
+	var camera = get_viewport().get_camera_3d()
 	var from = camera.project_ray_origin(screen_pos)
 	var to = from + camera.project_ray_normal(screen_pos) * 1000
+	
 	var space_state = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
 	query.collide_with_areas = true
 	var result = space_state.intersect_ray(query)
-	if result:
-		var tile_root = result.collider.get_parent()
-		if tile_root and tile_root.has_meta("tile_key"):
-			return tile_root.get_meta("tile_key")
+	
+	if not result:
+		return Vector2i(-1, -1)
+
+	# Walk up from the hit collider looking for a tile OR a piece
+	var node = result.collider
+	for _i in range(4): #it is only 2-3 levels deep
+		if node == null:
+			break
+		
+		# Direct tile hit
+		if node.has_meta("tile_key"):
+			return node.get_meta("tile_key")
+			
+		# Piece hit — return the tile_key the piece is registered on
+		if node.is_in_group("elephants") or node.is_in_group("meeples"):
+			if node.has_meta("tile_key") or "tile_key" in node:
+				return node.tile_key  # pieces store their tile_key as a var
+				
+		node = node.get_parent()
+		
 	return Vector2i(-1, -1)
 
 func _route_tile_click_to_effects(tile_key: Vector2i) -> void:
@@ -189,6 +225,9 @@ func _on_clear_tile_selection() -> void:
 	UI.hide_instruction()
 	$Board.clear_all_highlights()
 
+func _on_request_steal_popup() -> void:
+	UI.show_steal_popup(card_effects)
+
 
 # --- End turn ---
 
@@ -196,22 +235,39 @@ func _on_end_turn_button_pressed() -> void:
 	if UI.pending_card:
 		# Track if the card played was a Green card
 		var card_id = UI.pending_card.card_id
-		var card_color = CardData.ALL_CARDS.get(card_id, {}).get("color", Color.WHITE)
+		var card_data = CardData.ALL_CARDS.get(card_id, {})
+		var card_color = card_data.get("color", Color.WHITE)
 		if card_color == Color.GREEN:
 			GameState.player_stats[GameState.current_player_index]["green_cards_played"] += 1
 		elif card_color == Color.RED:
 			GameState.player_stats[GameState.current_player_index]["red_cards_played"] += 1
 		elif card_color == Color.YELLOW:
 			GameState.player_stats[GameState.current_player_index]["yellow_cards_played"] += 1
+			
+		# Track researcher stats for cards that increase elephants/humans
+		var increases_e = false
+		var increases_v = false
+		if card_color in [Color.GREEN, Color.RED, Color.YELLOW]:
+			for fx in card_data.get("sub_effects", []):
+				var op = fx.get("op", "")
+				if op == "add_e": increases_e = true
+				if op == "add_v" or op == "add_v_in": increases_v = true
+				
+			if increases_e and increases_v:
+				GameState.player_stats[GameState.current_player_index]["both_inc_cards"] += 1
+			elif increases_e:
+				GameState.player_stats[GameState.current_player_index]["e_inc_cards"] += 1
+			elif increases_v:
+				GameState.player_stats[GameState.current_player_index]["v_inc_cards"] += 1
 		
 		# Track if the card played was Green, Yellow, or Red
 		if card_color == Color.GREEN or card_color == Color.YELLOW or card_color == Color.RED:
 			GameState.player_stats[GameState.current_player_index]["action_cards_played"] += 1
 		
 		GameState.discard_card(GameState.current_player_index, UI.pending_card.card_id)
-		UI.remove_played_card_and_draw_replacement()
+	UI.remove_played_card_and_draw_replacement()
 	GameState.advance_turn()
-
+	UI.currently_viewing_card = false
 
 # --- Initial board setup ---
 
@@ -281,3 +337,7 @@ func _on_play_reduce_total_elephant() -> void:
 func _on_play_reduce_total_meeple() -> void:
 	totalMeeple -= 1
 	print("meeple total: %d" % totalMeeple)
+	
+func _on_steal_complete() -> void:
+	UI.reposition_cards()
+	UI.spawn_cards()   # re-renders the current player's hand so the stolen card appears
