@@ -928,6 +928,87 @@ func hide_steal_popup(steal_node) -> void:
 	if steal_node:
 		steal_node.visible = false
 
+func show_convert_type_popup(card_effects_node: Node, current_type: int) -> void:
+	var popup = get_node_or_null("_convert_type_popup")
+	if popup == null:
+		popup = PanelContainer.new()
+		popup.name = "_convert_type_popup"
+		popup.set_anchors_preset(Control.PRESET_CENTER)
+		popup.offset_left = -220
+		popup.offset_top = -110
+		popup.offset_right = 220
+		popup.offset_bottom = 110
+
+		var panel_style := StyleBoxFlat.new()
+		panel_style.bg_color = Color(0.08, 0.08, 0.08, 0.92)
+		panel_style.corner_radius_top_left = 12
+		panel_style.corner_radius_top_right = 12
+		panel_style.corner_radius_bottom_left = 12
+		panel_style.corner_radius_bottom_right = 12
+		panel_style.content_margin_left = 18
+		panel_style.content_margin_right = 18
+		panel_style.content_margin_top = 14
+		panel_style.content_margin_bottom = 14
+		popup.add_theme_stylebox_override("panel", panel_style)
+
+		var root_vbox := VBoxContainer.new()
+		root_vbox.name = "RootVBox"
+		root_vbox.add_theme_constant_override("separation", 12)
+		popup.add_child(root_vbox)
+
+		var title := Label.new()
+		title.name = "Title"
+		title.text = "Choose New Tile Type"
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.add_theme_font_size_override("font_size", 24)
+		title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.2))
+		root_vbox.add_child(title)
+
+		var row := HBoxContainer.new()
+		row.name = "ButtonsRow"
+		row.add_theme_constant_override("separation", 10)
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		root_vbox.add_child(row)
+
+		var button_specs = [
+			{"name": "ForestBtn", "text": "Forest", "type": GameState.TileType.FOREST},
+			{"name": "HumanBtn", "text": "Human", "type": GameState.TileType.HUMAN},
+			{"name": "PlantationBtn", "text": "Plantation", "type": GameState.TileType.PLANTATION},
+		]
+
+		for spec in button_specs:
+			var btn := Button.new()
+			btn.name = spec["name"]
+			btn.text = spec["text"]
+			btn.custom_minimum_size = Vector2(120, 44)
+			btn.add_theme_font_size_override("font_size", 18)
+			btn.pressed.connect(func():
+				hide_convert_type_popup()
+				card_effects_node.confirm_convert_any_any_type_selected(spec["type"])
+			)
+			row.add_child(btn)
+
+		add_child(popup)
+
+	var row_node: HBoxContainer = popup.get_node("RootVBox/ButtonsRow")
+	for btn in row_node.get_children():
+		if btn is Button:
+			var button: Button = btn
+			match button.name:
+				"ForestBtn":
+					button.disabled = current_type == GameState.TileType.FOREST
+				"HumanBtn":
+					button.disabled = current_type == GameState.TileType.HUMAN
+				"PlantationBtn":
+					button.disabled = current_type == GameState.TileType.PLANTATION
+
+	popup.visible = true
+
+func hide_convert_type_popup() -> void:
+	var popup = get_node_or_null("_convert_type_popup")
+	if popup:
+		popup.visible = false
+
 func _trigger_win(player_index: int, role_name: String) -> void:
 	if is_game_over:
 		return
