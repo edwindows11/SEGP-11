@@ -269,14 +269,16 @@ func _begin_move(piece_type: String, effect: Dictionary) -> void:
 
 func _request_source_selection_move(effect: Dictionary) -> void:
 	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
+	var is_away_move := _is_away_move_effect(effect, from_types)
 
 	var valid_source_keys: Array = []
 	var source_piece_count := 0
 	var immunity_blocked_sources := 0
 	for key in GameState.tile_registry:
 		var entry = GameState.tile_registry[key]
-		if from_types != null and not (entry["type"] in from_types):
-			continue
+		if from_types != null:
+			if not is_away_move and not (entry["type"] in from_types):
+				continue
 		var node_list = entry["elephant_nodes"] if _current_piece_type == "elephant" else entry["villager_nodes"]
 		if node_list.is_empty():
 			continue
@@ -568,6 +570,8 @@ func confirm_convert_any_any_type_selected(new_type: int) -> void:
 
 func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary, piece_type: String, piece_node: Node = null, enforce_immunity: bool = true) -> Array:
 	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
+	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
+	var is_away_move := _is_away_move_effect(effect, from_types)
 	var max_dist: int = effect.get("max_dist", -1)
 
 	var valid_dest_keys: Array = []
@@ -584,6 +588,12 @@ func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary,
 		if max_dist > 0:
 			var dist = abs(key.x - source_key.x) + abs(key.y - source_key.y)
 			if dist > max_dist:
+				continue
+		# "Move away" cards: destination must strictly increase distance from nearest target-type tile.
+		if is_away_move:
+			var from_dist := _min_distance_to_types(source_key, from_types)
+			var to_dist := _min_distance_to_types(key, from_types)
+			if to_dist <= from_dist:
 				continue
 		# Immune elephants cannot be moved to tiles that are closer to Human/Plantation.
 		if enforce_immunity and piece_type == "elephant" and piece_node != null and GameState.is_elephant_immune(piece_node):
@@ -609,6 +619,12 @@ func _min_distance_to_types(origin_key: Vector2i, target_types: Array) -> int:
 		if dist < best_dist:
 			best_dist = dist
 	return best_dist
+
+func _is_away_move_effect(effect: Dictionary, from_types: Variant) -> bool:
+	if from_types == null:
+		return false
+	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
+	return to_types == null
 
 func _tile_type_name(tile_type: int) -> String:
 	match tile_type:
