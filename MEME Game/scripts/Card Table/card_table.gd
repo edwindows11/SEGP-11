@@ -123,10 +123,9 @@ func _unhandled_input(event: InputEvent) -> void:
 						var tile_key = _raycast_to_tile_key(event.position)
 						var can_place = false
 						if tile_key != Vector2i(-1, -1) and GameState.tile_registry.has(tile_key):
-							var entry = GameState.tile_registry[tile_key]
-							if mode_id == 1 and entry["elephant_nodes"].size() < 1:
+							if mode_id == 1 and GameState.can_place_piece(tile_key, "elephant"):
 								can_place = true
-							elif mode_id == 2 and entry["villager_nodes"].size() < 2:
+							elif mode_id == 2 and GameState.can_place_piece(tile_key, "villager"):
 								can_place = true
 
 						if can_place:

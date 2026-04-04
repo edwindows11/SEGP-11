@@ -137,7 +137,11 @@ func can_place_piece(tile_key: Vector2i, piece_type: String) -> bool:
 	var entry = tile_registry[tile_key]
 	var is_elephant = piece_type == "elephant" or piece_type == "Elephant"
 	if is_elephant:
+		if entry["villager_nodes"].size() > 0:
+			return false
 		return entry["elephant_nodes"].size() < MAX_ELEPHANTS_PER_TILE
+	if entry["elephant_nodes"].size() > 0:
+		return false
 	return entry["villager_nodes"].size() < MAX_VILLAGERS_PER_TILE
 
 func get_shortest_distance_human_elephant() -> int:

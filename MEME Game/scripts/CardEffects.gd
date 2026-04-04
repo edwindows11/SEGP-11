@@ -174,7 +174,7 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			var entry = GameState.tile_registry[key]
 			if to_types != null and not (entry["type"] in to_types):
 				continue
-			if entry["elephant_nodes"].size() >= 1:
+			if not GameState.can_place_piece(key, "elephant"):
 				continue
 			var dist = abs(key.x - from_key.x) + abs(key.y - from_key.y)
 			if max_dist > 0 and dist > max_dist:
