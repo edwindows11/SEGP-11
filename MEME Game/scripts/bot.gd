@@ -34,9 +34,10 @@ var bot_players: Dictionary = {}
 
 # ── Timing ───────────────────────────────────────────────────────────────────
 # Small delays so the bot "thinks" instead of acting instantly (feels natural).
-const THINK_DELAY      := 1.2   # seconds before choosing a card
-const ACTION_DELAY     := 0.35  # seconds between interactive tile selections
-const END_TURN_DELAY   := 0.8   # seconds before pressing End Turn
+var think_delay: float = 2.0
+var card_reveal_delay: float = 1.4
+var action_delay: float = 0.85
+var end_turn_delay: float = 1.8
 
 var _pending_selections: Array = []   # Queue of tile keys to feed to CardEffects
 var _action_timer: float = 0.0
@@ -60,6 +61,26 @@ func set_bot_players(indices: Array, difficulty: Difficulty = Difficulty.MEDIUM)
 func set_player_difficulty(player_index: int, difficulty: Difficulty) -> void:
 	bot_players[player_index] = difficulty
 
+## Configure overall bot pacing from pre-game setup.
+func set_speed_preset(preset: String) -> void:
+	var normalized: String = preset.strip_edges().to_lower()
+	match normalized:
+		"slow":
+			think_delay = 3.0
+			card_reveal_delay = 2.0
+			action_delay = 1.2
+			end_turn_delay = 2.4
+		"fast":
+			think_delay = 1.1
+			card_reveal_delay = 0.7
+			action_delay = 0.35
+			end_turn_delay = 0.9
+		_:
+			think_delay = 2.0
+			card_reveal_delay = 1.4
+			action_delay = 0.85
+			end_turn_delay = 1.8
+
 ## Returns true if the given player index is a bot.
 func is_bot(player_index: int) -> bool:
 	return bot_players.has(player_index)
@@ -73,6 +94,7 @@ func _on_turn_changed(player_index: int, _role_name: String, is_skipped: bool) -
 	_bot_is_acting = false
 	_pending_selections.clear()
 	_waiting_for_action = false
+	_action_timer = 0.0
 
 	if is_skipped:
 		return
@@ -82,8 +104,11 @@ func _on_turn_changed(player_index: int, _role_name: String, is_skipped: bool) -
 	_current_bot_player = player_index
 	_bot_is_acting = true
 
+	if ui and ui.has_method("show_instruction"):
+		ui.show_instruction("Player " + str(player_index + 1) + " (Bot) is thinking...")
+
 	# Wait a beat so the UI can refresh, then begin thinking.
-	await get_tree().create_timer(THINK_DELAY).timeout
+	await get_tree().create_timer(think_delay).timeout
 	_bot_take_turn(player_index)
 
 
@@ -99,6 +124,8 @@ func _bot_take_turn(player_index: int) -> void:
 	var hand: Array = GameState.player_hands[player_index]
 
 	if hand.is_empty():
+		_announce_bot_message(player_index, "has no cards and passes", false)
+		await get_tree().create_timer(end_turn_delay).timeout
 		_end_bot_turn()
 		return
 
@@ -114,7 +141,16 @@ func _bot_take_turn(player_index: int) -> void:
 
 	if chosen_card_id == "":
 		# No playable card found — pass/end turn
+		_announce_bot_message(player_index, "passes (no valid action card)", false)
+		await get_tree().create_timer(end_turn_delay).timeout
 		_end_bot_turn()
+		return
+
+	var card_def: Dictionary = CardData.ALL_CARDS.get(chosen_card_id, {})
+	var card_name: String = str(card_def.get("name", chosen_card_id))
+	_announce_bot_message(player_index, "plays: " + card_name, true)
+	await get_tree().create_timer(card_reveal_delay).timeout
+	if not _bot_is_acting:
 		return
 
 	# Discard the chosen card from hand (card_table.gd does this at end_turn via
@@ -133,6 +169,17 @@ func _bot_take_turn(player_index: int) -> void:
 		card_effects.request_tile_selection.connect(_on_bot_tile_selection_requested)
 
 	card_effects.execute_card(chosen_card_id)
+
+func _announce_bot_message(player_index: int, message: String, is_positive: bool) -> void:
+	var text := "Player " + str(player_index + 1) + " (Bot) " + message
+
+	if ui and ui.has_method("show_instruction"):
+		ui.show_instruction(text)
+
+	if card_effects:
+		var action_log_node = card_effects.get("action_log")
+		if action_log_node and action_log_node.has_method("add_action"):
+			action_log_node.add_action(text, is_positive)
 
 var _bot_played_card_id: String = ""
 
@@ -400,7 +447,7 @@ func _role_win_score_hard(
 			# ── Village Head: 7 action cards + 16 villagers
 			"Village Head":
 				if op in ["add_v","add_v_in"]:
-					var deficit := max(0, 16 - total_villagers)
+					var deficit: int = maxi(0, 16 - total_villagers)
 					bonus += 6.0 * min(count, deficit)
 
 			# ── Plantation Owner: plantation increase ≥ 2 + 7 action cards
@@ -416,7 +463,7 @@ func _role_win_score_hard(
 			# ── Wildfire Department: 4 elephants in forest
 			"Wildfire Department":
 				if op == "add_e":
-					var deficit := max(0, 4 - e_in_forest)
+					var deficit: int = maxi(0, 4 - e_in_forest)
 					bonus += 8.0 * min(count, deficit)
 				if op == "convert" and fx.get("to","") == "FOREST":
 					bonus += 4.0
@@ -475,6 +522,7 @@ func _on_bot_tile_selection_requested(valid_keys: Array, _instruction: String) -
 
 	# Queue the selection with a short delay so the game engine can process it.
 	_pending_selections.append(chosen_key)
+	_action_timer = action_delay
 	_waiting_for_action = true
 
 
@@ -525,13 +573,17 @@ func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 		"add_e":
 			# Prefer forest tiles; among those, pick the one farthest from humans
 			var forest_keys = valid_keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.FOREST)
-			var pool := forest_keys if not forest_keys.is_empty() else valid_keys
+			var pool: Array = valid_keys
+			if not forest_keys.is_empty():
+				pool = forest_keys
 			return _key_farthest_from_human(pool)
 
 		"add_v", "add_v_in":
 			# Prefer human tiles
 			var human_keys = valid_keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.HUMAN)
-			var pool := human_keys if not human_keys.is_empty() else valid_keys
+			var pool: Array = valid_keys
+			if not human_keys.is_empty():
+				pool = human_keys
 			return pool[randi() % pool.size()]
 
 		"remove_e":
@@ -571,7 +623,9 @@ func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 			else:  # WAITING_DEST — pick destination
 				# Dest: forest tile farthest from humans
 				var forest_keys = valid_keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.FOREST)
-				var pool := forest_keys if not forest_keys.is_empty() else valid_keys
+				var pool: Array = valid_keys
+				if not forest_keys.is_empty():
+					pool = forest_keys
 				return _key_farthest_from_human(pool)
 
 	return valid_keys[randi() % valid_keys.size()]
@@ -596,6 +650,32 @@ func _bot_confirm_convert_any_any_type() -> void:
 		Difficulty.HARD:
 			card_effects.confirm_convert_any_any_type_selected(GameState.TileType.FOREST)
 
+func _bot_confirm_steal_target() -> void:
+	var thief := _current_bot_player
+	var candidates: Array = []
+
+	for i in range(GameState.player_count):
+		if i == thief:
+			continue
+		var hand_size: int = GameState.player_hands[i].size()
+		if hand_size > 0:
+			candidates.append({"player": i, "hand_size": hand_size})
+
+	if candidates.is_empty():
+		return
+
+	var difficulty: Difficulty = bot_players.get(_current_bot_player, Difficulty.EASY)
+	var target_player: int = candidates[0]["player"]
+
+	match difficulty:
+		Difficulty.EASY:
+			target_player = candidates[randi() % candidates.size()]["player"]
+		Difficulty.MEDIUM, Difficulty.HARD:
+			candidates.sort_custom(func(a, b): return a["hand_size"] > b["hand_size"])
+			target_player = candidates[0]["player"]
+
+	card_effects.confirm_steal_target(target_player)
+
 
 # ────────────────────────────────────────────────────────────────────────────
 # _process — drains the _pending_selections queue with delays
@@ -605,11 +685,15 @@ func _process(delta: float) -> void:
 	if not _bot_is_acting:
 		return
 
-	# Handle convert_any_any type confirmation (WAITING_CHOICE state)
-	if card_effects and card_effects.state == 3 and \
-			card_effects.current_effect.get("op","") == "convert_any_any":
-		_bot_confirm_convert_any_any_type()
-		return
+	# Handle popup-style choices in WAITING_CHOICE.
+	if card_effects and card_effects.state == 3:
+		var wait_op: String = card_effects.current_effect.get("op", "")
+		if wait_op == "convert_any_any":
+			_bot_confirm_convert_any_any_type()
+			return
+		if wait_op == "steal":
+			_bot_confirm_steal_target()
+			return
 
 	if not _waiting_for_action:
 		return
@@ -618,7 +702,7 @@ func _process(delta: float) -> void:
 	if _action_timer > 0.0:
 		return
 
-	_action_timer = ACTION_DELAY
+	_action_timer = action_delay
 	_waiting_for_action = false
 
 	if _pending_selections.is_empty():
@@ -653,7 +737,7 @@ func _on_bot_effects_complete() -> void:
 	if not _bot_is_acting:
 		return
 	# Small pause before ending the turn
-	await get_tree().create_timer(END_TURN_DELAY).timeout
+	await get_tree().create_timer(end_turn_delay).timeout
 	_end_bot_turn()
 
 
@@ -710,20 +794,20 @@ func _end_bot_turn() -> void:
 # ────────────────────────────────────────────────────────────────────────────
 
 func _key_closest_to_human(keys: Array) -> Vector2i:
-	var best_key := keys[0]
-	var best_dist := 999999
+	var best_key: Vector2i = Vector2i(keys[0])
+	var best_dist: int = 999999
 	for k in keys:
-		var d := _min_dist_to_type(k, GameState.TileType.HUMAN)
+		var d: int = _min_dist_to_type(k, GameState.TileType.HUMAN)
 		if d < best_dist:
 			best_dist = d
 			best_key = k
 	return best_key
 
 func _key_farthest_from_human(keys: Array) -> Vector2i:
-	var best_key := keys[0]
-	var best_dist := -1
+	var best_key: Vector2i = Vector2i(keys[0])
+	var best_dist: int = -1
 	for k in keys:
-		var d := _min_dist_to_type(k, GameState.TileType.HUMAN)
+		var d: int = _min_dist_to_type(k, GameState.TileType.HUMAN)
 		if d > best_dist:
 			best_dist = d
 			best_key = k
@@ -731,10 +815,10 @@ func _key_farthest_from_human(keys: Array) -> Vector2i:
 
 func _key_most_adjacent_forest(keys: Array) -> Vector2i:
 	# Among valid keys, pick the one with the most neighbouring forest tiles.
-	var best_key := keys[0]
-	var best_count := -1
+	var best_key: Vector2i = Vector2i(keys[0])
+	var best_count: int = -1
 	for k in keys:
-		var count := 0
+		var count: int = 0
 		for neighbour in _get_neighbours(k):
 			if GameState.tile_registry.has(neighbour) and \
 					GameState.tile_registry[neighbour]["type"] == GameState.TileType.FOREST:
@@ -755,10 +839,10 @@ func _key_least_valuable(keys: Array) -> Vector2i:
 	return keys[randi() % keys.size()]
 
 func _min_dist_to_type(origin: Vector2i, tile_type: int) -> int:
-	var best := 999999
+	var best: int = 999999
 	for k in GameState.tile_registry:
 		if GameState.tile_registry[k]["type"] == tile_type:
-			var d := abs(k.x - origin.x) + abs(k.y - origin.y)
+			var d: int = abs(k.x - origin.x) + abs(k.y - origin.y)
 			if d < best:
 				best = d
 	return best

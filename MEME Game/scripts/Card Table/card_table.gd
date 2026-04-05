@@ -9,8 +9,13 @@ var totalMeeple: int = 0
 var player_role: String = ""
 var player_roles: Array = []
 var _current_valid_selection_keys: Array = []
+var singleplayer_bot_count: int = 3
+var human_player_index: int = 0
+var bot_speed_preset: String = "Normal"
+var bot_difficulty_by_player: Dictionary = {}
 
 var card_effects: Node = null  # CardEffects instance
+var bot_ai: Node = null
 
 func _ready() -> void:
 	# --- GameState setup ---
@@ -58,6 +63,10 @@ func _ready() -> void:
 
 	# --- Wire GameState turn signal to UI ---
 	GameState.turn_changed.connect(UI._on_turn_changed)
+	GameState.turn_changed.connect(_on_turn_changed_for_input_locks)
+
+	# --- Optional singleplayer bots ---
+	_setup_singleplayer_bots()
 
 	if player_roles.size() > 0:
 		print("Game Started with roles: ", player_roles)
@@ -73,6 +82,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if pause_menu:
 			pause_menu.toggle_pause()
 			return
+
+	if _is_bot_turn():
+		return
 
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 
@@ -197,10 +209,15 @@ func _route_tile_click_to_effects(tile_key: Vector2i) -> void:
 # --- Card effect signal handlers ---
 
 func _on_card_activated(card_id: String) -> void:
+	if _is_bot_turn():
+		return
 	card_effects.execute_card(card_id)
 
 func _on_card_effects_complete() -> void:
-	UI.end_turn_button.disabled = false
+	if _is_bot_turn():
+		UI.end_turn_button.disabled = true
+	else:
+		UI.end_turn_button.disabled = false
 
 func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void:
 	_current_valid_selection_keys = _valid_keys.duplicate()
@@ -222,6 +239,9 @@ func _on_request_convert_type_popup(current_type: int) -> void:
 # --- End turn ---
 
 func _on_end_turn_button_pressed() -> void:
+	if _is_bot_turn():
+		return
+
 	if UI.pending_card:
 		# Track if the card played was a Green card
 		var card_id = UI.pending_card.card_id
@@ -258,6 +278,72 @@ func _on_end_turn_button_pressed() -> void:
 	UI.remove_played_card_and_draw_replacement()
 	GameState.advance_turn()
 	UI.currently_viewing_card = false
+
+func _setup_singleplayer_bots() -> void:
+	var max_bots: int = maxi(0, GameState.player_count - 1)
+	var bot_count: int = clampi(singleplayer_bot_count, 0, max_bots)
+	if bot_count <= 0:
+		return
+
+	var bot_script = load("res://scripts/bot.gd")
+	if bot_script == null:
+		push_warning("Bot script could not be loaded")
+		return
+
+	bot_ai = bot_script.new()
+	bot_ai.card_effects = card_effects
+	bot_ai.play = Play
+	bot_ai.board = $Board
+	bot_ai.ui = UI
+	if bot_ai.has_method("set_speed_preset"):
+		bot_ai.set_speed_preset(bot_speed_preset)
+	add_child(bot_ai)
+
+	var bot_indices: Array = []
+	for i in range(bot_count):
+		var bot_index := (human_player_index + 1 + i) % GameState.player_count
+		bot_indices.append(bot_index)
+
+	for i in range(bot_indices.size()):
+		var bot_player_index: int = bot_indices[i]
+		var configured_difficulty: int = int(bot_difficulty_by_player.get(bot_player_index, -1))
+		var difficulty: int = configured_difficulty
+		if difficulty < bot_ai.Difficulty.EASY or difficulty > bot_ai.Difficulty.HARD:
+			# Fallback keeps the previous default progression if no pre-game override exists.
+			difficulty = bot_ai.Difficulty.MEDIUM
+			if i == 0:
+				difficulty = bot_ai.Difficulty.HARD
+			elif i == 1:
+				difficulty = bot_ai.Difficulty.MEDIUM
+			else:
+				difficulty = bot_ai.Difficulty.EASY
+		bot_ai.set_player_difficulty(bot_player_index, difficulty)
+
+	if not GameState.turn_changed.is_connected(bot_ai._on_turn_changed):
+		GameState.turn_changed.connect(bot_ai._on_turn_changed)
+
+	print("Singleplayer bots enabled for players: ", bot_indices)
+
+func _is_bot_turn() -> bool:
+	return _is_bot_turn_for_player(GameState.current_player_index)
+
+func _is_bot_turn_for_player(player_index: int) -> bool:
+	if bot_ai == null:
+		return false
+	return bot_ai.is_bot(player_index)
+
+func _on_turn_changed_for_input_locks(player_index: int, _role_name: String, is_skipped: bool) -> void:
+	if UI == null:
+		return
+
+	var is_bot_turn := _is_bot_turn_for_player(player_index) and not is_skipped
+	if is_bot_turn:
+		UI.play_btn.disabled = true
+		UI.end_turn_button.disabled = true
+		return
+
+	if is_skipped:
+		UI.play_btn.disabled = true
 
 # --- Initial board setup ---
 
