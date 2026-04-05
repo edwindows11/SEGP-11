@@ -3,6 +3,10 @@ extends Control
 signal card_activated(card_id: String)
 signal end_turn_requested()
 signal request_po_ability()
+signal request_gov_ability()
+signal request_cons_ability()
+signal request_ld_ability()
+signal request_ec_ability()
 
 const CARD_SCENE = preload("res://scenes/Card.tscn")
 const TOTAL_CARDS = 5
@@ -31,6 +35,15 @@ var vh_villagers_increased_this_turn: bool = false
 var po_used_ability_this_turn: bool = false
 
 var po_ability_btn: Button = null
+var gov_ability_btn: Button = null
+var gov_used_ability_this_turn: bool = false
+var cons_ability_btn: Button = null
+var cons_used_ability_this_turn: bool = false
+var ld_ability_btn: Button = null
+var ld_used_ability_this_turn: bool = false
+var ec_ability_btn: Button = null
+var ec_used_ability_this_turn: bool = false
+var ec_choice_popup: PanelContainer = null
 
 # Conservationist Tracker UI
 var cons_tracker_panel: PanelContainer = null
@@ -80,6 +93,12 @@ var res_cards_label: Label = null
 var res_tiles_label: Label = null
 var res_status_label: Label = null
 
+# Government Tracker UI
+var gov_tracker_panel: PanelContainer = null
+var gov_cards_label: Label = null
+var gov_ratio_label: Label = null
+var gov_status_label: Label = null
+
 # Winning Screen
 var win_screen_panel: PanelContainer = null
 var win_screen_label: Label = null
@@ -87,6 +106,7 @@ var is_game_over: bool = false
 
 # Steal popup
 var steal_popup: PanelContainer = null
+var em_choice_popup: PanelContainer = null
 
 # Wildlife Department discard popup
 var wildlife_discard_popup: PanelContainer = null
@@ -97,14 +117,14 @@ var ability_dropdown_panel: PanelContainer = null
 
 const ROLE_ABILITIES: Dictionary = {
 	"Wildlife Department": "Draw 2 bonus cards (any colour) at the start of your turn. Discard 1 before ending the turn.",
-	"Conservationist":     "Win by playing at least 4 Green cards AND increasing forested area by 2 tiles.",
+	"Conservationist":     "Special: Once per turn as an extra action, convert 1 non-forest tile adjacent to a forested tile with an elephant into Forest.\nWin by playing at least 4 Green cards AND increasing forested area by 2 tiles.",
 	"Village Head":        "Special: Can play up to 2 colored cards, but max 1 can increase villagers. Must keep >= 1 card in hand.\nWin by playing cards that increase villagers (x2) AND removing 2 constraints.",
 	"Plantation Owner":    "Special: Instead of drawing, steal a played colored card, reverse its effects, and play it immediately. Uses your turn action.\nWin by playing 2G + 1R + 1Y cards AND increasing plantation tiles by 2.",
-	"Land Developer":      "Win by playing (2G+2R) or (2Y+2R) AND increasing human-dominated areas by 2.",
-	"Environmental Consultant": "Win by playing 2G + 2R AND satisfying 2 vacant secondary role goals.",
-	"Ecotourism Manager":  "Win by playing 3G + 2Y, keeping at least 1 elephant alive with distance >= 3 from humans.",
+	"Land Developer":      "Special: Once per turn as an extra action, convert 1 non-human tile with at least 3 human-dominated neighbours into a Human-Dominated tile.\nWin by playing (2G+2R) or (2Y+2R) AND increasing human-dominated areas by 2.",
+	"Environmental Consultant": "Special: At game start, borrow one special ability from another chosen role and use it for the whole game.\nWin by playing 2G + 2R AND satisfying 2 vacant secondary role goals.",
+	"Ecotourism Manager":  "Special: For your played black, yellow, red or green cards that increase elephants or humans, as an extra action, you may choose to move an elephant or a human in your chosen direction.\nWin by playing 3G + 2Y, keeping at least 1 elephant alive with distance >= 3 from humans.",
 	"Researcher":          "Special: Played Action cards that add elephants let you move an equal number of elephants.\nWin by playing cards that increase elephants (x2) and villagers (x3) while keeping them >= 2 tiles apart.",
-	"Government":          "No special ability.",
+	"Government":          "Special: Instead of drawing a card, steal any played Yellow, Red, or Green card from another player. You may replay it on your current or later turns (once per card).\nWin by playing 2R + 2Y cards AND having Villagers >= 2x Elephants on the board.",
 }
 
 func _ready():
@@ -139,6 +159,8 @@ func _ready():
 		placement_options.visible = false
 
 	_build_steal_popup()
+	_build_ec_choice_popup()
+	_build_em_choice_popup()
 	_build_role_ability_dropdown()
 
 	# Add instruction banner (shown when player must select a tile)
@@ -259,6 +281,150 @@ func _ready():
 	po_ability_btn.pressed.connect(_on_po_ability_btn_pressed)
 	# Push it into the CanvasLayer (or just add_child, which will be in the top-level Control)
 	add_child(po_ability_btn)
+
+	# Setup Government Ability Button ("Steal Card") — same position as PO, only one shows at a time
+	gov_ability_btn = Button.new()
+	gov_ability_btn.text = "⚖ Steal Card"
+	gov_ability_btn.visible = false
+	gov_ability_btn.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	gov_ability_btn.offset_left = 30
+	gov_ability_btn.offset_bottom = -30
+	gov_ability_btn.offset_top = -80
+	gov_ability_btn.offset_right = 280
+	gov_ability_btn.z_index = 50
+	
+	var gov_style = StyleBoxFlat.new()
+	gov_style.bg_color = Color(0.1, 0.2, 0.5, 0.95)  # Deep blue / authority
+	gov_style.corner_radius_top_left = 10
+	gov_style.corner_radius_top_right = 10
+	gov_style.corner_radius_bottom_left = 10
+	gov_style.corner_radius_bottom_right = 10
+	gov_style.content_margin_left = 15
+	gov_style.content_margin_right = 15
+	gov_style.content_margin_top = 10
+	gov_style.content_margin_bottom = 10
+	gov_style.border_width_top = 2
+	gov_style.border_width_bottom = 2
+	gov_style.border_width_left = 2
+	gov_style.border_width_right = 2
+	gov_style.border_color = Color(0.5, 0.75, 1.0, 1.0)
+	gov_ability_btn.add_theme_stylebox_override("normal", gov_style)
+	var gov_hover = gov_style.duplicate()
+	gov_hover.bg_color = Color(0.15, 0.3, 0.65, 0.95)
+	gov_ability_btn.add_theme_stylebox_override("hover", gov_hover)
+	gov_ability_btn.add_theme_font_size_override("font_size", 18)
+	gov_ability_btn.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0))
+	
+	gov_ability_btn.pressed.connect(_on_gov_ability_btn_pressed)
+	add_child(gov_ability_btn)
+
+	# Setup Conservationist Ability Button ("Expand Forest") — same bottom-left position
+	cons_ability_btn = Button.new()
+	cons_ability_btn.text = "🌿 Expand Forest"
+	cons_ability_btn.visible = false
+	cons_ability_btn.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	cons_ability_btn.offset_left = 30
+	cons_ability_btn.offset_bottom = -30
+	cons_ability_btn.offset_top = -80
+	cons_ability_btn.offset_right = 290
+	cons_ability_btn.z_index = 50
+	
+	var cons_style = StyleBoxFlat.new()
+	cons_style.bg_color = Color(0.05, 0.35, 0.1, 0.95)  # Deep forest green
+	cons_style.corner_radius_top_left = 10
+	cons_style.corner_radius_top_right = 10
+	cons_style.corner_radius_bottom_left = 10
+	cons_style.corner_radius_bottom_right = 10
+	cons_style.content_margin_left = 15
+	cons_style.content_margin_right = 15
+	cons_style.content_margin_top = 10
+	cons_style.content_margin_bottom = 10
+	cons_style.border_width_top = 2
+	cons_style.border_width_bottom = 2
+	cons_style.border_width_left = 2
+	cons_style.border_width_right = 2
+	cons_style.border_color = Color(0.3, 1.0, 0.4, 1.0)
+	cons_ability_btn.add_theme_stylebox_override("normal", cons_style)
+	var cons_hover = cons_style.duplicate()
+	cons_hover.bg_color = Color(0.08, 0.5, 0.15, 0.95)
+	cons_ability_btn.add_theme_stylebox_override("hover", cons_hover)
+	cons_ability_btn.add_theme_font_size_override("font_size", 18)
+	cons_ability_btn.add_theme_color_override("font_color", Color(0.85, 1.0, 0.88))
+	
+	cons_ability_btn.pressed.connect(_on_cons_ability_btn_pressed)
+	add_child(cons_ability_btn)
+
+	# Setup Land Developer Ability Button ("Expand Human Tile") — same bottom-left position
+	ld_ability_btn = Button.new()
+	ld_ability_btn.text = "🏙 Expand City"
+	ld_ability_btn.visible = false
+	ld_ability_btn.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	ld_ability_btn.offset_left = 30
+	ld_ability_btn.offset_bottom = -30
+	ld_ability_btn.offset_top = -80
+	ld_ability_btn.offset_right = 290
+	ld_ability_btn.z_index = 50
+	
+	var ld_style = StyleBoxFlat.new()
+	ld_style.bg_color = Color(0.35, 0.2, 0.05, 0.95)  # Dark brown-orange
+	ld_style.corner_radius_top_left = 10
+	ld_style.corner_radius_top_right = 10
+	ld_style.corner_radius_bottom_left = 10
+	ld_style.corner_radius_bottom_right = 10
+	ld_style.content_margin_left = 15
+	ld_style.content_margin_right = 15
+	ld_style.content_margin_top = 10
+	ld_style.content_margin_bottom = 10
+	ld_style.border_width_top = 2
+	ld_style.border_width_bottom = 2
+	ld_style.border_width_left = 2
+	ld_style.border_width_right = 2
+	ld_style.border_color = Color(1.0, 0.65, 0.2, 1.0)
+	ld_ability_btn.add_theme_stylebox_override("normal", ld_style)
+	var ld_hover = ld_style.duplicate()
+	ld_hover.bg_color = Color(0.5, 0.3, 0.08, 0.95)
+	ld_ability_btn.add_theme_stylebox_override("hover", ld_hover)
+	ld_ability_btn.add_theme_font_size_override("font_size", 18)
+	ld_ability_btn.add_theme_color_override("font_color", Color(1.0, 0.9, 0.75))
+	
+	ld_ability_btn.pressed.connect(_on_ld_ability_btn_pressed)
+	add_child(ld_ability_btn)
+
+	# Setup Environmental Consultant Ability Button ("Choose / Use Ability")
+	ec_ability_btn = Button.new()
+	ec_ability_btn.text = "🌍 Choose Ability"
+	ec_ability_btn.visible = false
+	ec_ability_btn.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	ec_ability_btn.offset_left = 30
+	ec_ability_btn.offset_bottom = -30
+	ec_ability_btn.offset_top = -80
+	ec_ability_btn.offset_right = 310
+	ec_ability_btn.z_index = 50
+
+	var ec_btn_style = StyleBoxFlat.new()
+	ec_btn_style.bg_color = Color(0.08, 0.32, 0.32, 0.95)  # Deep teal
+	ec_btn_style.corner_radius_top_left = 10
+	ec_btn_style.corner_radius_top_right = 10
+	ec_btn_style.corner_radius_bottom_left = 10
+	ec_btn_style.corner_radius_bottom_right = 10
+	ec_btn_style.content_margin_left = 15
+	ec_btn_style.content_margin_right = 15
+	ec_btn_style.content_margin_top = 10
+	ec_btn_style.content_margin_bottom = 10
+	ec_btn_style.border_width_top = 2
+	ec_btn_style.border_width_bottom = 2
+	ec_btn_style.border_width_left = 2
+	ec_btn_style.border_width_right = 2
+	ec_btn_style.border_color = Color(0.2, 0.9, 0.75, 1.0)
+	ec_ability_btn.add_theme_stylebox_override("normal", ec_btn_style)
+	var ec_btn_hover = ec_btn_style.duplicate()
+	ec_btn_hover.bg_color = Color(0.12, 0.48, 0.48, 0.95)
+	ec_ability_btn.add_theme_stylebox_override("hover", ec_btn_hover)
+	ec_ability_btn.add_theme_font_size_override("font_size", 18)
+	ec_ability_btn.add_theme_color_override("font_color", Color(0.85, 1.0, 0.95))
+
+	ec_ability_btn.pressed.connect(_on_ec_ability_btn_pressed)
+	add_child(ec_ability_btn)
 
 	# Add Village Head tracker
 	vh_tracker_panel = PanelContainer.new()
@@ -405,9 +571,9 @@ func _ready():
 	ec_tracker_panel = PanelContainer.new()
 	ec_tracker_panel.name = "_ec_tracker_panel"
 	ec_tracker_panel.visible = false
-	var ec_style = ld_tracker_style.duplicate()
-	ec_style.bg_color = Color(0.2, 0.4, 0.2, 0.8) # Dark greenish
-	ec_tracker_panel.add_theme_stylebox_override("panel", ec_style)
+	var ec_tracker_style = ld_tracker_style.duplicate()
+	ec_tracker_style.bg_color = Color(0.2, 0.4, 0.2, 0.8) # Dark greenish
+	ec_tracker_panel.add_theme_stylebox_override("panel", ec_tracker_style)
 	var ec_vbox = VBoxContainer.new()
 	ec_vbox.add_theme_constant_override("separation", 10)
 	ec_tracker_panel.add_child(ec_vbox)
@@ -529,6 +695,46 @@ func _ready():
 	res_vbox.add_child(res_status_label)
 	trackers_vbox.add_child(res_tracker_panel)
 
+	# Add Government tracker
+	gov_tracker_panel = PanelContainer.new()
+	gov_tracker_panel.name = "_gov_tracker_panel"
+	gov_tracker_panel.visible = false
+	var gov_tracker_style = StyleBoxFlat.new()
+	gov_tracker_style.bg_color = Color(0.05, 0.1, 0.3, 0.85)  # Dark navy blue
+	gov_tracker_style.corner_radius_top_left = 10
+	gov_tracker_style.corner_radius_bottom_left = 10
+	gov_tracker_style.corner_radius_top_right = 10
+	gov_tracker_style.corner_radius_bottom_right = 10
+	gov_tracker_style.content_margin_left = 15
+	gov_tracker_style.content_margin_right = 15
+	gov_tracker_style.content_margin_top = 15
+	gov_tracker_style.content_margin_bottom = 15
+	gov_tracker_panel.add_theme_stylebox_override("panel", gov_tracker_style)
+	var gov_vbox = VBoxContainer.new()
+	gov_vbox.add_theme_constant_override("separation", 10)
+	gov_tracker_panel.add_child(gov_vbox)
+	var gov_title = Label.new()
+	gov_title.text = "Government Goal"
+	gov_title.add_theme_font_size_override("font_size", 18)
+	gov_title.add_theme_color_override("font_color", Color(0.6, 0.85, 1.0))
+	gov_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gov_vbox.add_child(gov_title)
+	gov_cards_label = Label.new()
+	gov_cards_label.text = "Cards: 0R, 0Y / 2R, 2Y"
+	gov_cards_label.add_theme_font_size_override("font_size", 16)
+	gov_vbox.add_child(gov_cards_label)
+	gov_ratio_label = Label.new()
+	gov_ratio_label.text = "Villagers / Elephants: 0 / 0"
+	gov_ratio_label.add_theme_font_size_override("font_size", 16)
+	gov_vbox.add_child(gov_ratio_label)
+	gov_status_label = Label.new()
+	gov_status_label.text = "In Progress"
+	gov_status_label.add_theme_font_size_override("font_size", 16)
+	gov_status_label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.2))
+	gov_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gov_vbox.add_child(gov_status_label)
+	trackers_vbox.add_child(gov_tracker_panel)
+
 	# Add winning screen
 	win_screen_panel = PanelContainer.new()
 	win_screen_panel.name = "_win_screen_panel"
@@ -611,6 +817,7 @@ func _process(delta: float) -> void:
 	if em_tracker_panel: em_tracker_panel.visible = false
 	if wd_tracker_panel: wd_tracker_panel.visible = false
 	if res_tracker_panel: res_tracker_panel.visible = false
+	if gov_tracker_panel: gov_tracker_panel.visible = false
 	
 	var cons_index = GameState.player_roles.find("Conservationist")
 	if cons_index != -1:
@@ -792,6 +999,34 @@ func _process(delta: float) -> void:
 				res_status_label.text = "In Progress"
 				res_status_label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.2))
 
+	var gov_index = GameState.player_roles.find("Government")
+	if gov_index != -1:
+		if gov_tracker_panel: gov_tracker_panel.visible = true
+		var stats = GameState.player_stats[gov_index]
+		var r = stats.get("red_cards_played", 0)
+		var y = stats.get("yellow_cards_played", 0)
+
+		# Count total villagers and elephants on board
+		var total_v = GameState.get_total_villagers()
+		var total_e = 0
+		for key in GameState.tile_registry:
+			total_e += GameState.tile_registry[key]["elephant_nodes"].size()
+
+		gov_cards_label.text = "Cards: %dR, %dY / 2R, 2Y" % [r, y]
+		gov_ratio_label.text = "Villagers: %d, Elephants: %d (Need V >= 2x E)" % [total_v, total_e]
+
+		# Win: 2 red + 2 yellow cards AND villagers >= 2x elephants (and at least 1 elephant present)
+		var ratio_met = (total_e > 0 and total_v >= total_e * 2) or (total_e == 0 and total_v >= 4)
+		if r >= 2 and y >= 2 and ratio_met:
+			if gov_status_label.text != "GOAL MET!":
+				gov_status_label.text = "GOAL MET!"
+				gov_status_label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.2))
+				_trigger_win(gov_index, "Government")
+		else:
+			if gov_status_label.text != "In Progress":
+				gov_status_label.text = "In Progress"
+				gov_status_label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.2))
+
 func _on_window_resize() -> void:
 	reposition_cards()
 
@@ -886,7 +1121,7 @@ func _on_card_selected(selected_card) -> void:
 		return
 	
 	var r_name = GameState.player_roles[GameState.current_player_index] if GameState.current_player_index < GameState.player_roles.size() else ""
-	var max_cards = 2 if r_name == "Village Head" else 1
+	var max_cards = 2 if (r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head")) else 1
 
 	if cards_played_this_turn >= max_cards:
 		if pending_card:
@@ -894,7 +1129,7 @@ func _on_card_selected(selected_card) -> void:
 		show_instruction("You cannot play any more cards this turn.")
 		return
 		
-	if r_name == "Village Head" and cards_played_this_turn == 1:
+	if (r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head")) and cards_played_this_turn == 1:
 		var c_data = CardData.ALL_CARDS.get(selected_card.card_id, {})
 		var c_col = c_data.get("color", Color.WHITE)
 		if not c_col in [Color.GREEN, Color.YELLOW, Color.RED]:
@@ -909,7 +1144,7 @@ func _on_card_selected(selected_card) -> void:
 			show_instruction("Village Head can only play one card that adds villagers per turn.")
 			return
 			
-	if r_name == "Village Head":
+	if r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head"):
 		# Must keep at least 1 card in hand. Hand size includes selected card until it's played.
 		var current_hand_size = GameState.player_hands[GameState.current_player_index].size()
 		if pending_card:
@@ -977,13 +1212,20 @@ func _on_play_btn_pressed():
 		
 	if pending_card:
 		var cur_role = GameState.player_roles[GameState.current_player_index] if GameState.current_player_index < GameState.player_roles.size() else ""
-		if cur_role == "Village Head":
+		if cur_role == "Village Head" or (cur_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head"):
 			var c_data = CardData.ALL_CARDS.get(pending_card.card_id, {})
 			for fx in c_data.get("sub_effects", []):
 				if fx.get("op", "") in ["add_v", "add_v_in"]:
 					vh_villagers_increased_this_turn = true
 					break
-					
+
+		# Government: if this is a stolen card being replayed, mark it as used
+		if cur_role == "Government":
+			var gov_idx = GameState.current_player_index
+			var stash: Array = GameState.government_stolen_cards.get(gov_idx, [])
+			if pending_card.card_id in stash:
+				GameState.government_mark_replayed(pending_card.card_id)
+				pending_card.modulate = Color(1.0, 1.0, 1.0, 1.0)  # remove gold tint	
 		play_btn.disabled = true
 		var card_id = pending_card.card_id   
 		pending_card.queue_free()
@@ -1001,6 +1243,10 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool) ->
 	GameState.wildlife_dept_drawn_cards = []
 	vh_villagers_increased_this_turn = false
 	po_used_ability_this_turn = false
+	gov_used_ability_this_turn = false
+	cons_used_ability_this_turn = false
+	ld_used_ability_this_turn = false
+	ec_used_ability_this_turn = false
 
 	var skip_label = $Skipped
 	if skip_label:
@@ -1025,14 +1271,32 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool) ->
 			
 	if po_ability_btn:
 		po_ability_btn.visible = (role_name == "Plantation Owner" and not is_skipped)
+	if gov_ability_btn:
+		gov_ability_btn.visible = (role_name == "Government" and not is_skipped)
+	if cons_ability_btn:
+		cons_ability_btn.visible = (role_name == "Conservationist" and not is_skipped)
+	if ld_ability_btn:
+		ld_ability_btn.visible = (role_name == "Land Developer" and not is_skipped)
+	if ec_ability_btn:
+		# Always visible on EC's turn (even if no ability borrowed yet)
+		ec_ability_btn.visible = (role_name == "Environmental Consultant" and not is_skipped)
+		if role_name == "Environmental Consultant":
+			_update_ec_ability_btn_label()
 
-	# Wildlife Department special ability: draw 2 bonus cards at the start of their turn
-	if role_name == "Wildlife Department" and not is_skipped:
+	# Wildlife Department special ability: draw 2 bonus cards at the start of their turn.
+	# Also triggers if Environmental Consultant has borrowed the Wildlife Department ability.
+	var _is_wd_active = (role_name == "Wildlife Department") or \
+		(role_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
+	if _is_wd_active and not is_skipped:
 		GameState.wildlife_dept_draw_bonus(player_index)
 		spawn_cards()
 		_show_wildlife_bonus_banner()
 	else:
 		spawn_cards()
+
+	# Show EC ability choice popup on the very first EC turn (before a choice is made)
+	if role_name == "Environmental Consultant" and not is_skipped and GameState.ec_borrowed_ability == "":
+		call_deferred("show_ec_choice_popup")
 
 
 # --- Instruction label (shown during tile selection) ---
@@ -1249,6 +1513,47 @@ func _on_po_ability_btn_pressed() -> void:
 		return
 	request_po_ability.emit()
 
+func _on_gov_ability_btn_pressed() -> void:
+	if gov_used_ability_this_turn:
+		show_instruction("You have already stolen a card this turn.")
+		return
+	request_gov_ability.emit()
+
+func _on_cons_ability_btn_pressed() -> void:
+	if cons_used_ability_this_turn:
+		show_instruction("You have already used the Expand Forest ability this turn.")
+		return
+	request_cons_ability.emit()
+
+func _on_ld_ability_btn_pressed() -> void:
+	if ld_used_ability_this_turn:
+		show_instruction("You have already used the Expand City ability this turn.")
+		return
+	request_ld_ability.emit()
+
+# Spawn the newly-stolen card into the hand display (with a gold tint to mark it as stolen)
+func spawn_stolen_gov_card() -> void:
+	var displayed_ids: Array = []
+	for child in cards_container.get_children():
+		if not child.is_queued_for_deletion() and child != pending_card:
+			displayed_ids.append(child.card_id)
+
+	var gov_index = GameState.current_player_index
+	var stolen_stash: Array = GameState.government_stolen_cards.get(gov_index, [])
+	var hand = GameState.player_hands[gov_index]
+	for card_id in hand:
+		if not (card_id in displayed_ids) and (card_id in stolen_stash):
+			var card = CARD_SCENE.instantiate()
+			cards_container.add_child(card)
+			card.set_card_data(card_id)
+			card.card_selected.connect(_on_card_selected)
+			# Gold tint to mark it as a stolen card
+			card.modulate = Color(1.3, 1.1, 0.5, 1.0)
+			card.set_meta("is_stolen_gov_card", true)
+			break
+
+	call_deferred("reposition_cards")
+
 func _build_role_ability_dropdown() -> void:
 	# Add the button
 	ability_dropdown_btn = Button.new()
@@ -1336,3 +1641,235 @@ func _trigger_win(player_index: int, role_name: String) -> void:
 		win_screen_panel.visible = true
 	if win_screen_label:
 		win_screen_label.text = "Player " + str(player_index + 1) + " WON!\nRole: " + role_name
+
+
+# --- Environmental Consultant: Special Ability ---
+
+func _on_ec_ability_btn_pressed() -> void:
+	# If no choice has been made yet, show the picker popup
+	if GameState.ec_borrowed_ability == "":
+		show_ec_choice_popup()
+		return
+	# "None" means EC made a choice but there was nothing available
+	if GameState.ec_borrowed_ability == "None":
+		show_instruction("No ability was borrowed — no eligible roles are in this game.")
+		return
+	# Passive abilities
+	if GameState.ec_borrowed_ability in ["Wildlife Department", "Village Head", "Researcher", "Ecotourism Manager"]:
+		show_instruction(GameState.ec_borrowed_ability + " ability is passive and takes effect automatically.")
+		return
+	# Already used a button-based ability this turn?
+	if ec_used_ability_this_turn:
+		show_instruction("You have already used your borrowed ability this turn.")
+		return
+	ec_used_ability_this_turn = true
+	request_ec_ability.emit()
+
+func _build_ec_choice_popup() -> void:
+	ec_choice_popup = PanelContainer.new()
+	ec_choice_popup.name = "_ec_choice_popup"
+	ec_choice_popup.visible = false
+	ec_choice_popup.set_anchors_preset(Control.PRESET_CENTER)
+	ec_choice_popup.offset_left  = -270
+	ec_choice_popup.offset_right =  270
+	ec_choice_popup.offset_top   = -240
+	ec_choice_popup.offset_bottom = 240
+	ec_choice_popup.z_index = 90
+
+	var popup_style = StyleBoxFlat.new()
+	popup_style.bg_color = Color(0.06, 0.14, 0.18, 0.97)
+	popup_style.corner_radius_top_left    = 14
+	popup_style.corner_radius_top_right   = 14
+	popup_style.corner_radius_bottom_left = 14
+	popup_style.corner_radius_bottom_right = 14
+	popup_style.border_width_top    = 2
+	popup_style.border_width_bottom = 2
+	popup_style.border_width_left   = 2
+	popup_style.border_width_right  = 2
+	popup_style.border_color = Color(0.2, 0.9, 0.75, 0.9)
+	popup_style.content_margin_left   = 24
+	popup_style.content_margin_right  = 24
+	popup_style.content_margin_top    = 20
+	popup_style.content_margin_bottom = 20
+	ec_choice_popup.add_theme_stylebox_override("panel", popup_style)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 12)
+	ec_choice_popup.add_child(vbox)
+	ec_choice_popup.set_meta("_vbox", vbox)
+
+	var title = Label.new()
+	title.text = "Environmental Consultant — Borrow an Ability"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_color", Color(0.4, 1.0, 0.85))
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(title)
+
+	add_child(ec_choice_popup)
+
+func show_ec_choice_popup() -> void:
+	if not ec_choice_popup:
+		return
+
+	var vbox = ec_choice_popup.get_meta("_vbox")
+	# Clear old buttons — keep title row (index 0)
+	while vbox.get_child_count() > 1:
+		vbox.get_child(vbox.get_child_count() - 1).queue_free()
+
+	# Define all borrowable roles with display labels and tint colours
+	var borrowable: Array = [
+		{"role": "Plantation Owner",   "label": "🌿 Steal & Reverse Card",         "color": Color(0.1, 0.4, 0.2, 0.95)},
+		{"role": "Government",          "label": "⚖ Steal Played Card",             "color": Color(0.1, 0.2, 0.5, 0.95)},
+		{"role": "Conservationist",     "label": "🌳 Expand Forest",                 "color": Color(0.05, 0.35, 0.1, 0.95)},
+		{"role": "Land Developer",      "label": "🏙 Expand City",                   "color": Color(0.35, 0.2, 0.05, 0.95)},
+		{"role": "Wildlife Department", "label": "🦁 Draw 2 Bonus Cards (Passive)",  "color": Color(0.04, 0.14, 0.22, 0.95)},
+		{"role": "Village Head",        "label": "🛖 Village Head (Passive)",         "color": Color(0.3, 0.1, 0.1, 0.95)},
+		{"role": "Researcher",          "label": "🔬 Researcher (Passive)",           "color": Color(0.4, 0.1, 0.5, 0.95)},
+		{"role": "Ecotourism Manager",  "label": "📸 Ecotourism Manager (Passive)",   "color": Color(0.1, 0.5, 0.5, 0.95)},
+	]
+
+	var any_option := false
+	for entry in borrowable:
+		var role_name_b: String = entry["role"]
+		if not (role_name_b in GameState.player_roles):
+			continue  # Only show roles actually in this game
+		any_option = true
+		var btn = Button.new()
+		btn.text = entry["label"] + "  (" + role_name_b + ")"
+		btn.custom_minimum_size = Vector2(460, 52)
+		btn.add_theme_font_size_override("font_size", 16)
+
+		var btn_style = StyleBoxFlat.new()
+		btn_style.bg_color = entry["color"]
+		btn_style.corner_radius_top_left    = 8
+		btn_style.corner_radius_top_right   = 8
+		btn_style.corner_radius_bottom_left = 8
+		btn_style.corner_radius_bottom_right = 8
+		var btn_hover = btn_style.duplicate()
+		btn_hover.bg_color = (entry["color"] as Color).lightened(0.18)
+		btn.add_theme_stylebox_override("normal", btn_style)
+		btn.add_theme_stylebox_override("hover",  btn_hover)
+
+		var captured_role: String = role_name_b
+		btn.pressed.connect(func():
+			GameState.ec_borrowed_ability = captured_role
+			_update_ec_ability_btn_label()
+			ec_choice_popup.visible = false
+			show_instruction("Borrowed: " + captured_role + " ability!")
+			get_tree().create_timer(2.5).timeout.connect(func(): hide_instruction())
+		)
+		vbox.add_child(btn)
+
+	if not any_option:
+		# No borrowable roles in this game — inform the player
+		var lbl = Label.new()
+		lbl.text = "No other roles with special abilities are in this game.\nYou will play with your win condition only."
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.add_theme_font_size_override("font_size", 15)
+		lbl.add_theme_color_override("font_color", Color(0.8, 0.7, 0.5))
+		vbox.add_child(lbl)
+
+		var ok_btn = Button.new()
+		ok_btn.text = "Understood — play without ability"
+		ok_btn.custom_minimum_size = Vector2(460, 48)
+		ok_btn.add_theme_font_size_override("font_size", 16)
+		ok_btn.pressed.connect(func():
+			GameState.ec_borrowed_ability = "None"
+			_update_ec_ability_btn_label()
+			ec_choice_popup.visible = false
+		)
+		vbox.add_child(ok_btn)
+
+	ec_choice_popup.visible = true
+
+func _update_ec_ability_btn_label() -> void:
+	if not ec_ability_btn:
+		return
+	match GameState.ec_borrowed_ability:
+		"Plantation Owner":
+			ec_ability_btn.text = "🌿 Steal & Reverse (Borrowed)"
+		"Government":
+			ec_ability_btn.text = "⚖ Steal Card (Borrowed)"
+		"Conservationist":
+			ec_ability_btn.text = "🌳 Expand Forest (Borrowed)"
+		"Land Developer":
+			ec_ability_btn.text = "🏙 Expand City (Borrowed)"
+		"Wildlife Department":
+			ec_ability_btn.text = "🦁 Wildlife Dept (Passive — Auto)"
+		"Village Head":
+			ec_ability_btn.text = "🛖 Village Head (Passive — Auto)"
+		"Researcher":
+			ec_ability_btn.text = "🔬 Researcher (Passive — Auto)"
+		"Ecotourism Manager":
+			ec_ability_btn.text = "📸 Ecotourism Manager (Passive — Auto)"
+		"None":
+			ec_ability_btn.text = "🌍 No Ability (No eligible roles)"
+		_:
+			ec_ability_btn.text = "🌍 Choose Ability ▸"
+
+func _build_em_choice_popup() -> void:
+	em_choice_popup = PanelContainer.new()
+	em_choice_popup.name = "_em_choice_popup"
+	em_choice_popup.visible = false
+	em_choice_popup.set_anchors_preset(Control.PRESET_CENTER)
+	em_choice_popup.offset_left  = -240
+	em_choice_popup.offset_right =  240
+	em_choice_popup.offset_top   = -100
+	em_choice_popup.offset_bottom = 100
+	em_choice_popup.z_index = 80
+	
+	var popup_style = StyleBoxFlat.new()
+	popup_style.bg_color = Color(0.06, 0.14, 0.18, 0.97)
+	popup_style.corner_radius_top_left    = 14
+	popup_style.corner_radius_top_right   = 14
+	popup_style.corner_radius_bottom_left = 14
+	popup_style.corner_radius_bottom_right = 14
+	popup_style.border_width_top    = 2
+	popup_style.border_width_bottom = 2
+	popup_style.border_width_left   = 2
+	popup_style.border_width_right  = 2
+	popup_style.border_color = Color(0.2, 0.9, 0.5, 0.9)
+	em_choice_popup.add_theme_stylebox_override("panel", popup_style)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 14)
+	em_choice_popup.add_child(vbox)
+	em_choice_popup.set_meta("_vbox", vbox)
+
+	var title = Label.new()
+	title.text = "Ecotourism Manager — Extra Move"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_color", Color(0.4, 1.0, 0.85))
+	vbox.add_child(title)
+
+	add_child(em_choice_popup)
+
+func show_em_choice_popup(callback: Callable) -> void:
+	if not em_choice_popup:
+		return
+	var vbox = em_choice_popup.get_meta("_vbox")
+	# clear old buttons
+	while vbox.get_child_count() > 1:
+		vbox.get_child(vbox.get_child_count()-1).queue_free()
+
+	var opts = [
+		{"text": "🐘 Move an Elephant", "val": "elephant"},
+		{"text": "🧑 Move a Villager", "val": "villager"},
+		{"text": "Skip Move", "val": "skip"}
+	]
+	
+	for o in opts:
+		var btn = Button.new()
+		btn.text = o["text"]
+		btn.custom_minimum_size = Vector2(400, 40)
+		btn.add_theme_font_size_override("font_size", 16)
+		btn.pressed.connect(func():
+			em_choice_popup.visible = false
+			callback.call(o["val"])
+		)
+		vbox.add_child(btn)
+
+	em_choice_popup.visible = true

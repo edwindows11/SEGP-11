@@ -44,8 +44,12 @@ signal request_tile_selection(valid_keys: Array, instruction: String)
 signal clear_tile_selection()
 signal request_steal_target()
 signal steal_complete()
+signal request_em_choice()
 
 var lastCard = [null, null, null, null]
+
+# Stored UI node reference for ability callbacks that need to set a flag
+var _ability_ui_node: Node = null
 
 # --- Entry point ---
 
@@ -67,7 +71,7 @@ func execute_card(card_id: String) -> void:
 	var current_player = GameState.current_player_index
 	var role = GameState.player_roles[current_player] if current_player < GameState.player_roles.size() else "Unknown"
 	var color = card_def.get("color", Color.WHITE)
-	if role == "Researcher" and color in [Color.GREEN, Color.YELLOW, Color.RED]:
+	if (role == "Researcher" or (role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Researcher")) and color in [Color.GREEN, Color.YELLOW, Color.RED]:
 		var added_elephants = 0
 		for fx in pending_effects:
 			if fx.get("op", "") == "add_e":
@@ -81,6 +85,19 @@ func execute_card(card_id: String) -> void:
 				"from": ["ANY"],
 				"to": ["ANY"],
 				"max_dist": -1 
+			})
+
+	# Ecotourism Manager Special Ability
+	if (role == "Ecotourism Manager" or (role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Ecotourism Manager")) and color in [Color.BLACK, Color.YELLOW, Color.RED, Color.GREEN]:
+		var added_pieces = false
+		for fx in pending_effects:
+			var op = fx.get("op", "")
+			if op in ["add_e", "add_v", "add_v_in"]:
+				added_pieces = true
+				break
+		if added_pieces:
+			pending_effects.append({
+				"op": "em_extra_move"
 			})
 
 	_advance_effect()
@@ -142,10 +159,13 @@ func _advance_effect() -> void:
 		"immune":          _do_immune()
 		"move_e":          _begin_move("elephant", current_effect)
 		"move_v":          _begin_move("villager", current_effect)
+		"em_extra_move":   _do_em_extra_move()
 		"move_all_e_to":   _do_move_all_e_auto(current_effect)
 		"steal":           _do_steal()
 		"return_to_hand":  _do_return_card()
 		"skip"          :  _do_skip()
+		"cons_expand_forest": _do_cons_expand_forest()
+		"ld_expand_human":    _do_ld_expand_human()
 		_:
 			push_warning("CardEffects: unknown op: " + op)
 			effect_index += 1
@@ -254,6 +274,73 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 	effect_index += 1
 	_advance_effect()
 
+func _do_em_extra_move() -> void:
+	state = State.WAITING_CHOICE
+	emit_signal("request_em_choice")
+
+func confirm_em_choice(choice: String) -> void:
+	if state != State.WAITING_CHOICE:
+		return
+	if choice == "elephant":
+		pending_effects.insert(effect_index + 1, {"op": "move_e", "count": 1, "from": ["ANY"], "to": ["ANY"], "max_dist": -1})
+	elif choice == "villager":
+		pending_effects.insert(effect_index + 1, {"op": "move_v", "count": 1, "from": ["ANY"], "to": ["ANY"], "max_dist": -1})
+	
+	state = State.IDLE
+	effect_index += 1
+	_advance_effect()
+
+func execute_government_steal(target_index: int, ui_node: Node) -> void:
+	var stolen = lastCard[target_index]
+	if not stolen:
+		ui_node.show_instruction("That player hasn't played a valid card yet!")
+		return
+
+	var card_def = CardData.ALL_CARDS.get(stolen, {})
+	var card_color = card_def.get("color", Color.WHITE)
+	if not card_color in [Color.GREEN, Color.YELLOW, Color.RED]:
+		ui_node.show_instruction("Government can only steal yellow, red, or green cards!")
+		return
+
+	# Check this card hasn't already been replayed (shouldn't happen normally but guard it)
+	if not GameState.government_can_replay(stolen):
+		ui_node.show_instruction("That card has already been replayed!")
+		return
+
+	GameState.government_steal_card(GameState.current_player_index, stolen)
+
+	ui_node.gov_used_ability_this_turn = true
+	# Counts as the action for this turn so the play button should remain available
+	# (the player can still play a card — steal costs the DRAW, not the play)
+
+	var card_name = card_def.get("name", stolen)
+	_log("Government stole \"" + card_name + "\" from Player " + str(target_index + 1), true)
+
+	# Spawn the newly-arrived card in the UI hand
+	ui_node.spawn_stolen_gov_card()
+
+func execute_conservationist_ability(ui_node: Node) -> void:
+	var valid_tiles = _get_cons_valid_tiles()
+	if valid_tiles.is_empty():
+		ui_node.show_instruction("No valid tiles — needs a non-forest tile adjacent to a forested tile with an elephant!")
+		return
+	_ability_ui_node = ui_node
+	pending_effects = [{"op": "cons_expand_forest"}]
+	effect_index = 0
+	state = State.IDLE
+	_advance_effect()
+
+func execute_land_developer_ability(ui_node: Node) -> void:
+	var valid_tiles = _get_ld_valid_tiles()
+	if valid_tiles.is_empty():
+		ui_node.show_instruction("No valid tiles — needs a non-human tile with at least 3 human-dominated neighbours!")
+		return
+	_ability_ui_node = ui_node
+	pending_effects = [{"op": "ld_expand_human"}]
+	effect_index = 0
+	state = State.IDLE
+	_advance_effect()
+
 func _do_steal() -> void:
 	# Check there is at least one other player who has cards to steal
 	var thief := GameState.current_player_index
@@ -316,6 +403,72 @@ func _do_skip() -> void:
 	effect_index += 1
 	_advance_effect()
 
+# --- Conservationist: Expand Forest ---
+
+func _do_cons_expand_forest() -> void:
+	var valid_tiles = _get_cons_valid_tiles()
+	if valid_tiles.is_empty():
+		_log("No valid tiles for Conservationist ability", false)
+		effect_index += 1
+		_advance_effect()
+		return
+	state = State.WAITING_SOURCE
+	if board:
+		board.clear_all_highlights()
+		board.highlight_tiles(valid_tiles, Color(0.1, 1.0, 0.3, 0.55))  # Bright green
+	request_tile_selection.emit(valid_tiles, "Select a tile adjacent to the elephant's forest to convert to Forest")
+
+func _get_cons_valid_tiles() -> Array:
+	# Find every forest tile that has at least 1 elephant on it
+	var elephant_forest_keys: Array = []
+	for key in GameState.tile_registry:
+		var entry = GameState.tile_registry[key]
+		if entry["type"] == GameState.TileType.FOREST and entry["elephant_nodes"].size() > 0:
+			elephant_forest_keys.append(key)
+	if elephant_forest_keys.is_empty():
+		return []
+	# Collect non-forest neighbours of those tiles (no duplicates via dict)
+	var valid: Dictionary = {}
+	var directions = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	for fkey in elephant_forest_keys:
+		for dir in directions:
+			var neighbour = fkey + dir
+			if GameState.tile_registry.has(neighbour):
+				if GameState.tile_registry[neighbour]["type"] != GameState.TileType.FOREST:
+					valid[neighbour] = true
+	return valid.keys()
+
+func _do_ld_expand_human() -> void:
+	var valid_tiles = _get_ld_valid_tiles()
+	if valid_tiles.is_empty():
+		_log("No valid tiles for Land Developer ability", false)
+		effect_index += 1
+		_advance_effect()
+		return
+	state = State.WAITING_SOURCE
+	if board:
+		board.clear_all_highlights()
+		board.highlight_tiles(valid_tiles, Color(0.9, 0.5, 0.1, 0.55))  # Orange-brown
+	request_tile_selection.emit(valid_tiles, "Select a tile to convert to Human-Dominated (needs 3+ human neighbours)")
+
+func _get_ld_valid_tiles() -> Array:
+	# A tile is valid if it is NOT human-dominated AND >= 3 of its 4 cardinal neighbours are human-dominated
+	var directions = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	var valid: Array = []
+	for key in GameState.tile_registry:
+		var entry = GameState.tile_registry[key]
+		if entry["type"] == GameState.TileType.HUMAN:
+			continue  # already human
+		var human_neighbour_count := 0
+		for dir in directions:
+			var neighbour = key + dir
+			if GameState.tile_registry.has(neighbour):
+				if GameState.tile_registry[neighbour]["type"] == GameState.TileType.HUMAN:
+					human_neighbour_count += 1
+		if human_neighbour_count >= 3:
+			valid.append(key)
+	return valid
+
 # --- Interactive: Move ---
 
 func _begin_move(piece_type: String, effect: Dictionary) -> void:
@@ -366,6 +519,42 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 		return
 
 	var op: String = current_effect.get("op", "")
+
+	# --- Conservationist: expand forest ---
+	if op == "cons_expand_forest":
+		var entry = GameState.tile_registry.get(tile_key, {})
+		if entry.is_empty():
+			return
+		if entry["type"] == GameState.TileType.FOREST:
+			return  # already forest, pick another
+		if board:
+			board.convert_tile(tile_key, GameState.TileType.FOREST)
+			board.clear_all_highlights()
+		_log("Conservationist expanded forest!", true)
+		if _ability_ui_node and is_instance_valid(_ability_ui_node):
+			_ability_ui_node.cons_used_ability_this_turn = true
+			_ability_ui_node = null
+		effect_index += 1
+		_advance_effect()
+		return
+
+	# --- Land Developer: expand human tile ---
+	if op == "ld_expand_human":
+		var entry = GameState.tile_registry.get(tile_key, {})
+		if entry.is_empty():
+			return
+		if entry["type"] == GameState.TileType.HUMAN:
+			return  # already human, pick another
+		if board:
+			board.convert_tile(tile_key, GameState.TileType.HUMAN)
+			board.clear_all_highlights()
+		_log("Land Developer expanded human-dominated area!", true)
+		if _ability_ui_node and is_instance_valid(_ability_ui_node):
+			_ability_ui_node.ld_used_ability_this_turn = true
+			_ability_ui_node = null
+		effect_index += 1
+		_advance_effect()
+		return
 
 	if op in ["convert", "convert_any_any"]:
 		# Routed here by mistake — shouldn't happen if card_table.gd routes correctly

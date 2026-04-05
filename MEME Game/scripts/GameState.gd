@@ -40,6 +40,16 @@ var skip_next_turn = false
 # Wildlife Department special ability state
 var wildlife_dept_drawn_cards: Array = []  # the 2 bonus card IDs drawn each turn
 
+# Government special ability state
+# Key: player index (int) -> Array of stolen card IDs still available to replay
+var government_stolen_cards: Dictionary = {}
+# Card IDs already replayed (cannot be replayed again)
+var government_replayed_cards: Array = []
+
+# Environmental Consultant special ability state
+# "" = not chosen yet, "None" = chose no ability, otherwise = role name borrowed
+var ec_borrowed_ability: String = ""
+
 # Track forest increase
 var initial_forest_count: int = 0
 var initial_plantation_count: int = 0
@@ -325,6 +335,24 @@ func wildlife_dept_discard_bonus(player_index: int, card_id: String) -> void:
 func discard_card(player_index: int, card_id: String) -> void:
 	player_hands[player_index].erase(card_id)
 	discard_pile.append(card_id)
+
+# Government: add a stolen card to the Government player's stash and hand
+func government_steal_card(gov_player_index: int, card_id: String) -> void:
+	if not government_stolen_cards.has(gov_player_index):
+		government_stolen_cards[gov_player_index] = []
+	government_stolen_cards[gov_player_index].append(card_id)
+	player_hands[gov_player_index].append(card_id)
+
+# Government: mark a stolen card as replayed (can only replay each once)
+func government_mark_replayed(card_id: String) -> void:
+	government_replayed_cards.append(card_id)
+	# Remove from all players' stolen stashes so it won't be replayed again
+	for key in government_stolen_cards.keys():
+		government_stolen_cards[key].erase(card_id)
+
+# Government: check if a card has already been replayed
+func government_can_replay(card_id: String) -> bool:
+	return not (card_id in government_replayed_cards)
 
 func _pop_from_draw_pile() -> String:
 	if draw_pile.is_empty():

@@ -38,6 +38,23 @@ func _ready() -> void:
 	UI.spawn_players()
 	UI.spawn_cards()
 
+	# Show the correct ability button for the first player's role on turn 1
+	# (_on_turn_changed is not called at game start, only on advance_turn)
+	var initial_role = player_roles[0] if player_roles.size() > 0 else ""
+	if UI.cons_ability_btn:
+		UI.cons_ability_btn.visible = (initial_role == "Conservationist")
+	if UI.po_ability_btn:
+		UI.po_ability_btn.visible = (initial_role == "Plantation Owner")
+	if UI.gov_ability_btn:
+		UI.gov_ability_btn.visible = (initial_role == "Government")
+	if UI.ld_ability_btn:
+		UI.ld_ability_btn.visible = (initial_role == "Land Developer")
+	if UI.ec_ability_btn:
+		UI.ec_ability_btn.visible = (initial_role == "Environmental Consultant")
+	# If Player 1 is EC, show the borrow-choice popup immediately
+	if initial_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "":
+		UI.show_ec_choice_popup.call_deferred()
+
 	# --- CardEffects setup ---
 	card_effects = load("res://scripts/CardEffects.gd").new()
 	card_effects.board = $Board
@@ -50,11 +67,16 @@ func _ready() -> void:
 	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
 	card_effects.connect("request_steal_target", _on_request_steal_target)
 	card_effects.connect("steal_complete", func(): UI.reposition_cards())
+	card_effects.connect("request_em_choice", _on_request_em_choice)
 
 	# --- Wire UI signals ---
 	UI.card_activated.connect(_on_card_activated)
 	UI.end_turn_requested.connect(_on_end_turn_button_pressed)
 	UI.request_po_ability.connect(_on_po_ability_requested)
+	UI.request_gov_ability.connect(_on_gov_ability_requested)
+	UI.request_cons_ability.connect(_on_cons_ability_requested)
+	UI.request_ld_ability.connect(_on_ld_ability_requested)
+	UI.request_ec_ability.connect(_on_ec_ability_requested)
 	
 	# --- Wire GameState turn signal to UI ---
 	GameState.turn_changed.connect(UI._on_turn_changed)
@@ -231,8 +253,42 @@ func _on_clear_tile_selection() -> void:
 func _on_request_steal_target() -> void:
 	UI.show_player_select_popup("Steal a card from:", func(i): return GameState.player_hands[i].size() == 0, card_effects.confirm_steal_target)
 	
+func _on_request_em_choice() -> void:
+	UI.show_em_choice_popup(card_effects.confirm_em_choice)
+	
 func _on_po_ability_requested() -> void:
 	UI.show_player_select_popup("Reverse player's last card:", func(i): return card_effects.lastCard[i] == null, func(t_idx): card_effects.execute_reversed_card(t_idx, UI))
+
+func _on_gov_ability_requested() -> void:
+	# Disable players who haven't played a valid colored card yet
+	UI.show_player_select_popup(
+		"Steal a played card from:",
+		func(i):
+			var lc = card_effects.lastCard[i]
+			if lc == null:
+				return true  # disabled: no card played
+			var col = CardData.ALL_CARDS.get(lc, {}).get("color", Color.WHITE)
+			return not (col in [Color.GREEN, Color.YELLOW, Color.RED]),
+		func(t_idx): card_effects.execute_government_steal(t_idx, UI)
+	)
+
+func _on_cons_ability_requested() -> void:
+	card_effects.execute_conservationist_ability(UI)
+
+func _on_ld_ability_requested() -> void:
+	card_effects.execute_land_developer_ability(UI)
+
+func _on_ec_ability_requested() -> void:
+	# Delegate to the handler for the borrowed role's ability
+	match GameState.ec_borrowed_ability:
+		"Plantation Owner":
+			_on_po_ability_requested()
+		"Government":
+			_on_gov_ability_requested()
+		"Conservationist":
+			card_effects.execute_conservationist_ability(UI)
+		"Land Developer":
+			card_effects.execute_land_developer_ability(UI)
 	
 func _track_card_stats_and_discard(card_id: String) -> void:
 	var card_data = CardData.ALL_CARDS.get(card_id, {})
@@ -271,16 +327,19 @@ func _track_card_stats_and_discard(card_id: String) -> void:
 
 func _on_end_turn_button_pressed() -> void:
 	# --- Wildlife Department: must discard one bonus card before the turn ends ---
+	# Also applies if the Environmental Consultant borrowed the Wildlife Dept ability.
 	var cur_role: String = GameState.player_roles[GameState.current_player_index] \
 		if GameState.current_player_index < GameState.player_roles.size() else ""
-	if cur_role == "Wildlife Department" and GameState.wildlife_dept_drawn_cards.size() > 0:
+	var _ec_with_wd := (cur_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
+	if (cur_role == "Wildlife Department" or _ec_with_wd) and GameState.wildlife_dept_drawn_cards.size() > 0:
 		UI.end_turn_button.disabled = true
 		UI.show_wildlife_discard_popup()
 		return
 
-	# Refill hand up to 5 cards before ending the turn (unless Plantation Owner used ability)
+	# Refill hand up to 5 cards before ending the turn
+	# Skip draw if Plantation Owner or Government used their steal ability this turn
 	var p_index = GameState.current_player_index
-	if not UI.po_used_ability_this_turn:
+	if not UI.po_used_ability_this_turn and not UI.gov_used_ability_this_turn:
 		while GameState.player_hands[p_index].size() < UI.TOTAL_CARDS:
 			if GameState.draw_card(p_index) == "":
 				break
