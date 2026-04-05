@@ -156,6 +156,8 @@ func _do_immune() -> void:
 
 func _do_move_all_e_auto(effect: Dictionary) -> void:
 	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
+	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
+	var is_towards_move := _is_towards_move_effect(to_types, from_types)
 	var max_dist: int = effect.get("max_dist", -1)
 
 	var elephants = get_tree().get_nodes_in_group("elephants")
@@ -171,13 +173,21 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			if key == from_key:
 				continue
 			var entry = GameState.tile_registry[key]
-			if to_types != null and not (entry["type"] in to_types):
+			if not is_towards_move and to_types != null and not (entry["type"] in to_types):
 				continue
 			if not GameState.can_place_piece(key, "elephant"):
 				continue
 			var dist = abs(key.x - from_key.x) + abs(key.y - from_key.y)
 			if max_dist > 0 and dist > max_dist:
 				continue
+			if is_towards_move:
+				var from_dist := _min_distance_to_types(from_key, to_types)
+				var to_dist := _min_distance_to_types(key, to_types)
+				if to_dist >= from_dist:
+					continue
+				# "Towards" means moving closer, not directly onto the target-type tile.
+				if entry["type"] in to_types:
+					continue
 			if GameState.is_elephant_immune(elephant) and _is_move_closer_to_human_or_plantation(from_key, key):
 				blocked_by_immunity = true
 				continue
@@ -575,6 +585,7 @@ func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary,
 	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
 	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
 	var is_away_move := _is_away_move_effect(effect, from_types)
+	var is_towards_move := _is_towards_move_effect(to_types, from_types)
 	var max_dist: int = effect.get("max_dist", -1)
 
 	var valid_dest_keys: Array = []
@@ -582,7 +593,7 @@ func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary,
 		if key == source_key:
 			continue
 		var entry = GameState.tile_registry[key]
-		if to_types != null and not (entry["type"] in to_types):
+		if not is_towards_move and to_types != null and not (entry["type"] in to_types):
 			continue
 		# Occupancy + coexistence check
 		if not GameState.can_place_piece(key, piece_type):
@@ -597,6 +608,15 @@ func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary,
 			var from_dist := _min_distance_to_types(source_key, from_types)
 			var to_dist := _min_distance_to_types(key, from_types)
 			if to_dist <= from_dist:
+				continue
+		# "Move towards" cards: destination must strictly reduce distance to nearest target-type tile.
+		if is_towards_move:
+			var from_to_dist := _min_distance_to_types(source_key, to_types)
+			var to_to_dist := _min_distance_to_types(key, to_types)
+			if to_to_dist >= from_to_dist:
+				continue
+			# "Towards" means moving closer, not directly onto the target-type tile.
+			if entry["type"] in to_types:
 				continue
 		# Immune elephants cannot be moved to tiles that are closer to Human/Plantation.
 		if enforce_immunity and piece_type == "elephant" and piece_node != null and GameState.is_elephant_immune(piece_node):
@@ -628,6 +648,9 @@ func _is_away_move_effect(effect: Dictionary, from_types: Variant) -> bool:
 		return false
 	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
 	return to_types == null
+
+func _is_towards_move_effect(to_types: Variant, from_types: Variant) -> bool:
+	return to_types != null and from_types == null
 
 func _tile_type_name(tile_type: int) -> String:
 	match tile_type:
