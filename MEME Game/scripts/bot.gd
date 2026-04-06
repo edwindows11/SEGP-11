@@ -146,12 +146,20 @@ func _bot_take_turn(player_index: int) -> void:
 		_end_bot_turn()
 		return
 
+	# Reuse the same preview animation humans get when selecting a card.
+	var preview_started: bool = _show_bot_card_preview(chosen_card_id)
+	if preview_started:
+		await get_tree().create_timer(0.55).timeout
+		if not _bot_is_acting:
+			return
+
 	var card_def: Dictionary = CardData.ALL_CARDS.get(chosen_card_id, {})
 	var card_name: String = str(card_def.get("name", chosen_card_id))
 	_announce_bot_message(player_index, "plays: " + card_name, true)
 	await get_tree().create_timer(card_reveal_delay).timeout
 	if not _bot_is_acting:
 		return
+	_mark_preview_card_as_played(chosen_card_id)
 
 	# Discard the chosen card from hand (card_table.gd does this at end_turn via
 	# pending_card, but for bots we simulate the play then end-turn flow).
@@ -180,6 +188,43 @@ func _announce_bot_message(player_index: int, message: String, is_positive: bool
 		var action_log_node = card_effects.get("action_log")
 		if action_log_node and action_log_node.has_method("add_action"):
 			action_log_node.add_action(text, is_positive)
+
+func _show_bot_card_preview(card_id: String) -> bool:
+	if ui == null:
+		return false
+
+	var cards_container: Node = ui.get_node_or_null("CardsContainer")
+	if cards_container == null:
+		return false
+
+	for child in cards_container.get_children():
+		if child == null or child.is_queued_for_deletion():
+			continue
+		var child_card_id: String = str(child.get("card_id"))
+		if child_card_id != card_id:
+			continue
+		if ui.has_method("_on_card_selected"):
+			ui.call("_on_card_selected", child)
+			return true
+
+	return false
+
+func _mark_preview_card_as_played(card_id: String) -> void:
+	if ui == null:
+		return
+
+	var pending_card: Variant = ui.get("pending_card")
+	if pending_card == null:
+		return
+
+	var pending_card_id: String = str(pending_card.get("card_id"))
+	if pending_card_id != card_id:
+		return
+
+	pending_card.visible = false
+	var play_button: Variant = ui.get("play_btn")
+	if play_button != null:
+		play_button.disabled = true
 
 var _bot_played_card_id: String = ""
 
