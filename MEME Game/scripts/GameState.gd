@@ -150,7 +150,11 @@ func can_place_piece(tile_key: Vector2i, piece_type: String) -> bool:
 	var entry = tile_registry[tile_key]
 	var is_elephant = piece_type == "elephant" or piece_type == "Elephant"
 	if is_elephant:
+		if entry["villager_nodes"].size() > 0:
+			return false
 		return entry["elephant_nodes"].size() < MAX_ELEPHANTS_PER_TILE
+	if entry["elephant_nodes"].size() > 0:
+		return false
 	return entry["villager_nodes"].size() < MAX_VILLAGERS_PER_TILE
 
 func get_shortest_distance_human_elephant() -> int:
@@ -190,7 +194,7 @@ func count_vacant_secondary_met() -> int:
 		"Plantation Owner", 
 		"Land Developer",
 		"Ecotourism Manager",
-		"Wildfire Department",
+		"Wildlife Department",
 		"Researcher"
 	]
 	
@@ -212,10 +216,10 @@ func count_vacant_secondary_met() -> int:
 				var dist = get_shortest_distance_human_elephant()
 				var total_e = 0
 				for key in tile_registry:
-					if tile_registry[key]["elephant_nodes"].size() > 0:
+					if tile_registry.has(key) and tile_registry[key]["elephant_nodes"].size() > 0:
 						total_e += 1
 				is_met = (total_e > 0 and dist >= 3)
-			"Wildfire Department":
+			"Wildlife Department":
 				is_met = (get_elephants_in_forest() >= 4)
 			"Researcher":
 				is_met = (get_shortest_distance_human_elephant() >= 2)

@@ -1,6 +1,10 @@
 TextureButton
 TextureRect
 RichTextLabel
+<<<<<<< HEAD
+=======
+Label
+>>>>>>> origin/main
 Control
 Camera3D
 Node3D
@@ -11,5 +15,8 @@ NinePatchRect
 Label3D
 Sprite3D
 Panel
+<<<<<<< HEAD
 Node2D
 CollisionShape3D
+=======
+>>>>>>> origin/main

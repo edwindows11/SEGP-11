@@ -9,8 +9,12 @@ var totalMeeple: int = 0
 var player_role: String = ""
 var player_roles: Array = []
 var _current_valid_selection_keys: Array = []
-
 var card_effects: Node = null  # CardEffects instance
+var singleplayer_bot_count: int = 3
+var human_player_index: int = 0
+var bot_speed_preset: String = "Normal"
+var bot_difficulty_by_player: Dictionary = {}
+var bot_ai: Node = null
 
 func _ready() -> void:
 	# --- GameState setup ---
@@ -28,6 +32,31 @@ func _ready() -> void:
 	# --- Initialise Stats Tracking ---
 	GameState.setup_stats()
 
+	# --- CardEffects setup (must come early so card_effects is never null) ---
+	card_effects = load("res://scripts/CardEffects.gd").new()
+	if card_effects == null:
+		push_error("card_table.gd: Failed to instantiate CardEffects.gd!")
+		return
+	card_effects.board = $Board
+	card_effects.play = Play
+	card_effects.action_log = $CanvasLayer/Control/ActionLog
+	add_child(card_effects)
+
+	card_effects.effects_complete.connect(_on_card_effects_complete)
+	card_effects.request_tile_selection.connect(_on_request_tile_selection)
+	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
+
+	# Role abilities
+	card_effects.connect("request_steal_target", _on_request_steal_target)
+	card_effects.connect("steal_complete", func(): if UI.has_method("reposition_cards"): UI.reposition_cards())
+	card_effects.connect("request_em_choice", _on_request_em_choice)
+
+	# Conversion popups from origin/main
+	card_effects.connect("request_steal_popup", _on_request_steal_popup)
+	card_effects.connect("request_convert_type_popup", _on_request_convert_type_popup)
+	if not card_effects.is_connected("steal_complete", _on_steal_complete):
+		card_effects.connect("steal_complete", _on_steal_complete)
+
 	# --- Pass role to UI ---
 	player_role = player_roles[0] if player_roles.size() > 0 else "Unknown"
 	UI.player_role = player_role
@@ -39,7 +68,6 @@ func _ready() -> void:
 	UI.spawn_cards()
 
 	# Show the correct ability button for the first player's role on turn 1
-	# (_on_turn_changed is not called at game start, only on advance_turn)
 	var initial_role = player_roles[0] if player_roles.size() > 0 else ""
 	if UI.cons_ability_btn:
 		UI.cons_ability_btn.visible = (initial_role == "Conservationist")
@@ -55,19 +83,8 @@ func _ready() -> void:
 	if initial_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "":
 		UI.show_ec_choice_popup.call_deferred()
 
-	# --- CardEffects setup ---
-	card_effects = load("res://scripts/CardEffects.gd").new()
-	card_effects.board = $Board
-	card_effects.play = Play
-	card_effects.action_log = $CanvasLayer/Control/ActionLog
-	add_child(card_effects)
-
-	card_effects.effects_complete.connect(_on_card_effects_complete)
-	card_effects.request_tile_selection.connect(_on_request_tile_selection)
-	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
-	card_effects.connect("request_steal_target", _on_request_steal_target)
-	card_effects.connect("steal_complete", func(): UI.reposition_cards())
-	card_effects.connect("request_em_choice", _on_request_em_choice)
+	# --- Optional singleplayer bots ---
+	_setup_singleplayer_bots()
 
 	# --- Wire UI signals ---
 	UI.card_activated.connect(_on_card_activated)
@@ -77,12 +94,14 @@ func _ready() -> void:
 	UI.request_cons_ability.connect(_on_cons_ability_requested)
 	UI.request_ld_ability.connect(_on_ld_ability_requested)
 	UI.request_ec_ability.connect(_on_ec_ability_requested)
-	
+
 	# --- Wire GameState turn signal to UI ---
 	GameState.turn_changed.connect(UI._on_turn_changed)
+	GameState.turn_changed.connect(_on_turn_changed_for_input_locks)
 
 	if player_roles.size() > 0:
 		print("Game Started with roles: ", player_roles)
+
 
 
 func _process(_delta: float) -> void:
@@ -95,6 +114,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if pause_menu:
 			pause_menu.toggle_pause()
 			return
+
+	if _is_bot_turn():
+		return
 
 	# Land-Use Planning type-choice input (after selecting a tile):
 	# 1 = Forest, 2 = Human, 3 = Plantation
@@ -122,7 +144,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 		# --- Manual placement / removal mode (dropdown) ---
-		var mode_id = UI.placement_options.get_selected_id()
+		var mode_id = UI.placement_options.get_selected_id() if UI.placement_options else 0
 		if mode_id == 0:
 			pass  # Select mode
 		else:
@@ -146,10 +168,9 @@ func _unhandled_input(event: InputEvent) -> void:
 						var tile_key = _raycast_to_tile_key(event.position)
 						var can_place = false
 						if tile_key != Vector2i(-1, -1) and GameState.tile_registry.has(tile_key):
-							var entry = GameState.tile_registry[tile_key]
-							if mode_id == 1 and entry["elephant_nodes"].size() < 1:
+							if mode_id == 1 and GameState.can_place_piece(tile_key, "elephant"):
 								can_place = true
-							elif mode_id == 2 and entry["villager_nodes"].size() < 2:
+							elif mode_id == 2 and GameState.can_place_piece(tile_key, "villager"):
 								can_place = true
 
 						if can_place:
@@ -235,11 +256,16 @@ func _route_tile_click_to_effects(tile_key: Vector2i) -> void:
 # --- Card effect signal handlers ---
 
 func _on_card_activated(card_id: String) -> void:
+	if _is_bot_turn():
+		return
 	_track_card_stats_and_discard(card_id)
 	card_effects.execute_card(card_id)
 
 func _on_card_effects_complete() -> void:
-	UI.end_turn_button.disabled = false
+	if _is_bot_turn():
+		UI.end_turn_button.disabled = true
+	else:
+		UI.end_turn_button.disabled = false
 
 func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void:
 	_current_valid_selection_keys = _valid_keys.duplicate()
@@ -289,7 +315,22 @@ func _on_ec_ability_requested() -> void:
 			card_effects.execute_conservationist_ability(UI)
 		"Land Developer":
 			card_effects.execute_land_developer_ability(UI)
+		"Wildlife Department":
+			UI.show_instruction("Wildlife Department: Bonus draw happens automatically at turn start.")
+		"Village Head":
+			UI.show_instruction("Village Head: Passive ability — play up to 2 cards per turn (max 1 villager-increasing).")
+		"Researcher":
+			UI.show_instruction("Researcher: Passive ability — elephant-adding cards let you move elephants.")
+		_:
+			UI.show_instruction("No ability selected yet. Please wait for setup.")
+
 	
+func _on_request_steal_popup() -> void:
+	UI.show_steal_popup_v2(card_effects)
+
+func _on_request_convert_type_popup(current_type: int) -> void:
+	UI.show_convert_type_popup(card_effects, current_type)
+
 func _track_card_stats_and_discard(card_id: String) -> void:
 	var card_data = CardData.ALL_CARDS.get(card_id, {})
 	var card_color = card_data.get("color", Color.WHITE)
@@ -326,8 +367,10 @@ func _track_card_stats_and_discard(card_id: String) -> void:
 # --- End turn ---
 
 func _on_end_turn_button_pressed() -> void:
+	if _is_bot_turn():
+		return
+
 	# --- Wildlife Department: must discard one bonus card before the turn ends ---
-	# Also applies if the Environmental Consultant borrowed the Wildlife Dept ability.
 	var cur_role: String = GameState.player_roles[GameState.current_player_index] \
 		if GameState.current_player_index < GameState.player_roles.size() else ""
 	var _ec_with_wd := (cur_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
@@ -336,16 +379,94 @@ func _on_end_turn_button_pressed() -> void:
 		UI.show_wildlife_discard_popup()
 		return
 
-	# Refill hand up to 5 cards before ending the turn
-	# Skip draw if Plantation Owner or Government used their steal ability this turn
+	if UI.pending_card:
+		_track_card_stats_and_discard(UI.pending_card.card_id)
+		UI.remove_played_card_and_draw_replacement()
+	
+	# Refill hand up to 5 cards (unless ability skips draw)
 	var p_index = GameState.current_player_index
 	if not UI.po_used_ability_this_turn and not UI.gov_used_ability_this_turn:
 		while GameState.player_hands[p_index].size() < UI.TOTAL_CARDS:
 			if GameState.draw_card(p_index) == "":
 				break
-			
+
 	GameState.advance_turn()
 	UI.currently_viewing_card = false
+
+func _setup_singleplayer_bots() -> void:
+	var max_bots: int = maxi(0, GameState.player_count - 1)
+	var bot_count: int = clampi(singleplayer_bot_count, 0, max_bots)
+	if bot_count <= 0:
+		return
+
+	var bot_script = load("res://scripts/bot.gd")
+	if bot_script == null:
+		push_warning("Bot script could not be loaded")
+		return
+
+	bot_ai = bot_script.new()
+	bot_ai.card_effects = card_effects
+	bot_ai.play = Play
+	bot_ai.board = $Board
+	bot_ai.ui = UI
+	if bot_ai.has_method("set_speed_preset"):
+		bot_ai.set_speed_preset(bot_speed_preset)
+	add_child(bot_ai)
+
+	var bot_indices: Array = []
+	for i in range(bot_count):
+		var bot_index := (human_player_index + 1 + i) % GameState.player_count
+		bot_indices.append(bot_index)
+
+	for i in range(bot_indices.size()):
+		var bot_player_index: int = bot_indices[i]
+		var configured_difficulty: int = int(bot_difficulty_by_player.get(bot_player_index, -1))
+		var difficulty: int = configured_difficulty
+		if difficulty < bot_ai.Difficulty.EASY or difficulty > bot_ai.Difficulty.HARD:
+			# Fallback keeps the previous default progression if no pre-game override exists.
+			difficulty = bot_ai.Difficulty.MEDIUM
+			if i == 0:
+				difficulty = bot_ai.Difficulty.HARD
+			elif i == 1:
+				difficulty = bot_ai.Difficulty.MEDIUM
+			else:
+				difficulty = bot_ai.Difficulty.EASY
+		bot_ai.set_player_difficulty(bot_player_index, difficulty)
+
+	if not GameState.turn_changed.is_connected(bot_ai._on_turn_changed):
+		GameState.turn_changed.connect(bot_ai._on_turn_changed)
+
+	print("Singleplayer bots enabled for players: ", bot_indices)
+
+func _is_bot_turn() -> bool:
+	return _is_bot_turn_for_player(GameState.current_player_index)
+
+func _is_bot_turn_for_player(player_index: int) -> bool:
+	if bot_ai == null:
+		return false
+	return bot_ai.is_bot(player_index)
+
+func _on_turn_changed_for_input_locks(player_index: int, _role_name: String, is_skipped: bool) -> void:
+	if UI == null:
+		return
+
+	var is_bot_turn := _is_bot_turn_for_player(player_index) and not is_skipped
+	if is_bot_turn:
+		UI.play_btn.disabled = true
+		UI.end_turn_button.disabled = true
+		# Hide ability buttons so human driver can't click them for the bot
+		if UI.po_ability_btn: UI.po_ability_btn.visible = false
+		if UI.gov_ability_btn: UI.gov_ability_btn.visible = false
+		if UI.cons_ability_btn: UI.cons_ability_btn.visible = false
+		if UI.ld_ability_btn: UI.ld_ability_btn.visible = false
+		if UI.ec_ability_btn: UI.ec_ability_btn.visible = false
+		return
+
+	if is_skipped:
+		UI.play_btn.disabled = true
+	else:
+		# Ensure end turn button is re-enabled for the human player
+		UI.end_turn_button.disabled = false
 
 # --- Initial board setup ---
 
@@ -415,3 +536,7 @@ func _on_play_reduce_total_elephant() -> void:
 func _on_play_reduce_total_meeple() -> void:
 	totalMeeple -= 1
 	print("meeple total: %d" % totalMeeple)
+func _on_steal_complete() -> void:
+	if UI.has_method("reposition_cards"): UI.reposition_cards()
+	UI.spawn_cards()   # re-renders the current player's hand so the stolen card appears
+	$Board.clear_all_highlights()

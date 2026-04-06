@@ -36,6 +36,7 @@ material_overlay = ExtResource("3_4pkg1")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Meeple 1" index="0"]
 transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 0, 0, 0)
+		visible = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Meeple 1/StaticBody3D" index="0"]
 shape = SubResource("ConcavePolygonShape3D_4pkg1")
