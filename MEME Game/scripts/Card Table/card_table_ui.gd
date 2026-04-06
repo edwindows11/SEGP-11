@@ -20,6 +20,7 @@ const TEX_END_DISABLED  = preload("res://assets/CardTable/End_Turn_Disabled.png"
 @onready var cards_container = $CardsContainer
 @onready var players_container = $TopBar/PlayersContainer
 @onready var user_role_label = $UserRoleLabel
+@onready var end_turn_button = $TopBar/EndTurnButton
 @onready var timer_label = $TopBar/TimerLabel
 @onready var turn_timer = $TurnTimer
 @onready var placement_options = $TopBar/PlacementMode
