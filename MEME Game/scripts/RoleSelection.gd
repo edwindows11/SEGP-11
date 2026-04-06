@@ -30,7 +30,7 @@ var role_colors = {
 	"Plantation Owner": Color(0.788, 0.886, 0.396, 1.0),
 	"Researcher": Color(0.22, 0.714, 1.0, 1.0),
 	"Village Head": Color(0.898, 0.718, 0.502, 1.0),
-	"Wildfire Department": Color(1.0, 0.741, 0.349, 1.0)
+	"Wildlife Department": Color(1.0, 0.741, 0.349, 1.0)
 }
 
 var player_selections = [null, null, null, null]
@@ -65,7 +65,6 @@ func _ready():
 
 	setup_role_buttons()
 	setup_player_slots()
-	_setup_singleplayer_bot_count_controls()
 	if not start_game_button.pressed.is_connected(_on_start_game_pressed):
 		start_game_button.pressed.connect(_on_start_game_pressed)
 	update_ui()
@@ -365,7 +364,6 @@ func update_ui():
 			style.bg_color = Color(0.25, 0.15, 0.05, 0.6)
 			slot.add_theme_stylebox_override("panel", style)
 
-		var role_label = slot.get_node_or_null("RoleDisplay")
 		if role_label == null:
 			role_label = slot.get_node_or_null("SelectButton/RoleDisplay")
 		if role_label == null:

@@ -427,7 +427,7 @@ popup/item_0/text = "Slow"
 popup/item_0/id = 0
 popup/item_1/text = "Normal"
 popup/item_1/id = 1
-popup/item_2/text = "Hard"
+popup/item_2/text = "Fast"
 popup/item_2/id = 2
 
 [node name="Bot Difficulty" type="MarginContainer" parent="Bot Container/VBoxContainer"]
