@@ -1,14 +1,22 @@
-MarginContainer
-PanelContainer
-TextureRect
-VBoxContainer
-Panel
-ColorRect
-Control
-OptionButton
-Container
-AspectRatioContainer
-Label
-GridContainer
-HBoxContainer
 TextureButton
+TextureRect
+RichTextLabel
+<<<<<<< HEAD
+=======
+Label
+>>>>>>> origin/main
+Control
+Camera3D
+Node3D
+MarginContainer
+VBoxContainer
+Container
+NinePatchRect
+Label3D
+Sprite3D
+Panel
+<<<<<<< HEAD
+Node2D
+CollisionShape3D
+=======
+>>>>>>> origin/main

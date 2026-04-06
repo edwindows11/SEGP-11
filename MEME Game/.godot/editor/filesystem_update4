@@ -14,3 +14,6 @@ res://scripts/Pieces/elephant.gd
 res://scripts/Pieces/meeple.gd
 res://scripts/Pieces/outline.gd
 res://scenes/RoleSelection.tscn
+res://scripts/Board.gd
+res://scripts/CardEffects.gd
+res://scripts/GameState.gd

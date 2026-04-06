@@ -1,0 +1,134 @@
+[gd_scene load_steps=5 format=3 uid="uid://dxju17hwdjd0m"]
+
+[ext_resource type="Script" uid="uid://oti8gk6h0m1r" path="res://scripts/CardTable.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/ActionLog.tscn" id="2_actionlog"]
+[ext_resource type="PackedScene" uid="uid://w2pirshj72gv" path="res://scenes/Trial Scenes/Trial 2.tscn" id="3_wt453"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0, 0, 0, 1)
+
+[node name="CardTable" type="Node3D"]
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="Control"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.95, 0.95, 0.95, 1)
+
+[node name="CardsContainer" type="Control" parent="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1112.0
+offset_bottom = 608.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="Panel" parent="Control"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_right = 1113.0
+offset_bottom = 63.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
+[node name="TimerLabel" type="Label" parent="Control/TopBar"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 20.0
+offset_top = -20.0
+offset_right = 120.0
+offset_bottom = 20.0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
+theme_override_font_sizes/font_size = 24
+text = "60"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayersContainer" type="HBoxContainer" parent="Control/TopBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="EndTurnButton" type="Button" parent="Control/TopBar"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -20.0
+offset_right = -20.0
+offset_bottom = 20.0
+grow_horizontal = 0
+grow_vertical = 2
+text = "End Turn"
+
+[node name="BottomBar" type="Panel" parent="Control"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 597.0
+offset_bottom = 648.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
+[node name="UserRoleLabel" type="Label" parent="Control"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 568.0
+offset_right = 300.0
+offset_bottom = 598.0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
+theme_override_font_sizes/font_size = 20
+text = "My Role: "
+
+[node name="ActionLog" parent="Control" instance=ExtResource("2_actionlog")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 102.0
+offset_top = 108.0
+offset_right = 62.0
+offset_bottom = 68.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TurnTimer" type="Timer" parent="Control"]
+autostart = true
+
+[node name="Node3D" parent="." instance=ExtResource("3_wt453")]

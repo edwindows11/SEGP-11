@@ -238,7 +238,9 @@ func clear_all_highlights() -> void:
 			continue
 		var h = tile_node.find_child("_highlight", false, false)
 		if h:
-			h.free()  # Immediate removal — queue_free() defers to next frame which breaks same-frame re-highlight
+			# Rename so find_child won't match it in the same frame if we re-highlight immediately
+			h.name = "_highlight_queued_for_deletion"
+			h.queue_free()
 
 func _apply_highlight(tile_node: Node3D, color: Color) -> void:
 	var mesh_instance = MeshInstance3D.new()

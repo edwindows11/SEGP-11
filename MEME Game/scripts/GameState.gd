@@ -37,6 +37,19 @@ var player_stats: Array = [
 var cards_played_this_turn: int = 0
 var skip_next_turn = false
 
+# Wildlife Department special ability state
+var wildlife_dept_drawn_cards: Array = []  # the 2 bonus card IDs drawn each turn
+
+# Government special ability state
+# Key: player index (int) -> Array of stolen card IDs still available to replay
+var government_stolen_cards: Dictionary = {}
+# Card IDs already replayed (cannot be replayed again)
+var government_replayed_cards: Array = []
+
+# Environmental Consultant special ability state
+# "" = not chosen yet, "None" = chose no ability, otherwise = role name borrowed
+var ec_borrowed_ability: String = ""
+
 # Track forest increase
 var initial_forest_count: int = 0
 var initial_plantation_count: int = 0
@@ -181,7 +194,7 @@ func count_vacant_secondary_met() -> int:
 		"Plantation Owner", 
 		"Land Developer",
 		"Ecotourism Manager",
-		"Wildfire Department",
+		"Wildlife Department",
 		"Researcher"
 	]
 	
@@ -203,10 +216,10 @@ func count_vacant_secondary_met() -> int:
 				var dist = get_shortest_distance_human_elephant()
 				var total_e = 0
 				for key in tile_registry:
-					if tile_registry[key]["elephant_nodes"].size() > 0:
+					if tile_registry.has(key) and tile_registry[key]["elephant_nodes"].size() > 0:
 						total_e += 1
 				is_met = (total_e > 0 and dist >= 3)
-			"Wildfire Department":
+			"Wildlife Department":
 				is_met = (get_elephants_in_forest() >= 4)
 			"Researcher":
 				is_met = (get_shortest_distance_human_elephant() >= 2)
@@ -307,9 +320,43 @@ func draw_card(player_index: int) -> String:
 		player_hands[player_index].append(card)
 	return card
 
+# Wildlife Dept: draw 2 bonus cards (any color including black) at turn start
+func wildlife_dept_draw_bonus(player_index: int) -> void:
+	wildlife_dept_drawn_cards = []
+	for _i in range(2):
+		var card = _pop_from_draw_pile()
+		if card != "":
+			player_hands[player_index].append(card)
+			wildlife_dept_drawn_cards.append(card)
+
+# Wildlife Dept: discard the chosen bonus card from the player's hand
+func wildlife_dept_discard_bonus(player_index: int, card_id: String) -> void:
+	if card_id in player_hands[player_index]:
+		player_hands[player_index].erase(card_id)
+		discard_pile.append(card_id)
+	wildlife_dept_drawn_cards.erase(card_id)
+
 func discard_card(player_index: int, card_id: String) -> void:
 	player_hands[player_index].erase(card_id)
 	discard_pile.append(card_id)
+
+# Government: add a stolen card to the Government player's stash and hand
+func government_steal_card(gov_player_index: int, card_id: String) -> void:
+	if not government_stolen_cards.has(gov_player_index):
+		government_stolen_cards[gov_player_index] = []
+	government_stolen_cards[gov_player_index].append(card_id)
+	player_hands[gov_player_index].append(card_id)
+
+# Government: mark a stolen card as replayed (can only replay each once)
+func government_mark_replayed(card_id: String) -> void:
+	government_replayed_cards.append(card_id)
+	# Remove from all players' stolen stashes so it won't be replayed again
+	for key in government_stolen_cards.keys():
+		government_stolen_cards[key].erase(card_id)
+
+# Government: check if a card has already been replayed
+func government_can_replay(card_id: String) -> bool:
+	return not (card_id in government_replayed_cards)
 
 func _pop_from_draw_pile() -> String:
 	if draw_pile.is_empty():

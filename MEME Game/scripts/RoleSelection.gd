@@ -18,7 +18,7 @@ var roles = [
 	"Plantation Owner",
 	"Researcher",
 	"Village Head",
-	"Wildfire Department"
+	"Wildlife Department"
 ]
 
 var role_colors = {
@@ -36,6 +36,7 @@ var role_colors = {
 var player_selections = [null, null, null, null]
 var current_player_index = 0
 var total_players = 4
+
 var singleplayer_bot_count = 3
 var bot_count_option: OptionButton = null
 var bot_speed_option: OptionButton = null
@@ -64,8 +65,9 @@ func _ready():
 
 	setup_role_buttons()
 	setup_player_slots()
-	_connect_bot_container_controls()
-	start_game_button.pressed.connect(_on_start_game_pressed)
+	_setup_singleplayer_bot_count_controls()
+	if not start_game_button.pressed.is_connected(_on_start_game_pressed):
+		start_game_button.pressed.connect(_on_start_game_pressed)
 	update_ui()
 	_refresh_player_slot_headers()
 	_refresh_bot_difficulty_controls()
@@ -344,7 +346,7 @@ func is_role_taken(role_name) -> bool:
 func update_ui():
 	for i in range(total_players):
 		var slot = player_slots_container.get_child(i)
-
+		var role_label = slot.get_node("RoleDisplay")
 		var style = slot.get_theme_stylebox("panel")
 		if style == null:
 			style = StyleBoxFlat.new()
@@ -359,6 +361,7 @@ func update_ui():
 		else:
 			style = style.duplicate()
 			style.border_width_bottom = 0
+			style.bg_color = Color(0.25, 0.15, 0.05, 0.6)
 			style.bg_color = Color(0.25, 0.15, 0.05, 0.6)
 			slot.add_theme_stylebox_override("panel", style)
 
