@@ -8,11 +8,11 @@
 [ext_resource type="Texture2D" uid="uid://dw47u1s6mrtc5" path="res://assets/MainMenu/buttons/Play_Hover.png" id="4_ow34m"]
 [ext_resource type="Script" uid="uid://crer7at5wljon" path="res://scripts/MainMenu/Buttons/start_button.gd" id="5_8a8k8"]
 [ext_resource type="Texture2D" uid="uid://tvx8qyhhbhon" path="res://assets/MainMenu/buttons/HowToPlay.png" id="5_826wr"]
-[ext_resource type="Texture2D" uid="uid://8ag7viaas37a" path="res://assets/MainMenu/buttons/Settings.png" id="5_mipys"]
-[ext_resource type="Texture2D" uid="uid://bogejsg83ufws" path="res://assets/MainMenu/buttons/Settings_Hover.png" id="6_8a8k8"]
 [ext_resource type="Texture2D" uid="uid://d2ipi4thqvaer" path="res://assets/MainMenu/buttons/HowToPlay_Hover.png" id="6_ucygd"]
-[ext_resource type="Script" uid="uid://crufckq7qphc6" path="res://scripts/MainMenu/Buttons/settings_button.gd" id="8_2nypq"]
+[ext_resource type="Script" uid="uid://crufckq7qphc6" path="res://scripts/MainMenu/Buttons/exit_button.gd" id="8_2nypq"]
+[ext_resource type="Texture2D" uid="uid://drhrmogiewoxo" path="res://assets/MainMenu/buttons/Exit.png" id="11_5faoh"]
 [ext_resource type="Script" uid="uid://cnhwglppb2ux5" path="res://scripts/MainMenu/Buttons/how_to_play_button.gd" id="11_bky6r"]
+[ext_resource type="Texture2D" uid="uid://bws14o5c0plo1" path="res://assets/MainMenu/buttons/Exit_Hover.png" id="12_ptake"]
 [ext_resource type="Texture2D" uid="uid://cobya6p65w4jm" path="res://assets/MainMenu/MEME logo.png" id="14_5faoh"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_l72w3"]
@@ -33,20 +33,6 @@ region_rect = Rect2(24, 56, 240, 144)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2nypq"]
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_7la6k"]
-texture = ExtResource("5_mipys")
-region_rect = Rect2(16, 40, 448, 168)
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5faoh"]
-texture = ExtResource("6_8a8k8")
-region_rect = Rect2(24, 56, 432, 144)
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_2nypq"]
-texture = ExtResource("6_8a8k8")
-region_rect = Rect2(24, 56, 432, 144)
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bky6r"]
-
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mipys"]
 texture = ExtResource("5_826wr")
 region_rect = Rect2(16, 56, 600, 144)
@@ -56,6 +42,17 @@ texture = ExtResource("6_ucygd")
 region_rect = Rect2(24, 56, 592, 136)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_l4mxc"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_hubol"]
+texture = ExtResource("11_5faoh")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_8vx4p"]
+texture = ExtResource("12_ptake")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tdapf"]
+texture = ExtResource("12_ptake")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bky6r"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -152,34 +149,13 @@ grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(1.0158751, 0.9029035)
 focus_neighbor_top = NodePath("../Title")
-focus_neighbor_bottom = NodePath("../SettingsButton")
+focus_neighbor_bottom = NodePath("../ExitButton")
 theme_override_styles/normal = SubResource("StyleBoxTexture_l72w3")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_l4mxc")
 theme_override_styles/hover = SubResource("StyleBoxTexture_826wr")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_bky6r")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_2nypq")
 script = ExtResource("5_8a8k8")
-
-[node name="SettingsButton" type="Button" parent="MarginContainer/Background"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.42800003
-anchor_top = 0.551
-anchor_right = 0.559
-anchor_bottom = 0.59900004
-offset_left = -28.709595
-offset_top = 285.45587
-offset_right = 3.970337
-offset_bottom = 283.61584
-scale = Vector2(1.6882509, 3.3215353)
-focus_neighbor_top = NodePath("../StartButton")
-focus_neighbor_bottom = NodePath("../HowToPlayButton")
-theme_override_styles/normal = SubResource("StyleBoxTexture_7la6k")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_5faoh")
-theme_override_styles/hover = SubResource("StyleBoxTexture_2nypq")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_bky6r")
-script = ExtResource("8_2nypq")
 
 [node name="HowToPlayButton" type="Button" parent="MarginContainer/Background"]
 custom_minimum_size = Vector2(0, 50)
@@ -194,11 +170,32 @@ offset_top = -187.31567
 offset_right = 0.63305664
 offset_bottom = -160.27563
 scale = Vector2(1.1796377, 1.0634071)
-focus_neighbor_top = NodePath("../SettingsButton")
+focus_neighbor_top = NodePath("../ExitButton")
 theme_override_styles/normal = SubResource("StyleBoxTexture_mipys")
 theme_override_styles/hover = SubResource("StyleBoxTexture_8a8k8")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_l4mxc")
 script = ExtResource("11_bky6r")
+
+[node name="ExitButton" type="Button" parent="MarginContainer/Background"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.42800003
+anchor_top = 0.551
+anchor_right = 0.559
+anchor_bottom = 0.59900004
+offset_left = 77.00476
+offset_top = 226.88434
+offset_right = -30.200806
+offset_bottom = 249.5597
+scale = Vector2(1.6882509, 3.3215353)
+focus_neighbor_top = NodePath("../StartButton")
+focus_neighbor_bottom = NodePath("../HowToPlayButton")
+theme_override_styles/normal = SubResource("StyleBoxTexture_hubol")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_8vx4p")
+theme_override_styles/hover = SubResource("StyleBoxTexture_tdapf")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_bky6r")
+script = ExtResource("8_2nypq")
 
 [node name="MEME logo" type="TextureRect" parent="MarginContainer/Background"]
 layout_mode = 1
