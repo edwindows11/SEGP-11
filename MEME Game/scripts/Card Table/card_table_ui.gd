@@ -7,6 +7,7 @@ const CARD_SCENE = preload("res://scenes/Card.tscn")
 const TOTAL_CARDS = 5
 const CARD_SPACING = 200.0
 const BOTTOM_MARGIN = 50.0
+const RECENT_HISTORY_LIMIT = 5
 
 const PLAYER_DISPLAY_SCENE = preload("res://scenes/PlayerDisplay.tscn")
 
@@ -90,6 +91,17 @@ var is_game_over: bool = false
 
 # Steal popup
 var steal_popup: PanelContainer = null
+
+# Recent cards overlay
+var recent_cards_by_player: Array = []
+var recent_cards_toggle_button: Button = null
+var recent_cards_overlay_panel: PanelContainer = null
+var recent_cards_sections_container: HBoxContainer = null
+var recent_cards_preview_holder: CenterContainer = null
+var recent_cards_preview_caption: Label = null
+var recent_cards_preview_card: Control = null
+var selected_recent_uid: String = ""
+var _recent_uid_counter: int = 0
 
 func _ready():
 	# NOTE: spawn_cards() and spawn_players() are called from card_table.gd
@@ -490,6 +502,7 @@ func _ready():
 	win_vbox.add_child(win_screen_label)
 	
 	add_child(win_screen_panel)
+	_setup_recent_cards_overlay_ui()
 
 func _process(delta: float) -> void:
 	if is_game_over:
@@ -718,6 +731,294 @@ func _on_timer_timeout():
 		end_turn_requested.emit()  # card_table.gd handles the actual turn-end logic
 	else:
 		timer_label.text = str(time_left)
+
+
+# --- Recent Cards Overlay ---
+
+func _ensure_recent_player_buckets(player_count: int) -> void:
+	var target_count: int = maxi(4, player_count)
+	if recent_cards_by_player.is_empty():
+		recent_cards_by_player = [[], [], [], []]
+	while recent_cards_by_player.size() < target_count:
+		recent_cards_by_player.append([])
+	while recent_cards_by_player.size() > target_count:
+		recent_cards_by_player.pop_back()
+
+func _setup_recent_cards_overlay_ui() -> void:
+	_ensure_recent_player_buckets(GameState.player_count)
+
+	recent_cards_toggle_button = Button.new()
+	recent_cards_toggle_button.name = "_recent_cards_toggle_button"
+	recent_cards_toggle_button.text = "Recent Cards"
+	recent_cards_toggle_button.custom_minimum_size = Vector2(160, 42)
+	recent_cards_toggle_button.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	recent_cards_toggle_button.offset_left = 16
+	recent_cards_toggle_button.offset_top = -92
+	recent_cards_toggle_button.offset_right = 176
+	recent_cards_toggle_button.offset_bottom = -50
+	recent_cards_toggle_button.z_index = 90
+	recent_cards_toggle_button.pressed.connect(_toggle_recent_cards_overlay)
+	add_child(recent_cards_toggle_button)
+
+	recent_cards_overlay_panel = PanelContainer.new()
+	recent_cards_overlay_panel.name = "_recent_cards_overlay"
+	recent_cards_overlay_panel.visible = false
+	recent_cards_overlay_panel.set_anchors_preset(Control.PRESET_CENTER)
+	recent_cards_overlay_panel.offset_left = -560
+	recent_cards_overlay_panel.offset_top = -380
+	recent_cards_overlay_panel.offset_right = 560
+	recent_cards_overlay_panel.offset_bottom = 220
+	recent_cards_overlay_panel.z_index = 90
+
+	var overlay_style := StyleBoxFlat.new()
+	overlay_style.bg_color = Color(0.05, 0.05, 0.05, 0.92)
+	overlay_style.corner_radius_top_left = 14
+	overlay_style.corner_radius_top_right = 14
+	overlay_style.corner_radius_bottom_left = 14
+	overlay_style.corner_radius_bottom_right = 14
+	overlay_style.content_margin_left = 20
+	overlay_style.content_margin_right = 20
+	overlay_style.content_margin_top = 16
+	overlay_style.content_margin_bottom = 16
+	recent_cards_overlay_panel.add_theme_stylebox_override("panel", overlay_style)
+
+	var root_vbox := VBoxContainer.new()
+	root_vbox.name = "RootVBox"
+	root_vbox.add_theme_constant_override("separation", 14)
+	recent_cards_overlay_panel.add_child(root_vbox)
+
+	var title := Label.new()
+	title.text = "Recent Cards Played"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.25))
+	root_vbox.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "Click a card to expand it. Click the same card again to minimize."
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 16)
+	subtitle.add_theme_color_override("font_color", Color(0.82, 0.82, 0.82))
+	root_vbox.add_child(subtitle)
+
+	var cards_scroll := ScrollContainer.new()
+	cards_scroll.custom_minimum_size = Vector2(0, 320)
+	cards_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root_vbox.add_child(cards_scroll)
+
+	recent_cards_sections_container = HBoxContainer.new()
+	recent_cards_sections_container.name = "RecentCardsSections"
+	recent_cards_sections_container.add_theme_constant_override("separation", 14)
+	recent_cards_sections_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	cards_scroll.add_child(recent_cards_sections_container)
+
+	var preview_panel := PanelContainer.new()
+	preview_panel.custom_minimum_size = Vector2(0, 360)
+	var preview_style := StyleBoxFlat.new()
+	preview_style.bg_color = Color(0.1, 0.1, 0.1, 0.88)
+	preview_style.corner_radius_top_left = 10
+	preview_style.corner_radius_top_right = 10
+	preview_style.corner_radius_bottom_left = 10
+	preview_style.corner_radius_bottom_right = 10
+	preview_style.content_margin_left = 12
+	preview_style.content_margin_right = 12
+	preview_style.content_margin_top = 8
+	preview_style.content_margin_bottom = 8
+	preview_panel.add_theme_stylebox_override("panel", preview_style)
+	root_vbox.add_child(preview_panel)
+
+	var preview_vbox := VBoxContainer.new()
+	preview_vbox.add_theme_constant_override("separation", 8)
+	preview_panel.add_child(preview_vbox)
+
+	recent_cards_preview_caption = Label.new()
+	recent_cards_preview_caption.text = "Select a recent card to preview"
+	recent_cards_preview_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	recent_cards_preview_caption.add_theme_font_size_override("font_size", 18)
+	recent_cards_preview_caption.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
+	preview_vbox.add_child(recent_cards_preview_caption)
+
+	recent_cards_preview_holder = CenterContainer.new()
+	recent_cards_preview_holder.custom_minimum_size = Vector2(0, 300)
+	preview_vbox.add_child(recent_cards_preview_holder)
+
+	add_child(recent_cards_overlay_panel)
+
+func _toggle_recent_cards_overlay() -> void:
+	if recent_cards_overlay_panel == null:
+		return
+	recent_cards_overlay_panel.visible = not recent_cards_overlay_panel.visible
+	if recent_cards_overlay_panel.visible:
+		_rebuild_recent_cards_overlay()
+	else:
+		_clear_recent_cards_preview()
+
+func add_recent_card_for_player(player_index: int, card_id: String) -> void:
+	if card_id == "":
+		return
+	_ensure_recent_player_buckets(GameState.player_count)
+	if player_index < 0 or player_index >= recent_cards_by_player.size():
+		return
+
+	_recent_uid_counter += 1
+	var entry_uid: String = str(_recent_uid_counter)
+	var entry := {"uid": entry_uid, "card_id": card_id}
+	var bucket: Array = recent_cards_by_player[player_index]
+	bucket.append(entry)
+
+	while bucket.size() > RECENT_HISTORY_LIMIT:
+		var removed_entry: Variant = bucket.pop_front()
+		if removed_entry is Dictionary:
+			var removed_uid: String = str(removed_entry.get("uid", ""))
+			if removed_uid == selected_recent_uid:
+				selected_recent_uid = ""
+				_clear_recent_cards_preview()
+
+	recent_cards_by_player[player_index] = bucket
+
+	if recent_cards_overlay_panel and recent_cards_overlay_panel.visible:
+		_rebuild_recent_cards_overlay()
+
+func _rebuild_recent_cards_overlay() -> void:
+	if recent_cards_sections_container == null:
+		return
+
+	_ensure_recent_player_buckets(GameState.player_count)
+
+	for child in recent_cards_sections_container.get_children():
+		child.queue_free()
+
+	if selected_recent_uid != "" and not _recent_uid_exists(selected_recent_uid):
+		selected_recent_uid = ""
+		_clear_recent_cards_preview()
+
+	for player_index in range(recent_cards_by_player.size()):
+		var section_panel := PanelContainer.new()
+		section_panel.custom_minimum_size = Vector2(230, 0)
+		var section_style := StyleBoxFlat.new()
+		section_style.bg_color = Color(0.12, 0.12, 0.12, 0.85)
+		section_style.corner_radius_top_left = 8
+		section_style.corner_radius_top_right = 8
+		section_style.corner_radius_bottom_left = 8
+		section_style.corner_radius_bottom_right = 8
+		section_style.content_margin_left = 10
+		section_style.content_margin_right = 10
+		section_style.content_margin_top = 8
+		section_style.content_margin_bottom = 8
+		section_panel.add_theme_stylebox_override("panel", section_style)
+
+		var section_vbox := VBoxContainer.new()
+		section_vbox.add_theme_constant_override("separation", 6)
+		section_panel.add_child(section_vbox)
+
+		var header := Label.new()
+		header.text = "Player %d" % [player_index + 1]
+		header.add_theme_font_size_override("font_size", 18)
+		header.add_theme_color_override("font_color", Color(0.92, 0.92, 0.92))
+		section_vbox.add_child(header)
+
+		var cards_column := VBoxContainer.new()
+		cards_column.add_theme_constant_override("separation", 6)
+		section_vbox.add_child(cards_column)
+
+		var bucket: Array = recent_cards_by_player[player_index]
+		if bucket.is_empty():
+			var empty_label := Label.new()
+			empty_label.text = "No cards played yet"
+			empty_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+			empty_label.add_theme_font_size_override("font_size", 14)
+			cards_column.add_child(empty_label)
+		else:
+			for entry_index in range(bucket.size() - 1, -1, -1):
+				var entry_variant: Variant = bucket[entry_index]
+				if not (entry_variant is Dictionary):
+					continue
+				var entry: Dictionary = entry_variant
+				var entry_uid: String = str(entry.get("uid", ""))
+				var card_id: String = str(entry.get("card_id", ""))
+				var card_name: String = _card_name_from_id(card_id)
+				var thumb := TextureButton.new()
+				thumb.custom_minimum_size = Vector2(74, 104)
+				thumb.texture_normal = _load_card_texture(card_id)
+				thumb.texture_hover = thumb.texture_normal
+				thumb.texture_pressed = thumb.texture_normal
+				thumb.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+				thumb.ignore_texture_size = true
+				thumb.tooltip_text = card_name
+				if entry_uid == selected_recent_uid:
+					thumb.modulate = Color(1.0, 1.0, 1.0, 1.0)
+				else:
+					thumb.modulate = Color(0.85, 0.85, 0.85, 1.0)
+				thumb.pressed.connect(_on_recent_card_thumbnail_pressed.bind(entry_uid, card_id))
+				cards_column.add_child(thumb)
+
+		recent_cards_sections_container.add_child(section_panel)
+
+func _card_name_from_id(card_id: String) -> String:
+	var card_def: Dictionary = CardData.ALL_CARDS.get(card_id, {})
+	return str(card_def.get("name", card_id))
+
+func _load_card_texture(card_id: String) -> Texture2D:
+	var card_name: String = _card_name_from_id(card_id)
+	var texture: Texture2D = load("res://assets/Card/" + card_name + ".png")
+	return texture
+
+func _on_recent_card_thumbnail_pressed(entry_uid: String, card_id: String) -> void:
+	if entry_uid == selected_recent_uid:
+		selected_recent_uid = ""
+		_clear_recent_cards_preview()
+		_rebuild_recent_cards_overlay()
+		return
+
+	selected_recent_uid = entry_uid
+	_show_recent_cards_preview(card_id)
+	_rebuild_recent_cards_overlay()
+
+func _show_recent_cards_preview(card_id: String) -> void:
+	_clear_recent_cards_preview()
+	if recent_cards_preview_holder == null:
+		return
+
+	var preview_card: Control = CARD_SCENE.instantiate()
+	recent_cards_preview_holder.add_child(preview_card)
+	preview_card.set_card_data(card_id)
+	preview_card.set_anchors_preset(Control.PRESET_CENTER)
+	preview_card.offset_left = -90
+	preview_card.offset_top = -54
+	preview_card.offset_right = 90
+	preview_card.offset_bottom = 54
+	preview_card.pivot_offset = Vector2(90, 54)
+	preview_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	preview_card.scale = Vector2(0.78, 0.78)
+	preview_card.modulate = Color(1, 1, 1, 0)
+	recent_cards_preview_card = preview_card
+
+	if recent_cards_preview_caption:
+		recent_cards_preview_caption.text = _card_name_from_id(card_id)
+
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(preview_card, "scale", Vector2(2.6, 2.6), 0.32)
+	tween.parallel().tween_property(preview_card, "modulate", Color(1, 1, 1, 1), 0.2)
+
+func _clear_recent_cards_preview() -> void:
+	if recent_cards_preview_card and is_instance_valid(recent_cards_preview_card):
+		recent_cards_preview_card.queue_free()
+	recent_cards_preview_card = null
+	if recent_cards_preview_caption:
+		recent_cards_preview_caption.text = "Select a recent card to preview"
+
+func _recent_uid_exists(uid: String) -> bool:
+	for bucket_variant in recent_cards_by_player:
+		if not (bucket_variant is Array):
+			continue
+		var bucket: Array = bucket_variant
+		for entry_variant in bucket:
+			if entry_variant is Dictionary:
+				if str(entry_variant.get("uid", "")) == uid:
+					return true
+	return false
 
 
 # --- Player display ---

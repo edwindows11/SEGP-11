@@ -835,6 +835,8 @@ func _end_bot_turn() -> void:
 			GameState.player_stats[p]["action_cards_played"] += 1
 
 		# Discard and draw a replacement
+		if ui and ui.has_method("add_recent_card_for_player"):
+			ui.add_recent_card_for_player(p, card_id)
 		GameState.discard_card(p, card_id)
 		if GameState.player_hands[p].size() < 5:
 			GameState.draw_card(p)
