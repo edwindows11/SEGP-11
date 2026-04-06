@@ -19,6 +19,9 @@
 
 extends Node
 
+signal bot_turn_started
+signal bot_turn_ended
+
 # ── Difficulty enum ──────────────────────────────────────────────────────────
 enum Difficulty { EASY, MEDIUM, HARD }
 
@@ -96,19 +99,23 @@ func _on_turn_changed(player_index: int, _role_name: String, is_skipped: bool) -
 	_waiting_for_action = false
 	_action_timer = 0.0
 
-	if is_skipped:
-		return
 	if not is_bot(player_index):
+		return
+
+	if is_skipped:
+		await get_tree().create_timer(end_turn_delay, false).timeout
+		GameState.advance_turn()
 		return
 
 	_current_bot_player = player_index
 	_bot_is_acting = true
+	bot_turn_started.emit()
 
 	if ui and ui.has_method("show_instruction"):
 		ui.show_instruction("Player " + str(player_index + 1) + " (Bot) is thinking...")
 
 	# Wait a beat so the UI can refresh, then begin thinking.
-	await get_tree().create_timer(think_delay).timeout
+	await get_tree().create_timer(think_delay, false).timeout
 	_bot_take_turn(player_index)
 
 
@@ -125,54 +132,61 @@ func _bot_take_turn(player_index: int) -> void:
 
 	if hand.is_empty():
 		_announce_bot_message(player_index, "has no cards and passes", false)
-		await get_tree().create_timer(end_turn_delay).timeout
+		await get_tree().create_timer(end_turn_delay, false).timeout
 		_end_bot_turn()
 		return
 
-	# Pick a card based on difficulty
+	# --- Black card rule ---
+	# If the hand contains ANY black cards, the bot MUST play one of them
+	# and cannot play anything else this turn
+	var black_cards_in_hand: Array = hand.filter(
+		func(cid): return CardData.ALL_CARDS[cid].get("color", Color.WHITE) == Color.BLACK
+	)
+	var must_play_black: bool = not black_cards_in_hand.is_empty()
+
 	var chosen_card_id: String = ""
-	match difficulty:
-		Difficulty.EASY:
-			chosen_card_id = _pick_card_easy(hand, player_index)
-		Difficulty.MEDIUM:
-			chosen_card_id = _pick_card_medium(hand, player_index)
-		Difficulty.HARD:
-			chosen_card_id = _pick_card_hard(hand, player_index)
+
+	if must_play_black:
+		# Bot must play a black card — pick one (random for all difficulties,
+		# hard bot picks the "best" black card if there are multiple)
+		if difficulty == Difficulty.HARD and black_cards_in_hand.size() > 1:
+			# Hard bot picks the black card with the most sub_effects (most impactful)
+			black_cards_in_hand.sort_custom(func(a, b):
+				return CardData.ALL_CARDS[a].get("sub_effects", []).size() > \
+					   CardData.ALL_CARDS[b].get("sub_effects", []).size()
+			)
+			chosen_card_id = black_cards_in_hand[0]
+		else:
+			chosen_card_id = black_cards_in_hand[randi() % black_cards_in_hand.size()]
+		_announce_bot_message(player_index, "is forced to play a black card!", false)
+	else:
+		# Normal pick — difficulty-based, black cards are excluded inside each picker
+		match difficulty:
+			Difficulty.EASY:
+				chosen_card_id = _pick_card_easy(hand, player_index)
+			Difficulty.MEDIUM:
+				chosen_card_id = _pick_card_medium(hand, player_index)
+			Difficulty.HARD:
+				chosen_card_id = _pick_card_hard(hand, player_index)
 
 	if chosen_card_id == "":
-		# No playable card found — pass/end turn
 		_announce_bot_message(player_index, "passes (no valid action card)", false)
-		await get_tree().create_timer(end_turn_delay).timeout
+		await get_tree().create_timer(end_turn_delay, false).timeout
 		_end_bot_turn()
 		return
-
-	# Reuse the same preview animation humans get when selecting a card.
-	var preview_started: bool = _show_bot_card_preview(chosen_card_id)
-	if preview_started:
-		await get_tree().create_timer(0.55).timeout
-		if not _bot_is_acting:
-			return
 
 	var card_def: Dictionary = CardData.ALL_CARDS.get(chosen_card_id, {})
 	var card_name: String = str(card_def.get("name", chosen_card_id))
 	_announce_bot_message(player_index, "plays: " + card_name, true)
-	await get_tree().create_timer(card_reveal_delay).timeout
+	await get_tree().create_timer(card_reveal_delay, false).timeout
 	if not _bot_is_acting:
 		return
-	_mark_preview_card_as_played(chosen_card_id)
 
-	# Discard the chosen card from hand (card_table.gd does this at end_turn via
-	# pending_card, but for bots we simulate the play then end-turn flow).
-	# We store it so _end_bot_turn can discard + draw replacement.
 	_bot_played_card_id = chosen_card_id
 
-	# Connect to effects_complete so we know when to end the turn.
 	if not card_effects.effects_complete.is_connected(_on_bot_effects_complete):
 		card_effects.effects_complete.connect(_on_bot_effects_complete)
 
-	# Tell CardEffects to execute the card.
-	# CardEffects will emit request_tile_selection for interactive sub-effects.
-	# We intercept those in _process via _pending_selections.
 	if not card_effects.request_tile_selection.is_connected(_on_bot_tile_selection_requested):
 		card_effects.request_tile_selection.connect(_on_bot_tile_selection_requested)
 
@@ -222,9 +236,8 @@ func _mark_preview_card_as_played(card_id: String) -> void:
 		return
 
 	pending_card.visible = false
-	var play_button: Variant = ui.get("play_btn")
-	if play_button != null:
-		play_button.disabled = true
+	if ui.has_method("_set_play_btn_disabled"):
+		ui._set_play_btn_disabled(true)
 
 var _bot_played_card_id: String = ""
 
@@ -233,44 +246,40 @@ var _bot_played_card_id: String = ""
 # Card selection strategies
 # ────────────────────────────────────────────────────────────────────────────
 
-## EASY — picks a completely random card from hand.
+## EASY — random non-black card. Black cards are only played when forced (see _bot_take_turn).
 func _pick_card_easy(hand: Array, _player_index: int) -> String:
-	var shuffled = hand.duplicate()
-	shuffled.shuffle()
-	for card_id in shuffled:
-		var color = CardData.ALL_CARDS[card_id].get("color", Color.WHITE)
-		if color != Color.BLACK:   # bots never play black cards (complex effects)
-			return card_id
-	return ""
+	# Filter out black cards entirely — those are handled upstream in _bot_take_turn
+	var playable = hand.filter(
+		func(cid): return CardData.ALL_CARDS[cid].get("color", Color.WHITE) != Color.BLACK
+	)
+	if playable.is_empty():
+		return ""
+	playable.shuffle()
+	return playable[0]
 
 
-## MEDIUM — prefers green cards, avoids obviously harmful red ones,
-##          gives a light nod toward the player's role goal.
+
+
+## MEDIUM — prefers green, avoids harmful red, no black cards.
 func _pick_card_medium(hand: Array, player_index: int) -> String:
 	var role: String = GameState.player_roles[player_index] if player_index < GameState.player_roles.size() else ""
 
-	var green_cards: Array  = []
-	var yellow_cards: Array = []
-	var red_cards: Array    = []
-
-	for card_id in hand:
-		var color = CardData.ALL_CARDS[card_id].get("color", Color.WHITE)
-		if color == Color.GREEN:   green_cards.append(card_id)
-		elif color == Color.YELLOW: yellow_cards.append(card_id)
-		elif color == Color.RED:   red_cards.append(card_id)
-
-	# Score each non-black card with a medium heuristic.
 	var best_id   := ""
 	var best_score := -9999.0
 
-	for card_id in (green_cards + yellow_cards + red_cards):
+	for card_id in hand:
+		var color = CardData.ALL_CARDS[card_id].get("color", Color.WHITE)
+		# Skip black cards — handled upstream in _bot_take_turn
+		if color == Color.BLACK:
+			continue
 		var score := _score_card_medium(card_id, role)
 		if score > best_score:
 			best_score = score
 			best_id = card_id
 
 	return best_id
-
+	
+	
 func _score_card_medium(card_id: String, role: String) -> float:
 	var card    = CardData.ALL_CARDS[card_id]
 	var color   = card.get("color", Color.WHITE)
@@ -355,9 +364,7 @@ func _role_bonus_medium(card_id: String, role: String) -> float:
 				if op == "add_e" or op == "add_v": bonus += 2.0
 	return bonus
 
-
-## HARD — evaluates every card against the current board state and role win
-##        condition progress, choosing the highest-value action.
+## HARD — evaluates every non-black card against board state and role win condition.
 func _pick_card_hard(hand: Array, player_index: int) -> String:
 	var role: String = GameState.player_roles[player_index] if player_index < GameState.player_roles.size() else ""
 
@@ -366,6 +373,7 @@ func _pick_card_hard(hand: Array, player_index: int) -> String:
 
 	for card_id in hand:
 		var color = CardData.ALL_CARDS[card_id].get("color", Color.WHITE)
+		# Skip black cards — handled upstream in _bot_take_turn
 		if color == Color.BLACK:
 			continue
 		var score := _score_card_hard(card_id, role, player_index)
@@ -374,7 +382,7 @@ func _pick_card_hard(hand: Array, player_index: int) -> String:
 			best_id = card_id
 
 	return best_id
-
+	
 func _score_card_hard(card_id: String, role: String, player_index: int) -> float:
 	var card    = CardData.ALL_CARDS[card_id]
 	var color   = card.get("color", Color.WHITE)
@@ -782,7 +790,7 @@ func _on_bot_effects_complete() -> void:
 	if not _bot_is_acting:
 		return
 	# Small pause before ending the turn
-	await get_tree().create_timer(end_turn_delay).timeout
+	await get_tree().create_timer(end_turn_delay, false).timeout
 	_end_bot_turn()
 
 
@@ -791,6 +799,7 @@ func _end_bot_turn() -> void:
 		return
 	_bot_is_acting = false
 	_pending_selections.clear()
+	bot_turn_ended.emit()
 
 	# Mirror what card_table.gd _on_end_turn_button_pressed does:
 	if _bot_played_card_id != "":

@@ -14,6 +14,9 @@ var target_rotation: Vector2 = Vector2(0, deg_to_rad(45))
 var current_zoom: float = 15.0
 var target_zoom: float = 15.0
 var is_dragging: bool = false
+var _mouse_held: bool = false
+var _drag_total: float = 0.0
+const DRAG_THRESHOLD: float = 5.0  # pixels mouse must move before rotation begins
 
 func _ready() -> void:
 	# Calculate initial rotation/zoom based on EDITOR transform if you wanted, 
@@ -72,21 +75,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			target_zoom = clamp(target_zoom + zoom_speed, zoom_min, zoom_max)
 		
-		if event.button_index == MOUSE_BUTTON_RIGHT:
-			is_dragging = event.pressed
-			if is_dragging:
-				Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_mouse_held = true
+				_drag_total = 0.0
+				is_dragging = false
 			else:
-				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+				_mouse_held = false
+				is_dragging = false
 
-	if event is InputEventMouseMotion and is_dragging:
-		# Adjust target rotation based on mouse delta
-		target_rotation.x += event.relative.x * rotation_speed * 0.01
-		target_rotation.y += event.relative.y * rotation_speed * 0.01
-		
-		# Clamp Pitch (Vertical look)
-		# Prevent flipping over the top (approx 10 degrees to 80 degrees relative to ground)
-		target_rotation.y = clamp(target_rotation.y, deg_to_rad(10), deg_to_rad(85))
+	if event is InputEventMouseMotion and _mouse_held:
+		_drag_total += event.relative.length()
+		if _drag_total >= DRAG_THRESHOLD:
+			is_dragging = true
+		if is_dragging:
+			target_rotation.x += event.relative.x * rotation_speed * 0.01
+			target_rotation.y += event.relative.y * rotation_speed * 0.01
+			target_rotation.y = clamp(target_rotation.y, deg_to_rad(10), deg_to_rad(85))
 
 	# Q / E — snap-rotate 90° to cycle through the 4 cardinal sides
 	if event is InputEventKey and event.pressed and not event.echo:

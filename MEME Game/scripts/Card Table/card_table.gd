@@ -76,6 +76,11 @@ func _process(_delta: float) -> void:
 	pass
 
 
+func _on_pause_button_pressed() -> void:
+	var pause_menu = $CanvasLayer/PauseMenu
+	if pause_menu:
+		pause_menu.toggle_pause()
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		var pause_menu = $CanvasLayer/PauseMenu
@@ -157,9 +162,9 @@ func _unhandled_input(event: InputEvent) -> void:
 # --- Tile selection helpers ---
 
 func _raycast_to_tile_key(screen_pos: Vector2) -> Vector2i:
-	var camera = get_viewport().get_camera_3d()
-	var from = camera.project_ray_origin(screen_pos)
-	var to = from + camera.project_ray_normal(screen_pos) * 1000
+	var cam = get_viewport().get_camera_3d()
+	var from = cam.project_ray_origin(screen_pos)
+	var to = from + cam.project_ray_normal(screen_pos) * 1000
 	
 	var space_state = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
@@ -214,10 +219,8 @@ func _on_card_activated(card_id: String) -> void:
 	card_effects.execute_card(card_id)
 
 func _on_card_effects_complete() -> void:
-	if _is_bot_turn():
-		UI.end_turn_button.disabled = true
-	else:
-		UI.end_turn_button.disabled = false
+	if not _is_bot_turn():
+		UI.set_end_turn_ready()
 
 func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void:
 	_current_valid_selection_keys = _valid_keys.duplicate()
@@ -230,6 +233,8 @@ func _on_clear_tile_selection() -> void:
 	$Board.clear_all_highlights()
 
 func _on_request_steal_popup() -> void:
+	if _is_bot_turn():
+		return
 	UI.show_steal_popup(card_effects)
 
 func _on_request_convert_type_popup(current_type: int) -> void:
@@ -322,6 +327,9 @@ func _setup_singleplayer_bots() -> void:
 	if not GameState.turn_changed.is_connected(bot_ai._on_turn_changed):
 		GameState.turn_changed.connect(bot_ai._on_turn_changed)
 
+	bot_ai.bot_turn_started.connect(UI._on_bot_turn_started)
+	bot_ai.bot_turn_ended.connect(UI._on_bot_turn_ended)
+
 	print("Singleplayer bots enabled for players: ", bot_indices)
 
 func _is_bot_turn() -> bool:
@@ -338,12 +346,10 @@ func _on_turn_changed_for_input_locks(player_index: int, _role_name: String, is_
 
 	var is_bot_turn := _is_bot_turn_for_player(player_index) and not is_skipped
 	if is_bot_turn:
-		UI.play_btn.disabled = true
-		UI.end_turn_button.disabled = true
 		return
 
 	if is_skipped:
-		UI.play_btn.disabled = true
+		UI._set_play_btn_disabled(true)
 
 # --- Initial board setup ---
 

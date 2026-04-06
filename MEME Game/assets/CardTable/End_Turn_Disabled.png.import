@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ofosdi1omyja"
-path="res://.godot/imported/PLAY_Hover.png-7b8f0ff5cfe4e7ef352a309131d18f34.ctex"
+uid="uid://byr12o57s8ir2"
+path="res://.godot/imported/End_Turn_Disabled.png-ba1218c73d58f264ca8c7834438489ef.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/CardTable/PLAY_Hover.png"
-dest_files=["res://.godot/imported/PLAY_Hover.png-7b8f0ff5cfe4e7ef352a309131d18f34.ctex"]
+source_file="res://assets/CardTable/End_Turn_Disabled.png"
+dest_files=["res://.godot/imported/End_Turn_Disabled.png-ba1218c73d58f264ca8c7834438489ef.ctex"]
 
 [params]
 

@@ -363,6 +363,9 @@ func confirm_steal_target(target_player_index: int) -> void:
 	var hand : Array = GameState.player_hands[target_player_index]
 	if hand.is_empty():
 		_log("Player " + str(target_player_index + 1) + " has no cards!", false)
+		state = State.IDLE
+		effect_index += 1
+		_advance_effect()
 		return
 
 	var stolen_card: String = hand[randi() % hand.size()]
@@ -545,6 +548,10 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 			var world_pos: Vector3 = entry["world_pos"]
 			placed = play.spawn_piece_on_tile(_interact_piece_type, world_pos, tile_key)
 		if not placed:
+			# Tile is no longer valid — skip this placement and continue
+			_log("Could not place " + _interact_piece_type + " on selected tile, skipping", false)
+			effect_index += 1
+			_advance_effect()
 			return
 		_log("+1 " + _interact_piece_type, true)
 		_interact_count_remaining -= 1
@@ -604,6 +611,12 @@ func confirm_dest_selected(tile_key: Vector2i) -> void:
 	
 	var valid_dest_now: Array = _build_valid_dest_keys_for_source(selected_source_key, current_effect, _current_piece_type, null, true)
 	if not valid_dest_now.has(tile_key):
+		if valid_dest_now.is_empty():
+			# No destinations left at all — skip this move
+			_log("No valid destinations remain, skipping move", false)
+			effect_index += 1
+			_advance_effect()
+		# else: player clicked invalid tile, let them re-select
 		return
 
 	var source_entry = GameState.tile_registry.get(selected_source_key, {})

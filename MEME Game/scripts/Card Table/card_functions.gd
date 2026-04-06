@@ -41,7 +41,7 @@ func spawn_piece_on_tile(type: String, pos: Vector3, tile_key: Vector2i) -> bool
 		)
 
 	if piece_instance:
-		piece_instance.position = pos
+		piece_instance.position = pos + Vector3(0, 0, 0.1)
 		piece_instance.tile_key = tile_key
 		var placed := GameState.piece_placed(
 			piece_instance,

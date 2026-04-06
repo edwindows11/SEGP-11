@@ -10,10 +10,15 @@ const BOTTOM_MARGIN = 50.0
 
 const PLAYER_DISPLAY_SCENE = preload("res://scenes/PlayerDisplay.tscn")
 
+const TEX_PLAY_NORMAL   = preload("res://assets/CardTable/PLAY (1).png")
+const TEX_PLAY_HOVER    = preload("res://assets/CardTable/PLAY (1) Hover.png")
+const TEX_PLAY_DISABLED = preload("res://assets/CardTable/PLAY Disable.png")
+const TEX_END_NORMAL    = preload("res://assets/CardTable/End_Turn.png")
+const TEX_END_DISABLED  = preload("res://assets/CardTable/End_Turn_Disabled.png")
+
 @onready var cards_container = $CardsContainer
 @onready var players_container = $TopBar/PlayersContainer
 @onready var user_role_label = $UserRoleLabel
-@onready var end_turn_button = $TopBar/EndTurnButton
 @onready var timer_label = $TopBar/TimerLabel
 @onready var turn_timer = $TurnTimer
 @onready var placement_options = $TopBar/PlacementMode
@@ -26,6 +31,9 @@ var pending_card: Control = null
 var instruction_label: Label = null
 var play_card: bool = true
 var currently_viewing_card: bool = false
+var bot_turn_active: bool = false
+var _play_btn_is_end_turn: bool = false
+var trackers_vbox: VBoxContainer = null
 
 # Conservationist Tracker UI
 var cons_tracker_panel: PanelContainer = null
@@ -86,14 +94,10 @@ var steal_popup: PanelContainer = null
 func _ready():
 	# NOTE: spawn_cards() and spawn_players() are called from card_table.gd
 	# after GameState.player_roles and the deck are initialized.
-	play_btn.disabled = true
+	_set_play_btn_disabled(true)
 	play_btn.pressed.connect(_on_play_btn_pressed)
 	if user_role_label:
 		user_role_label.text = "My Role: " + player_role
-
-	# IMPORTANT: Do NOT connect end_turn_button.pressed here.
-	# The scene has it wired to card_table.gd._on_end_turn_button_pressed already.
-	# Connecting again here would double-fire the handler.
 
 	turn_timer.timeout.connect(_on_timer_timeout)
 	get_tree().root.size_changed.connect(_on_window_resize)
@@ -140,7 +144,7 @@ func _ready():
 	right_margin.offset_bottom = 300
 	right_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
-	var trackers_vbox = VBoxContainer.new()
+	trackers_vbox = VBoxContainer.new()
 	trackers_vbox.add_theme_constant_override("separation", 15)
 	trackers_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	trackers_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -504,8 +508,8 @@ func _process(delta: float) -> void:
 	if cons_index != -1:
 		if cons_tracker_panel: cons_tracker_panel.visible = true
 		var greens_played = GameState.player_stats[cons_index]["green_cards_played"]
-		var forest_increase = GameState.get_forest_increase()
-		
+		var forest_increase = max(0, GameState.get_forest_increase())
+
 		cons_green_label.text = "Green Cards: " + str(greens_played) + " / 4"
 		cons_forest_label.text = "Forest Increase: " + str(forest_increase) + " / 2"
 		
@@ -545,8 +549,8 @@ func _process(delta: float) -> void:
 		var g = stats.get("green_cards_played", 0)
 		var r = stats.get("red_cards_played", 0)
 		var y = stats.get("yellow_cards_played", 0)
-		var p = GameState.get_plantation_increase()
-		
+		var p = max(0, GameState.get_plantation_increase())
+
 		po_cards_label.text = "Cards: %dG, %dR, %dY / 2G, 1R, 1Y" % [g, r, y]
 		po_plant_label.text = "Plantations: %d / 2" % p
 		
@@ -567,8 +571,8 @@ func _process(delta: float) -> void:
 		var g = stats.get("green_cards_played", 0)
 		var r = stats.get("red_cards_played", 0)
 		var y = stats.get("yellow_cards_played", 0)
-		var h = GameState.get_human_increase()
-		
+		var h = max(0, GameState.get_human_increase())
+
 		ld_cards_label.text = "Cards: %dG, %dR, %dY / (2G+2R) or (2Y+2R)" % [g, r, y]
 		ld_human_label.text = "Human Areas: %d / 2" % h
 		
@@ -731,6 +735,25 @@ func spawn_players() -> void:
 		var role_name = roles[i] if i < roles.size() else "Unknown"
 		player.setup("Player " + str(i + 1), role_name)
 
+	# Reorder tracker panels to match player order (Player 1 at top → Player 4 at bottom)
+	var role_to_panel: Dictionary = {
+		"Conservationist": cons_tracker_panel,
+		"Village Head": vh_tracker_panel,
+		"Plantation Owner": po_tracker_panel,
+		"Land Developer": ld_tracker_panel,
+		"Environmental Consultant": ec_tracker_panel,
+		"Ecotourism Manager": em_tracker_panel,
+		"Wildfire Department": wd_tracker_panel,
+		"Researcher": res_tracker_panel,
+	}
+	var idx := 0
+	for i in range(GameState.player_count):
+		var role = roles[i] if i < roles.size() else ""
+		var panel = role_to_panel.get(role, null)
+		if panel != null and is_instance_valid(panel):
+			trackers_vbox.move_child(panel, idx)
+			idx += 1
+
 
 # --- Card hand management ---
 
@@ -740,11 +763,14 @@ func spawn_cards() -> void:
 		child.queue_free()
 	pending_card = null
 
-	var hand = GameState.player_hands[GameState.current_player_index]
+	var current_idx = GameState.current_player_index
+	var hand = GameState.player_hands[current_idx]
+
 	for card_id in hand:
 		var card = CARD_SCENE.instantiate()
 		cards_container.add_child(card)
 		card.set_card_data(card_id)
+
 		card.card_selected.connect(_on_card_selected)
 
 	call_deferred("reposition_cards")
@@ -785,6 +811,8 @@ func remove_played_card_and_draw_replacement() -> void:
 	call_deferred("reposition_cards")
 
 func _on_card_selected(selected_card) -> void:
+	if bot_turn_active:
+		return
 	if not play_card:
 		return
 	
@@ -800,7 +828,6 @@ func _on_card_selected(selected_card) -> void:
 		card_to_return.is_selected = false
 		card_to_return.z_index = 0
 		pending_card = null
-		end_turn_button.disabled = false
 		var old_btn = get_node_or_null("_play_card_btn")
 		if old_btn:
 			old_btn.queue_free()
@@ -834,20 +861,62 @@ func _on_card_selected(selected_card) -> void:
 	tween.tween_property(selected_card, "position", target_pos, 0.5)
 	tween.tween_property(selected_card, "scale", Vector2(3, 3), 0.5)
 
-	end_turn_button.disabled = true
-	
-	play_btn.disabled = false
-	
+	_set_play_btn_disabled(false)
+
+func _set_play_btn_disabled(value: bool) -> void:
+	play_btn.disabled = value
+	play_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE if value else Control.MOUSE_FILTER_STOP
+
+func _switch_to_end_turn_mode() -> void:
+	_play_btn_is_end_turn = true
+	play_btn.texture_normal   = TEX_END_NORMAL
+	play_btn.texture_pressed  = TEX_END_NORMAL
+	play_btn.texture_hover    = TEX_END_NORMAL
+	play_btn.texture_disabled = TEX_END_DISABLED
+	play_btn.texture_focused  = TEX_END_NORMAL
+	_set_play_btn_disabled(true)
+
+func _switch_to_play_mode() -> void:
+	_play_btn_is_end_turn = false
+	currently_viewing_card = false
+	pending_card = null
+	play_btn.texture_normal   = TEX_PLAY_NORMAL
+	play_btn.texture_pressed  = TEX_PLAY_NORMAL
+	play_btn.texture_hover    = TEX_PLAY_HOVER
+	play_btn.texture_disabled = TEX_PLAY_DISABLED
+	play_btn.texture_focused  = TEX_PLAY_NORMAL
+	_set_play_btn_disabled(true)
+
+func set_end_turn_ready() -> void:
+	if bot_turn_active:
+		return
+	if _play_btn_is_end_turn:
+		_set_play_btn_disabled(false)
+
 func _on_play_btn_pressed():
 	if play_btn.disabled:
 		return
-		
+
+	if _play_btn_is_end_turn:
+		_switch_to_play_mode()
+		end_turn_requested.emit()
+		return
+
 	if pending_card:
-		play_btn.disabled = true
 		pending_card.visible = false
-		var card_id = pending_card.card_id   
+		var card_id = pending_card.card_id
 		cards_played_this_turn += 1
+		_switch_to_end_turn_mode()
 		card_activated.emit(card_id)
+
+# --- Bot turn lock ---
+
+func _on_bot_turn_started() -> void:
+	bot_turn_active = true
+	_set_play_btn_disabled(true)
+
+func _on_bot_turn_ended() -> void:
+	bot_turn_active = false
 
 # --- Turn management ---
 
@@ -864,7 +933,8 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool) ->
 	if timer_label:
 		timer_label.text = str(time_left)
 	cards_played_this_turn = 0
-	end_turn_button.disabled = false
+	bot_turn_active = false
+	_switch_to_play_mode()
 	spawn_cards()
 
 

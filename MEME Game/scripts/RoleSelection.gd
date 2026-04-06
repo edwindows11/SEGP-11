@@ -70,6 +70,7 @@ func _ready():
 	update_ui()
 	_refresh_player_slot_headers()
 	_refresh_bot_difficulty_controls()
+	_connect_bot_container_controls() 
 
 
 # ---- PRELOAD ROLE TEXTURES ----
@@ -228,6 +229,17 @@ func _get_slot_texture_rect(slot_index: int) -> TextureRect:
 	if tex_rect == null:
 		tex_rect = slot.get_node_or_null("PlayerRole")
 	return tex_rect
+	
+func _get_slot_role_label(slot_index: int) -> Label:
+	var slot = player_slots_container.get_child(slot_index)
+	if slot == null:
+		return null
+
+	var label = slot.get_node_or_null("SelectButton/RoleDisplay")
+	if label == null:
+		label = slot.get_node_or_null("RoleDisplay")
+
+	return label
 
 
 func setup_player_slots():
@@ -345,7 +357,7 @@ func is_role_taken(role_name) -> bool:
 func update_ui():
 	for i in range(total_players):
 		var slot = player_slots_container.get_child(i)
-		var role_label = slot.get_node("RoleDisplay")
+		var role_label = _get_slot_role_label(i)
 		var style = slot.get_theme_stylebox("panel")
 		if style == null:
 			style = StyleBoxFlat.new()
