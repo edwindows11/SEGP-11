@@ -18,7 +18,7 @@ var roles = [
 	"Plantation Owner",
 	"Researcher",
 	"Village Head",
-	"Wildlife Department"
+	"Wildfire Department"
 ]
 
 var role_colors = {
@@ -30,7 +30,7 @@ var role_colors = {
 	"Plantation Owner": Color(0.788, 0.886, 0.396, 1.0),
 	"Researcher": Color(0.22, 0.714, 1.0, 1.0),
 	"Village Head": Color(0.898, 0.718, 0.502, 1.0),
-	"Wildlife Department": Color(1.0, 0.741, 0.349, 1.0)
+	"Wildfire Department": Color(1.0, 0.741, 0.349, 1.0)
 }
 
 var player_selections = [null, null, null, null]

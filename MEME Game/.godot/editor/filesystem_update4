@@ -17,3 +17,6 @@ res://scenes/RoleSelection.tscn
 res://scripts/Board.gd
 res://scripts/CardEffects.gd
 res://scripts/GameState.gd
+res://scenes/MainMenu.tscn
+res://scenes/ScenarioSelect.tscn
+res://scripts/ScenarioSelect.gd

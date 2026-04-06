@@ -34,11 +34,6 @@ const SCENARIO_NAMES := [
 
 func _ready() -> void:
 	# --- Root layout ---
-	var bg := ColorRect.new()
-	bg.color = Color(0.12, 0.10, 0.08)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
-
 	var root_vbox := VBoxContainer.new()
 	root_vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root_vbox.add_theme_constant_override("separation", 16)
