@@ -9,7 +9,8 @@ signal request_ld_ability()
 signal request_ec_ability()
 
 const CARD_SCENE = preload("res://scenes/Card.tscn")
-const TOTAL_CARDS = 5
+const TOTAL_CARDS = 5       # standard "draw hand" — the end-of-turn refill target
+const MAX_HAND_SIZE = 8     # absolute cap — hand can grow up to this via steals/returns
 const CARD_SPACING = 200.0
 const BOTTOM_MARGIN = 50.0
 
@@ -316,7 +317,7 @@ func _build_all_trackers():
 	trackers_vbox.add_child(em_tracker_panel)
 
 	# Wildlife Department
-	wd_tracker_panel = _create_tracker_panel("Wildlife Dept Goal", Color(0.6, 0.2, 0.0, 0.8), Color(1.0, 0.5, 0.2), "Wildfire Department")
+	wd_tracker_panel = _create_tracker_panel("Wildlife Dept Goal", Color(0.6, 0.2, 0.0, 0.8), Color(1.0, 0.5, 0.2), "Wildlife Department")
 	wd_cards_label = _add_tracker_label(wd_tracker_panel, "Green Cards: 0 / 4")
 	wd_elephants_label = _add_tracker_label(wd_tracker_panel, "Forest Elephants: 0 / 4")
 	wd_status_label = _add_tracker_status(wd_tracker_panel)
@@ -372,6 +373,7 @@ func _create_tracker_panel(title_text: String, bg_color: Color, title_color: Col
 					_show_role_card_overlay(captured_tex)
 			)
 			hbox.add_child(tex_rect)
+			
 
 	var vbox = VBoxContainer.new()
 	vbox.name = "VBox"
@@ -404,6 +406,7 @@ func _add_tracker_status(panel: PanelContainer) -> Label:
 	return lbl
 
 func _on_special_ability_pressed():
+	if bot_turn_active: return
 	match player_role:
 		"Plantation Owner":
 			if cards_played_this_turn == 0:
@@ -617,7 +620,7 @@ func _build_role_ability_dropdown():
 	ability_dropdown_btn.add_theme_stylebox_override("normal", style)
 	ability_dropdown_btn.pressed.connect(_toggle_ability_dropdown)
 	add_child(ability_dropdown_btn)
-
+	
 	ability_dropdown_panel = PanelContainer.new()
 	ability_dropdown_panel.visible = false
 	ability_dropdown_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -633,7 +636,7 @@ func _build_role_ability_dropdown():
 	pstyle.content_margin_bottom = 12
 	ability_dropdown_panel.add_theme_stylebox_override("panel", pstyle)
 
-	# HBox: role card image on the left, text on the right
+# HBox: role card image on the left, text on the right
 	var hbox = HBoxContainer.new()
 	hbox.name = "DropdownHBox"
 	hbox.add_theme_constant_override("separation", 14)
@@ -664,7 +667,7 @@ func _build_role_ability_dropdown():
 	hbox.add_child(lbl)
 
 	add_child(ability_dropdown_panel)
-	
+
 func _toggle_ability_dropdown():
 	ability_dropdown_panel.visible = !ability_dropdown_panel.visible
 	ability_dropdown_btn.text = "Role Ability ▴" if ability_dropdown_panel.visible else "Role Ability ▾"
@@ -827,14 +830,35 @@ func spawn_cards():
 		cards_container.add_child(card)
 		card.set_card_data(card_id)
 		card.card_selected.connect(_on_card_selected)
+		# If a bot is taking this turn, the displayed hand belongs to the bot —
+		# the human player must not be able to click or interact with it.
+		if bot_turn_active:
+			card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			card.is_selected = true  # blocks Card._on_gui_input from re-firing
 	call_deferred("reposition_cards")
 
 func _on_card_selected(selected_card):
+	if bot_turn_active: return
 	if not play_card: return
 	var p_idx = GameState.current_player_index
 	var r_name = GameState.player_roles[p_idx]
-	var max_c = 2 if (r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head")) else 1
+	# Only 1 card may be played per turn for every role.
+	var max_c = 1
 	if cards_played_this_turn >= max_c: return
+
+	# Black card rule: if the player has any black cards in hand, they MUST
+	# play a black card and cannot select anything else this turn. Mirrors the
+	# bot's enforcement in bot.gd._bot_take_turn.
+	var hand_has_black := false
+	for cid in GameState.player_hands[p_idx]:
+		if CardData.ALL_CARDS.get(cid, {}).get("color", Color.WHITE) == Color.BLACK:
+			hand_has_black = true
+			break
+	if hand_has_black:
+		var sel_color = CardData.ALL_CARDS.get(selected_card.card_id, {}).get("color", Color.WHITE)
+		if sel_color != Color.BLACK:
+			show_instruction("You must play your black card this turn.")
+			return
 
 	# Village Head constraints
 	if max_c == 2 and cards_played_this_turn == 1:
@@ -862,14 +886,20 @@ func _on_card_selected(selected_card):
 	selected_card.original_position = selected_card.position
 	selected_card.z_index = 10
 	var win_size = get_viewport_rect().size
-	var scale_factor := Vector2(3.0, 3.0)
-	var target_pos: Vector2 = (win_size - selected_card.custom_minimum_size * scale_factor) / 2.0
+	var scale_factor := Vector2(4.0, 4.0)
+	# Card.tscn has pivot_offset set to the card's centre, so scaling happens
+	# around the card's midpoint. With a centre pivot, the card's centre after
+	# scaling is always at `position + pivot_offset` (scale doesn't shift it),
+	# so to put that centre at the viewport centre we just need:
+	#     position = viewport_centre - pivot_offset
+	var target_pos: Vector2 = win_size / 2.0 - selected_card.pivot_offset
 	var tween = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	tween.tween_property(selected_card, "position", target_pos, 0.5)
 	tween.tween_property(selected_card, "scale", scale_factor, 0.5)
 	play_btn.disabled = false
 
 func _on_play_btn_pressed():
+	if bot_turn_active: return
 	if _play_btn_is_end_turn:
 		end_turn_requested.emit()
 		return
@@ -891,8 +921,8 @@ func _on_play_btn_pressed():
 	cards_played_this_turn += 1
 	add_recent_card_for_player(GameState.current_player_index, cid)
 
-	# Determine how many cards this role can play per turn
-	var max_cards = 2 if (r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head")) else 1
+	# Only 1 card may be played per turn for every role.
+	var max_cards = 1
 	if cards_played_this_turn >= max_cards:
 		_switch_to_end_turn_mode()  # button becomes disabled End Turn, enabled by set_end_turn_ready()
 	else:
@@ -902,13 +932,28 @@ func _on_play_btn_pressed():
 
 	card_activated.emit(cid)
 
+func _close_all_popups() -> void:
+	# Dismiss any selection popups that may still be open from the previous
+	# turn so a new turn always starts with a clean UI.
+	if steal_popup: steal_popup.visible = false
+	if em_choice_popup: em_choice_popup.visible = false
+	if ec_choice_popup: ec_choice_popup.visible = false
+	if wildlife_discard_popup: wildlife_discard_popup.visible = false
+	var steal_node = get_node_or_null("Steal")
+	if steal_node: steal_node.visible = false
+	var convert_popup = get_node_or_null("_convert_type_popup")
+	if convert_popup: convert_popup.visible = false
+	hide_instruction()
+
 func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
+	_close_all_popups()
 	play_card = not is_skipped
 	cards_played_this_turn = 0
 	time_left = 60
 	if timer_label:
 		timer_label.text = str(time_left)
 	if is_skipped:
+		_switch_to_end_turn_mode()
 		timer_label.text = "Skipped"
 
 	var skip_label = $Skipped
@@ -931,8 +976,16 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 	if _is_wd and not is_skipped:
 		GameState.wildlife_dept_draw_bonus(player_index)
 
-	bot_turn_active = false
-	_switch_to_play_mode()
+	# Only reset to play mode for an active human turn. Skip when:
+	#  - bot_turn_active: bot._on_turn_changed already fired bot_turn_started
+	#    and put the button into the disabled End Turn state earlier in this
+	#    same dispatch — we must not clobber that.
+	#  - is_skipped: the earlier `if is_skipped:` block already switched the
+	#    button to End Turn for the skipped player; resetting to Play here
+	#    would undo that.
+	# bot_turn_active is cleared in _on_bot_turn_ended, not here.
+	if not bot_turn_active and not is_skipped:
+		_switch_to_play_mode()
 	spawn_cards()
 
 func hide_instruction():
@@ -1313,7 +1366,19 @@ func set_end_turn_ready() -> void:
 
 func _on_bot_turn_started() -> void:
 	bot_turn_active = true
-	_set_play_btn_disabled(true)
+	# Show the End Turn texture (disabled) for the entire bot turn so the player
+	# can see "End Turn" instead of "Play". The button stays disabled — only the
+	# bot itself can end its own turn via _on_bot_turn_ended.
+	_switch_to_end_turn_mode()
+	# Block input on every currently-displayed card so the player cannot click
+	# the bot's hand. spawn_cards() also applies this when it runs after the
+	# signal, but doing it here too covers any ordering edge case.
+	if cards_container:
+		for card in cards_container.get_children():
+			if card is Control:
+				card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				if "is_selected" in card:
+					card.is_selected = true
 
 func _on_bot_turn_ended() -> void:
 	bot_turn_active = false
