@@ -1,6 +1,5 @@
+res://scripts/Card Table/card_table.gd
 res://scenes/CardTable.tscn
 res://scripts/Card Table/card_table_ui.gd
-res://scripts/PlayerDisplay.gd
-res://scripts/Card Table/card_table.gd
 res://scripts/bot.gd
-res://scripts/CardEffects.gd
+res://scripts/RoleSelection.gd

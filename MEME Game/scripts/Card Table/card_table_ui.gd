@@ -647,10 +647,12 @@ func _build_role_ability_dropdown():
 	tex_rect.custom_minimum_size = Vector2(80, 112)
 	tex_rect.mouse_filter = Control.MOUSE_FILTER_STOP  # ← was IGNORE, must be STOP to receive clicks
 	tex_rect.gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			var img: TextureRect = ability_dropdown_panel.get_node("DropdownHBox/RoleCardImage")
-			if img.texture != null:
-				_show_role_card_overlay(img.texture)
+		if event is InputEventMouseButton \
+		and event.button_index == MOUSE_BUTTON_LEFT \
+		and event.pressed:
+			
+			if tex_rect.texture != null:
+				_show_role_card_overlay(tex_rect.texture)
 	)
 	hbox.add_child(tex_rect)
 
@@ -666,16 +668,18 @@ func _build_role_ability_dropdown():
 func _toggle_ability_dropdown():
 	ability_dropdown_panel.visible = !ability_dropdown_panel.visible
 	ability_dropdown_btn.text = "Role Ability ▴" if ability_dropdown_panel.visible else "Role Ability ▾"
-	if ability_dropdown_panel.visible:
-		var cur = GameState.player_roles[GameState.current_player_index] \
-			if GameState.current_player_index < GameState.player_roles.size() else "Unknown"
+	_refresh_role_panel_ui()
+	
+func _refresh_role_panel_ui():
+	var cur = GameState.player_roles[GameState.current_player_index] \
+		if GameState.current_player_index < GameState.player_roles.size() else "Unknown"
 
-		ability_dropdown_panel.get_node("DropdownHBox/AbilityText").text = ROLE_ABILITIES.get(cur, "")
+	ability_dropdown_panel.get_node("DropdownHBox/AbilityText").text = ROLE_ABILITIES.get(cur, "")
 
-		var tex_rect: TextureRect = ability_dropdown_panel.get_node("DropdownHBox/RoleCardImage")
-		var tex_path = "res://assets/Role Card/%s.png" % cur
-		tex_rect.texture = load(tex_path) if ResourceLoader.exists(tex_path) else null
-		# ← no gui_input.connect here anymore
+	var tex_rect: TextureRect = ability_dropdown_panel.get_node("DropdownHBox/RoleCardImage")
+	var tex_path = "res://assets/Role Card/%s.png" % cur
+	tex_rect.texture = load(tex_path) if ResourceLoader.exists(tex_path) else null
+
 		
 func _process(_delta):
 	if is_game_over: return

@@ -13,7 +13,7 @@ var roles = [
 	"Plantation",
 	"Researcher",
 	"Village Head",
-	"Wildfire Department"
+	"Wildlife Department"
 ]
  
 var player_selections = [null, null, null, null] # Array to store role for 4 players

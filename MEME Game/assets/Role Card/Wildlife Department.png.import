@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bmfqo0ljpvhor"
-path="res://.godot/imported/Wildfire Department.png-9b070d1429fe9f5d5d094a6b5a44f1df.ctex"
+path="res://.godot/imported/Wildlife Department.png-1691e1a53002fae21786ce3ece8252f4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Role Card/Wildfire Department.png"
-dest_files=["res://.godot/imported/Wildfire Department.png-9b070d1429fe9f5d5d094a6b5a44f1df.ctex"]
+source_file="res://assets/Role Card/Wildlife Department.png"
+dest_files=["res://.godot/imported/Wildlife Department.png-1691e1a53002fae21786ce3ece8252f4.ctex"]
 
 [params]
 

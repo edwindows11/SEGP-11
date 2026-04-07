@@ -356,7 +356,7 @@ func _role_bonus_medium(card_id: String, role: String) -> float:
 				if op == "convert" and fx.get("to","") == "PLANTATION": bonus += 5.0
 			"Land Developer":
 				if op == "convert" and fx.get("to","") == "HUMAN": bonus += 5.0
-			"Wildfire Department":
+			"Wildlife Department":
 				if op == "add_e": bonus += 3.0
 			"Ecotourism Manager":
 				if op == "move_e" and fx.get("to","") != "HUMAN": bonus += 3.0
@@ -513,8 +513,8 @@ func _role_win_score_hard(
 				if op == "convert" and fx.get("to","") == "HUMAN":
 					bonus += 12.0 * count
 
-			# ── Wildfire Department: 4 elephants in forest
-			"Wildfire Department":
+			# ── Wildlife Department: 4 elephants in forest
+			"Wildlife Department":
 				if op == "add_e":
 					var deficit: int = maxi(0, 4 - e_in_forest)
 					bonus += 8.0 * min(count, deficit)

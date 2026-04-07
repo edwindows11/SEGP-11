@@ -1,5 +1,5 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1775553595
+::res://::1775573052
 README.md::TextFile::-1::1775420183::0::1::::<><><>0<>0<><>::
 Updates.md::TextFile::-1::1775420183::0::1::::<><><>0<>0<><>::
 ::res://assets/::1775530139
@@ -108,7 +108,7 @@ Meeple2D.png::CompressedTexture2D::8060161915930704971::1773367942::1775553146::
 Meeple.tscn::PackedScene::7580436012762488179::1775472907::0::1::::<><><>0<>0<><>::uid://chv44r2w6i86d::::res://assets/Pieces/blend/Meeple2.blend<>uid://bnfbinc8sdors::::res://scripts/Pieces/meeple.gd<>uid://p1adtaq8li1b::::res://assets/Pieces/Outline.tres
 Outline.tres::StandardMaterial3D::1106512832272915709::1773367942::0::1::::<><><>0<>0<><>::
 ::res://assets/Pieces/blend/::1775552821
-::res://assets/Role Card/::1775553146
+::res://assets/Role Card/::1775573052
 Conservationist.png::CompressedTexture2D::36849127972206636::1775422623::1775553146::1::::<><><>0<>0<>f220de711a5dd0aa1d3a4ca046678ced<>res://.godot/imported/Conservationist.png-61b8f2778144d5a19fb5ed0901e8f31c.ctex::
 Ecotourism Manager.png::CompressedTexture2D::6006588552941788082::1775422623::1775553146::1::::<><><>0<>0<>5203ad96437570e0aa65524a8b979171<>res://.godot/imported/Ecotourism Manager.png-fd9baffafaa80eadc8e5b38a835b47f3.ctex::
 Environmental Consultant.png::CompressedTexture2D::5984037919100032088::1775422623::1775553146::1::::<><><>0<>0<>2e67579c0f69103ca0d0b9c9ad391d33<>res://.godot/imported/Environmental Consultant.png-1f0cd33c5bdb97d71211b87ce49f3e63.ctex::
@@ -118,7 +118,7 @@ Plantation Owner.png::CompressedTexture2D::1526376764656848125::1775422623::1775
 Researcher.png::CompressedTexture2D::8567571089326729449::1775422623::1775553146::1::::<><><>0<>0<>ca1c33d85e35a9945f1ed13823453cd0<>res://.godot/imported/Researcher.png-7d6ed6a9fe51674c16946dc2533e511e.ctex::
 RoleCard.png::CompressedTexture2D::5491501723094360034::1775422623::1775553146::1::::<><><>0<>0<>cc23c7e8d8b0576a10387e5dd7bd9187<>res://.godot/imported/RoleCard.png-5a259d2b6ea02c4cdbee9bce98f0cb10.ctex::
 Village Head.png::CompressedTexture2D::2667681117965538753::1775422623::1775553146::1::::<><><>0<>0<>08392156232b801e6c670c53170dd143<>res://.godot/imported/Village Head.png-896f7bd9cb84138e77eb67d1a9702d78.ctex::
-Wildfire Department.png::CompressedTexture2D::3240006499625120513::1775422623::1775553146::1::::<><><>0<>0<>a358c024dce632fa3a10fef277e27c39<>res://.godot/imported/Wildfire Department.png-9b070d1429fe9f5d5d094a6b5a44f1df.ctex::
+Wildlife Department.png::CompressedTexture2D::3240006499625120513::1775422623::1775573052::1::::<><><>0<>0<>0caafa43b3dfd9e6087cc71f5e14460f<>res://.godot/imported/Wildlife Department.png-1691e1a53002fae21786ce3ece8252f4.ctex::
 ::res://assets/Tiles/::1775553149
 ForestTile.glb::PackedScene::7963592313741091600::1773367942::1775553148::1::::<><><>0<>0<>4d4e904b01da2c003509408a08b23074<>res://.godot/imported/ForestTile.glb-a1bd726e3b4e129e16863911103ec2c9.scn::uid://dqup5nvo0xvwl::::res://assets/Tiles/ForestTile_3.png
 ForestTile_1.png::CompressedTexture2D::2171488458284129217::1773367942::1775553146::1::::<><><>0<>0<>dfb5da2e0e57f96870bf994ba0cd5cf5<>res://.godot/imported/ForestTile_1.png-33b37625549bb8bc620cae8505c89b8c.s3tc.ctex::
@@ -127,10 +127,10 @@ HumanDominatedTile.glb::PackedScene::1675755418352003013::1773367942::1775553148
 HumanDominatedTile_1.png::CompressedTexture2D::5927078993202749137::1773367942::1775553146::1::::<><><>0<>0<>10c763c594b58bb0fd0d1b6cf3124d5f<>res://.godot/imported/HumanDominatedTile_1.png-f22e5c3a31fa4cc3f6dfb8ea70ac8a83.s3tc.ctex::
 PlantationTile.glb::PackedScene::8619284372743211699::1773367942::1775553149::1::::<><><>0<>0<>d59e1d6636171e2a9b05da42518c3d2f<>res://.godot/imported/PlantationTile.glb-b2bbc1a335dc2afa2dd050aec7f3e382.scn::uid://wm2eilf5yedk::::res://assets/Tiles/PlantationTile_2.png
 PlantationTile_2.png::CompressedTexture2D::1570574032513608832::1773367942::1775553146::1::::<><><>0<>0<>6b643d7a0914a7aabda7816204886c46<>res://.godot/imported/PlantationTile_2.png-5e9624a3443d0d05a5af0e3f50f04d47.s3tc.ctex::
-::res://scenes/::1775552094
+::res://scenes/::1775572641
 ActionLog.tscn::PackedScene::-1::1775420183::0::1::::<><><>0<>0<><>::res://scripts/ActionLog.gd
 Card.tscn::PackedScene::3774748604761572987::1775420183::0::1::::<><><>0<>0<><>::uid://bkonqrcid8iyp::::res://scripts/Card.gd
-CardTable.tscn::PackedScene::6986705891419701701::1775552094::0::1::::<><><>0<>0<><>::uid://b5fykedev53t2::::res://scripts/Card Table/card_table.gd<>uid://oti8gk6h0m1r::::res://scripts/Card Table/card_table_ui.gd<>res://scenes/ActionLog.tscn<>uid://cytbbj4ddsi50::::res://scripts/Card Table/card_functions.gd<>uid://dktt2i1ceg3ah::::res://scripts/Board.gd<>uid://btarkqtbmpr2x::::res://assets/CardTable/Steal/Steal container.png<>uid://cgqxld4isd01::::res://assets/CardTable/Skipped.png<>uid://dtcmw3h1jhbnt::::res://assets/CardTable/Steal/Player container.png<>uid://dh6r7eebvovxe::::res://scripts/CameraControls.gd<>uid://b6ugg1cs8clv0::::res://assets/CardTable/Steal/Player container hover.png<>uid://c1aemo1creo1i::::res://assets/CardTable/PLAY (1).png<>uid://02nmxj2l05xh::::res://scenes/PauseMenu.tscn<>uid://camxy31gjo2vv::::res://assets/Font/IntroHeadR-Base.otf<>uid://s6nbqxu400wx::::res://assets/CardTable/PLAY (1) Hover.png<>uid://ckhos8y525rsj::::res://assets/CardTable/PLAY Disable.png<>uid://b7arqou58uulu::::res://assets/CardTable/PAUSE.png<>uid://bf1yk1nhgw672::::res://assets/CardTable/Special Ability.png<>uid://df1dw6qutaro5::::res://assets/CardTable/Special Abilit_Hover.png
+CardTable.tscn::PackedScene::6986705891419701701::1775572641::0::1::::<><><>0<>0<><>::uid://b5fykedev53t2::::res://scripts/Card Table/card_table.gd<>uid://oti8gk6h0m1r::::res://scripts/Card Table/card_table_ui.gd<>res://scenes/ActionLog.tscn<>uid://cytbbj4ddsi50::::res://scripts/Card Table/card_functions.gd<>uid://dktt2i1ceg3ah::::res://scripts/Board.gd<>uid://btarkqtbmpr2x::::res://assets/CardTable/Steal/Steal container.png<>uid://cgqxld4isd01::::res://assets/CardTable/Skipped.png<>uid://dtcmw3h1jhbnt::::res://assets/CardTable/Steal/Player container.png<>uid://dh6r7eebvovxe::::res://scripts/CameraControls.gd<>uid://b6ugg1cs8clv0::::res://assets/CardTable/Steal/Player container hover.png<>uid://c1aemo1creo1i::::res://assets/CardTable/PLAY (1).png<>uid://02nmxj2l05xh::::res://scenes/PauseMenu.tscn<>uid://camxy31gjo2vv::::res://assets/Font/IntroHeadR-Base.otf<>uid://s6nbqxu400wx::::res://assets/CardTable/PLAY (1) Hover.png<>uid://ckhos8y525rsj::::res://assets/CardTable/PLAY Disable.png<>uid://b7arqou58uulu::::res://assets/CardTable/PAUSE.png<>uid://bf1yk1nhgw672::::res://assets/CardTable/Special Ability.png<>uid://df1dw6qutaro5::::res://assets/CardTable/Special Abilit_Hover.png
 How to Play.tscn::PackedScene::5093261575779970301::1775545457::0::1::::<><><>0<>0<><>::uid://ckie1dykhjfiv::::res://scripts/HowToPlay.gd<>uid://bwh8g3ahyoj61::::res://assets/Font/LeagueSpartan-Bold.ttf<>uid://32w7jq2grok5::::res://assets/Font/LeagueSpartan-Regular.ttf<>uid://565dk5asxdr2::::res://assets/Tiles/ForestTile_1.png<>uid://wm2eilf5yedk::::res://assets/Tiles/PlantationTile_2.png<>uid://cqpeeitnqiext::::res://assets/Tiles/HumanDominatedTile_1.png<>uid://b4bqbycfmx71t::::res://assets/How To Play/Elephant.png<>uid://yy7sfl5udh3o::::res://assets/How To Play/Meeple.png<>uid://773g6l4khhes::::res://assets/How To Play/Card.png<>uid://dmmvkr2rgrmqo::::res://assets/How To Play/Card 2.png<>uid://o4v2vlqp48tp::::res://assets/CardTable/Scenario Selection.png<>uid://cipxwwiyv46fa::::res://assets/How To Play/Card 3.png<>uid://bac3oerinjpjq::::res://assets/CardTable/Role Selection.png<>uid://61w1dmn1gi0x::::res://assets/How To Play/Tile.png<>uid://dpevw4ipu5m1s::::res://assets/How To Play/MEME.png
 main.tscn::PackedScene::3291442695496918881::1765543160::0::1::::<><><>0<>0<><>::uid://c53lmlm3k7fop::::res://scripts/grid_manager.gd<>uid://c8q4j5k6l7m8::::res://scenes/elephant.tscn
 MainMenu.tscn::PackedScene::1448884684200451426::1775543147::0::1::::<><><>0<>0<><>::uid://doxiianmbebdg::::res://assets/MainMenu/background.png<>uid://2re3gb8w87k7::::res://assets/MainMenu/Title.png<>uid://bumw8dy524x60::::res://assets/MainMenu/buttons/Play.png<>uid://86wvpud0j1rp::::res://assets/Pieces/Elephant2D.png<>uid://dm3nxownjha4j::::res://assets/Pieces/Meeple2D.png<>uid://dw47u1s6mrtc5::::res://assets/MainMenu/buttons/Play_Hover.png<>uid://crer7at5wljon::::res://scripts/MainMenu/Buttons/start_button.gd<>uid://tvx8qyhhbhon::::res://assets/MainMenu/buttons/HowToPlay.png<>uid://d2ipi4thqvaer::::res://assets/MainMenu/buttons/HowToPlay_Hover.png<>uid://crufckq7qphc6::::res://scripts/MainMenu/Buttons/exit_button.gd<>uid://drhrmogiewoxo::::res://assets/MainMenu/buttons/Exit.png<>uid://cnhwglppb2ux5::::res://scripts/MainMenu/Buttons/how_to_play_button.gd<>uid://bws14o5c0plo1::::res://assets/MainMenu/buttons/Exit_Hover.png<>uid://cobya6p65w4jm::::res://assets/MainMenu/MEME logo.png
@@ -139,29 +139,29 @@ PlayerDisplay.tscn::PackedScene::-1::1775420183::0::1::::<><><>0<>0<><>::res://s
 RoleSelection.tscn::PackedScene::3085309343925659114::1775547002::0::1::::<><><>0<>0<><>::uid://b4kfkrg3hxequ::::res://scripts/RoleSelection.gd<>uid://r35ud6vpntk::::res://assets/Role Card/Conservationist.png<>uid://doxiianmbebdg::::res://assets/MainMenu/background.png
 Scenario Selection.png::CompressedTexture2D::8382753620437026828::1775544649::1775544650::1::::<><><>0<>0<>98d51ef3b68a814f6346c468a15925a6<>res://.godot/imported/Scenario Selection.png-32aa24a918df82eb663ae7708df80610.ctex::
 ScenarioSelect.tscn::PackedScene::185917438114360158::1775543976::0::1::::<><><>0<>0<><>::uid://j6l7ni7ki42p::::res://scripts/ScenarioSelect.gd<>uid://doxiianmbebdg::::res://assets/MainMenu/background.png
-::res://scripts/::1775544112
+::res://scripts/::1775566300
 ActionLog.gd::GDScript::5666482020251196246::1775527151::0::1::::<>VBoxContainer<><>0<>0<><>::
 Board.gd::GDScript::7901575964532958119::1775472907::0::1::::<>Node3D<><>0<>0<><>::
 bot.gd::GDScript::307146462602611153::1775493462::0::1::::<>Node<><>0<>0<><>::
 CameraControls.gd::GDScript::7715669217550061510::1775490153::0::1::::<>Camera3D<><>0<>0<><>::
 Card.gd::GDScript::3118029198594064919::1775420183::0::1::::<>Control<><>0<>0<><>::
 CardData.gd::GDScript::8308118792669831157::1775420183::0::1::::CardData<>RefCounted<><>0<>0<><>::
-CardEffects.gd::GDScript::5574388463560760133::1775491358::0::1::::<>Node<><>0<>0<><>::
+CardEffects.gd::GDScript::5574388463560760133::1775566068::0::1::::<>Node<><>0<>0<><>::
 GameState.gd::GDScript::8753606182841504797::1775472907::0::1::::<>Node<><>0<>0<><>::
 grid_manager.gd::GDScript::6936999167669461023::1775420183::0::1::::<>Node3D<><>0<>0<><>::
 HowToPlay.gd::GDScript::5491534319521022129::1775544112::0::1::::<>Control<><>0<>0<><>::
 PauseMenu.gd::GDScript::689138363115911362::1775420183::0::1::::<>Control<><>0<>0<><>::
-PlayerDisplay.gd::GDScript::7339365875984792514::1775527151::0::1::::<>Control<><>0<>0<><>::
+PlayerDisplay.gd::GDScript::7339365875984792514::1775563055::0::1::::<>Control<><>0<>0<><>::
 RoleSelection.gd::GDScript::4442863273087753580::1775481063::0::1::::<>Control<><>0<>0<><>::
 ScenarioData.gd::GDScript::4788294458591493734::1775420183::0::1::::ScenarioData<>RefCounted<><>0<>0<><>::
 ScenarioSelect.gd::GDScript::696421032073165305::1775474808::0::1::::<>Control<><>0<>0<><>::
 ::res://scripts/Actions/::1774429603
 camera.gd::GDScript::9140071614531063616::1774429603::0::1::::<>CharacterBody3D<><>0<>0<><>::
 global.gd::GDScript::3578250104377179340::1774429603::0::1::::Enums<>Node<><>0<>0<><>::
-::res://scripts/Card Table/::1775551536
+::res://scripts/Card Table/::1775572936
 card_functions.gd::GDScript::6496659812463298837::1775489816::0::1::::<>Node3D<><>0<>0<><>::
-card_table.gd::GDScript::4503883162308646289::1775551536::0::1::::<>Node3D<><>0<>0<><>::
-card_table_ui.gd::GDScript::1022411987407577293::1775551522::0::1::::<>Control<><>0<>0<><>::
+card_table.gd::GDScript::4503883162308646289::1775572936::0::1::::<>Node3D<><>0<>0<><>::
+card_table_ui.gd::GDScript::1022411987407577293::1775572641::0::1::::<>Control<><>0<>0<><>::
 ::res://scripts/MainMenu/::1772647032
 ::res://scripts/MainMenu/Buttons/::1775542954
 exit_button.gd::GDScript::6007646972291875063::1775476693::0::1::::<>Button<><>0<>0<><>::

@@ -440,6 +440,8 @@ func _setup_singleplayer_bots() -> void:
 			else:
 				difficulty = bot_ai.Difficulty.EASY
 		bot_ai.set_player_difficulty(bot_player_index, difficulty)
+		bot_ai.bot_turn_started.connect(UI._on_bot_turn_started)
+		bot_ai.bot_turn_ended.connect(UI._on_bot_turn_ended)
 
 	if not GameState.turn_changed.is_connected(bot_ai._on_turn_changed):
 		GameState.turn_changed.connect(bot_ai._on_turn_changed)
@@ -455,6 +457,7 @@ func _is_bot_turn_for_player(player_index: int) -> bool:
 	return bot_ai.is_bot(player_index)
 
 func _on_turn_changed_for_input_locks(player_index: int, _role_name: String, is_skipped: bool) -> void:
+	UI._refresh_role_panel_ui()
 	if UI == null:
 		return
 
