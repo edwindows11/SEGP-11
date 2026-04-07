@@ -9,3 +9,12 @@ res://scripts/PlayerDisplay.gd
 res://scripts/RoleSelection.gd
 res://scripts/CameraControls.gd
 res://scenes/CardTable.tscn
+res://scripts/CardData.gd
+res://scripts/Board.gd
+res://scripts/ScenarioData.gd
+res://scripts/MainMenu/Buttons/exit_button.gd
+res://scripts/MainMenu/Buttons/how_to_play_button.gd
+res://scripts/MainMenu/Buttons/start_button.gd
+res://scripts/Pieces/meeple.gd
+res://scripts/Card.gd
+res://scripts/PauseMenu.gd

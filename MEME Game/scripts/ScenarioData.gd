@@ -12,6 +12,7 @@ class_name ScenarioData
 #   "villagers_count": int               — number of villagers to place randomly on HUMAN tiles
 #   "difficulty"     : Dictionary         — { "pro_elephant": String, "neutral": String, "pro_people": String }
 
+# Single-letter aliases let the grid literals below stay readable as a map
 const F = 0   # Forest
 const V = 1   # Human / Village
 const O = 2   # Plantation / Oil Palm
@@ -138,7 +139,10 @@ static var SCENARIOS: Array = [
 	},
 ]
 
+# --- Lookup helpers ---
+
 # Returns null for "random" — caller should use the original flood-fill algorithm
+# Out-of-range indices also return null so callers can fall back to random gen.
 static func get_scenario(index: int):
 	if index < 0 or index >= SCENARIOS.size():
 		return null

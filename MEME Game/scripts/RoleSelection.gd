@@ -33,16 +33,20 @@ var role_colors = {
 	"Wildlife Department": Color(1.0, 0.741, 0.349, 1.0)
 }
 
+# ---- PLAYER STATE ----
+# Index = player slot, value = chosen role name (or null if not picked yet)
 var player_selections = [null, null, null, null]
 var current_player_index = 0
 var total_players = 4
 
+# ---- BOT CONFIG ----
 var singleplayer_bot_count = 3
 var bot_count_option: OptionButton = null
 var bot_speed_option: OptionButton = null
 var bot_speed_preset: String = "Normal"
 var bot_difficulty_options: Dictionary = {}
 var bot_difficulty_panels: Dictionary = {}
+# Default difficulty per bot slot (player_idx -> difficulty id 0/1/2)
 var bot_difficulty_by_player: Dictionary = {
 	1: 2,
 	2: 1,
@@ -86,6 +90,8 @@ func _preload_role_textures():
 			print("WARNING: Could not load texture for role: ", role, " at path: ", path)
 
 
+# ---- BOT CONTAINER WIRING ----
+# Hooks the bot count / speed / per-player difficulty option buttons to handlers.
 func _connect_bot_container_controls():
 	bot_count_option = bot_count
 	bot_speed_option = bot_speed
@@ -103,6 +109,8 @@ func _connect_bot_container_controls():
 	_connect_difficulty_option(bot_player4, 3)
 
 
+# Wires one per-player difficulty dropdown and remembers its parent panel
+# so we can later dim/disable the whole row when fewer bots are configured.
 func _connect_difficulty_option(option_node: OptionButton, player_idx: int):
 	if option_node == null:
 		return
@@ -257,6 +265,7 @@ func _on_bot_count_selected(index: int):
 	_refresh_bot_difficulty_controls()
 
 
+# Maps the dropdown's item id to the named preset string the game uses
 func _on_bot_speed_selected(index: int):
 	if bot_speed_option == null:
 		return
@@ -278,6 +287,8 @@ func _on_bot_difficulty_selected(index: int, player_index: int):
 	bot_difficulty_by_player[player_index] = difficulty_id
 
 
+# Greys out difficulty pickers for bot slots that aren't in use given the
+# currently chosen bot count.
 func _refresh_bot_difficulty_controls():
 	for player_idx in range(1, total_players):
 		var option = bot_difficulty_options.get(player_idx)
@@ -291,6 +302,8 @@ func _refresh_bot_difficulty_controls():
 			panel.modulate = Color(1, 1, 1, 0.5) if disabled else Color(1, 1, 1, 1)
 
 
+# Builds the difficulty map for only the bots that are actually in play,
+# so it can be passed to the CardTable scene as-is.
 func _build_active_bot_difficulty_map() -> Dictionary:
 	var result: Dictionary = {}
 	for player_idx in range(1, total_players):
@@ -300,6 +313,7 @@ func _build_active_bot_difficulty_map() -> Dictionary:
 	return result
 
 
+# Updates each slot's header label to reflect human / bot / unused state.
 func _refresh_player_slot_headers():
 	for i in range(total_players):
 		var slot = player_slots_container.get_child(i)
@@ -336,6 +350,8 @@ func _on_player_slot_pressed(player_idx: int):
 	update_ui()
 
 
+# Moves the active slot to the next player who hasn't picked yet,
+# wrapping around. Leaves current_player_index unchanged if everyone is done.
 func advance_turn():
 	var next_idx = -1
 	for i in range(total_players):
@@ -412,10 +428,14 @@ func update_ui():
 	var all_selected = player_selections.all(func(r): return r != null)
 	start_game_button.disabled = not all_selected
 
+# ---- START GAME ----
+# Instantiates the CardTable scene, copies all chosen settings onto it,
+# then swaps it in as the current scene.
 func _on_start_game_pressed():
 	var card_table_scene = load("res://scenes/CardTable.tscn")
 	var card_table = card_table_scene.instantiate()
 
+	# Newer CardTable supports multi-role array; fall back to single role for older versions
 	if "player_roles" in card_table:
 		card_table.player_roles = player_selections
 	else:

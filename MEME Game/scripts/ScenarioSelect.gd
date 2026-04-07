@@ -3,9 +3,11 @@ extends Control
 # Emitted when user confirms a scenario and proceeds to role selection
 const CELL_SIZE := 40  # pixels per grid cell in the preview
 
+# -1 = nothing selected yet (confirm button stays disabled)
 var selected_index: int = -1  # 0..4 = preset scenario, 5 = random
 
-# Node references (created in _ready)
+# --- Node references (created in _ready) ---
+
 var card_container: HBoxContainer
 var detail_panel: PanelContainer
 var preview_grid: Control
@@ -14,6 +16,8 @@ var concept_label: RichTextLabel
 var difficulty_label: RichTextLabel
 var stats_label: Label
 var confirm_button: Button
+
+# --- Visual constants ---
 
 # Color mapping for the tile preview
 const TILE_COLORS := {
@@ -271,10 +275,12 @@ func _build_scenario_cards() -> void:
 
 # --- Card selection ---
 
+# Handles a click on one of the 6 scenario cards: highlights it and
+# refreshes the detail panel on the right with that scenario's info.
 func _on_card_pressed(index: int) -> void:
 	selected_index = index
 
-	# Update card highlight borders
+	# Rebuild every card's stylebox so only the selected one shows the gold border
 	var cards = card_container.get_children()
 	for i in range(cards.size()):
 		var style: StyleBoxFlat
@@ -309,12 +315,13 @@ func _on_card_pressed(index: int) -> void:
 		_show_random_details()
 
 
+# Populates the detail panel for one of the 5 hand-authored scenarios.
 func _show_preset_details(idx: int) -> void:
 	var scenario = ScenarioData.SCENARIOS[idx]
 	title_label.text = scenario["name"]
 	concept_label.text = scenario["concept"]
 
-	# Count tiles
+	# Tally tile types across the 8x8 grid for the stats line
 	var counts := { 0: 0, 1: 0, 2: 0 }
 	var grid: Array = scenario["grid"]
 	for row in range(8):
@@ -340,6 +347,7 @@ func _show_preset_details(idx: int) -> void:
 	_draw_grid_preview(grid, scenario["elephants"])
 
 
+# Populates the detail panel for the special "Random Map" option (index 5).
 func _show_random_details() -> void:
 	title_label.text = "Random Map"
 	concept_label.text = "The board is generated using a seed-based flood-fill algorithm that creates three contiguous tile regions — Forest, Village, and Oil Palm. Each game is unique!"
@@ -365,6 +373,7 @@ func _show_random_details() -> void:
 	preview_grid.add_child(center_label)
 
 
+# Renders the 8x8 mini-map preview as ColorRects, then overlays elephant markers.
 func _draw_grid_preview(grid: Array, elephants: Array) -> void:
 	_clear_preview()
 	for row in range(8):
@@ -372,10 +381,11 @@ func _draw_grid_preview(grid: Array, elephants: Array) -> void:
 			var rect := ColorRect.new()
 			rect.color = TILE_COLORS[grid[row][col]]
 			rect.position = Vector2(col * CELL_SIZE, row * CELL_SIZE)
+			# -2 leaves a 2px gutter between cells so the grid is visible
 			rect.size = Vector2(CELL_SIZE - 2, CELL_SIZE - 2)
 			preview_grid.add_child(rect)
 
-	# Draw elephant markers
+	# Draw elephant markers — note epos is (row, col) so y maps to col, x to row
 	for epos in elephants:
 		var marker := ColorRect.new()
 		marker.color = ELEPHANT_COLOR
