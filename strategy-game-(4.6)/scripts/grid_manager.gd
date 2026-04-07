@@ -14,10 +14,10 @@ func _unhandled_input(event):
 			# Start Dragging
 			start_dragging(event.position)
 		elif current_dragged_unit:
-			# Stop Dragging (Place)
+			# Stop Dragging 
 			finish_dragging()
 	
-	# Handle Mouse Motion (Dragging)
+	# Handle Mouse Motion 
 	elif event is InputEventMouseMotion and current_dragged_unit:
 		update_drag_position(event.position)
 
@@ -33,24 +33,29 @@ func start_dragging(screen_pos: Vector2):
 	
 	update_drag_position(screen_pos)
 
+# drag according to mouse
 func update_drag_position(screen_pos: Vector2):
 	var world_pos = get_world_position_from_screen(screen_pos)
 	if world_pos:
 		var grid_pos = world_to_grid(world_pos)
 		current_dragged_unit.global_position = grid_to_world(grid_pos)
 
+#when nolonger left clicking
 func finish_dragging():
 	current_dragged_unit = null
 
+# see mouse position and drag according to it
 func get_world_position_from_screen(screen_pos: Vector2):
 	var camera = get_viewport().get_camera_3d()
+
+	#Converts the 2D screen position into a 3D starting point.
 	var from = camera.project_ray_origin(screen_pos)
 	var to = from + camera.project_ray_normal(screen_pos) * 1000
-	
 	var space_state = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
 	var result = space_state.intersect_ray(query)
 	
+	#Return the exact 3D position of the hit point.
 	if result:
 		return result.position
 	return null
