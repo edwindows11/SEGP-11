@@ -105,18 +105,22 @@ func _ready() -> void:
 	if player_roles.size() > 0:
 		print("Game Started with roles: ", player_roles)
 
+	UI.pause_btn.pressed.connect(_pause)
+
 
 
 func _process(_delta: float) -> void:
 	pass
 
+func _pause():
+	var pause_menu = $CanvasLayer/PauseMenu
+	if pause_menu:
+		pause_menu.toggle_pause()
+		return
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
-		var pause_menu = $CanvasLayer/PauseMenu
-		if pause_menu:
-			pause_menu.toggle_pause()
-			return
+		_pause()
 
 	if _is_bot_turn():
 		return
@@ -269,6 +273,7 @@ func _on_card_effects_complete() -> void:
 		if UI.end_turn_button: UI.end_turn_button.disabled = true
 	else:
 		if UI.end_turn_button: UI.end_turn_button.disabled = false
+		UI.set_end_turn_ready()  # enables play btn when it's in End Turn mode
 
 func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void:
 	_current_valid_selection_keys = _valid_keys.duplicate()
@@ -338,7 +343,7 @@ func _on_ec_ability_requested() -> void:
 
 	
 func _on_request_steal_popup() -> void:
-	UI.show_steal_popup_v2(card_effects)
+	UI.show_steal_popup(card_effects)
 
 func _on_request_convert_type_popup(current_type: int) -> void:
 	UI.show_convert_type_popup(card_effects, current_type)

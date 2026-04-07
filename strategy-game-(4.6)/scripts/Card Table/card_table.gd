@@ -53,7 +53,12 @@ func _ready() -> void:
 	UI.end_turn_requested.connect(_on_end_turn_button_pressed)
 
 	# --- Wire GameState turn signal to UI ---
-	GameState.turn_changed.connect(UI._on_turn_changed)
+	GameState.turn_changed.connect(Callable(UI, "_on_turn_changed"))
+
+	# --- Wire pause button ---
+	var pause_btn = $CanvasLayer/Control/TopBar/PauseButton
+	if pause_btn:
+		pause_btn.pressed.connect(pause)
 
 	if player_roles.size() > 0:
 		print("Game Started with roles: ", player_roles)
@@ -63,13 +68,13 @@ func _process(_delta: float) -> void:
 	pass
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
-		var pause_menu = $CanvasLayer/PauseMenu
-		if pause_menu:
-			pause_menu.toggle_pause()
-			return
+func pause()-> void:
+	var pause_menu = $CanvasLayer/PauseMenu
+	if pause_menu:
+		pause_menu.toggle_pause()
+		return
 
+func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 
 		# --- Card effect tile selection mode ---

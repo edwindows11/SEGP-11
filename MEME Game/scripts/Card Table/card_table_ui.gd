@@ -23,6 +23,8 @@ const PLAYER_DISPLAY_SCENE = preload("res://scenes/PlayerDisplay.tscn")
 @onready var turn_timer = $TurnTimer
 @onready var placement_options = $TopBar/PlacementMode
 @onready var play_btn = $PlayCard
+@onready var pause_btn = $TopBar/PauseButton
+
 var _play_btn_is_end_turn: bool = false
 const TEX_PLAY_NORMAL   = preload("res://assets/CardTable/PLAY (1).png")
 const TEX_PLAY_HOVER    = preload("res://assets/CardTable/PLAY (1) Hover.png")
@@ -47,6 +49,7 @@ var pending_card: Control = null
 var instruction_label: Label = null
 var play_card: bool = true
 var currently_viewing_card: bool = false
+var bot_turn_active: bool = false
 var vh_villagers_increased_this_turn: bool = false
 var po_used_ability_this_turn: bool = false
 
@@ -134,7 +137,7 @@ const ROLE_ABILITIES: Dictionary = {
 }
 
 func _ready():
-	play_btn.disabled = true
+	pause_btn.pressed.connect(_pause)
 	play_btn.pressed.connect(_on_play_btn_pressed)
 	if user_role_label:
 		user_role_label.text = "My Role: " + player_role
@@ -156,6 +159,13 @@ func _ready():
 		placement_options.visible = false
 
 	_init_all_ui_elements()
+	
+
+func _pause():
+	var pause_menu = $CanvasLayer/PauseMenu
+	if pause_menu:
+		pause_menu.toggle_pause()
+		return
 
 func _init_all_ui_elements():
 	_build_instruction_banner()
@@ -772,13 +782,17 @@ func _on_card_selected(selected_card):
 	play_btn.disabled = false
 
 func _on_play_btn_pressed():
+	if _play_btn_is_end_turn:
+		end_turn_requested.emit()
+		return
+
 	if not pending_card: return
 	var p_idx = GameState.current_player_index
 	var r_name = GameState.player_roles[p_idx]
 	if (r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head")):
 		for fx in CardData.ALL_CARDS.get(pending_card.card_id, {}).get("sub_effects", []):
 			if fx.get("op", "") in ["add_v", "add_v_in"]: vh_villagers_increased_this_turn = true; break
-	
+
 	if r_name == "Government" and pending_card.card_id in GameState.government_stolen_cards.get(p_idx, []):
 		GameState.government_mark_replayed(pending_card.card_id)
 
@@ -787,7 +801,17 @@ func _on_play_btn_pressed():
 	pending_card = null
 	currently_viewing_card = false
 	cards_played_this_turn += 1
-	play_btn.disabled = true
+	add_recent_card_for_player(GameState.current_player_index, cid)
+
+	# Determine how many cards this role can play per turn
+	var max_cards = 2 if (r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head")) else 1
+	if cards_played_this_turn >= max_cards:
+		_switch_to_end_turn_mode()  # button becomes disabled End Turn, enabled by set_end_turn_ready()
+	else:
+		# Still has cards to play — reset play button so they can select and play another
+		play_btn.disabled = true
+		currently_viewing_card = false
+
 	card_activated.emit(cid)
 
 func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
@@ -799,6 +823,10 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 	if is_skipped:
 		timer_label.text = "Skipped"
 
+	var skip_label = $Skipped
+	if skip_label:
+		skip_label.visible = is_skipped
+
 	vh_villagers_increased_this_turn = false
 	po_used_ability_this_turn = false
 	gov_used_ability_this_turn = false
@@ -807,7 +835,7 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 	ec_used_ability_this_turn = false
 	player_role = role_name
 	user_role_label.text = "Player %d | %s" % [player_index + 1, role_name]
-	
+
 	po_ability_btn.visible = (role_name == "Plantation Owner" and not is_skipped)
 	gov_ability_btn.visible = (role_name == "Government" and not is_skipped)
 	cons_ability_btn.visible = (role_name == "Conservationist" and not is_skipped)
@@ -817,14 +845,14 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 	var _is_wd = (role_name == "Wildlife Department") or (role_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
 	if _is_wd and not is_skipped:
 		GameState.wildlife_dept_draw_bonus(player_index)
-	
+
+	bot_turn_active = false
+	_switch_to_play_mode()
 	spawn_cards()
 
-func show_instruction(text):
-	instruction_label.text = text
-	instruction_label.get_parent().visible = true
 func hide_instruction():
-	instruction_label.get_parent().visible = false
+	if instruction_label:
+		instruction_label.get_parent().visible = false
 
 func show_wildlife_discard_popup():
 	var drawn = GameState.wildlife_dept_drawn_cards
@@ -897,88 +925,6 @@ func show_em_choice_popup(callback):
 		)
 		vbox.add_child(b)
 	em_choice_popup.visible = true
-
-func _trigger_win(player_index: int, role_name: String) -> void:
-	if is_game_over:
-		return
-	is_game_over = true
-	if win_screen_panel:
-		win_screen_panel.visible = true
-	if win_screen_label:
-		win_screen_label.text = "Player " + str(player_index + 1) + " WON!\nRole: " + role_name
-
-func show_convert_type_popup(card_effects: Node, current_type: int) -> void:
-	var popup = get_node_or_null("_convert_type_popup")
-	if popup == null:
-		popup = PanelContainer.new()
-		popup.name = "_convert_type_popup"
-		popup.set_anchors_preset(Control.PRESET_CENTER)
-		popup.offset_left = -220
-		popup.offset_top = -110
-		popup.offset_right = 220
-		popup.offset_bottom = 110
-
-		var panel_style := StyleBoxFlat.new()
-		panel_style.bg_color = Color(0.08, 0.08, 0.08, 0.92)
-		panel_style.corner_radius_top_left = 12
-		panel_style.corner_radius_top_right = 12
-		panel_style.corner_radius_bottom_left = 12
-		panel_style.corner_radius_bottom_right = 12
-		panel_style.content_margin_left = 18
-		panel_style.content_margin_right = 18
-		panel_style.content_margin_top = 14
-		panel_style.content_margin_bottom = 14
-		popup.add_theme_stylebox_override("panel", panel_style)
-
-		var root_vbox := VBoxContainer.new()
-		root_vbox.add_theme_constant_override("separation", 12)
-		popup.add_child(root_vbox)
-
-		var title := Label.new()
-		title.text = "Choose New Tile Type"
-		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		title.add_theme_font_size_override("font_size", 24)
-		title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.2))
-		root_vbox.add_child(title)
-
-		var row := HBoxContainer.new()
-		row.name = "ButtonsRow"
-		row.add_theme_constant_override("separation", 10)
-		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		root_vbox.add_child(row)
-
-		var button_specs = [
-			{"name": "ForestBtn", "text": "Forest", "type": GameState.TileType.FOREST},
-			{"name": "HumanBtn", "text": "Human", "type": GameState.TileType.HUMAN},
-			{"name": "PlantationBtn", "text": "Plantation", "type": GameState.TileType.PLANTATION},
-		]
-
-		for spec in button_specs:
-			var btn := Button.new()
-			btn.name = spec["name"]
-			btn.text = spec["text"]
-			btn.custom_minimum_size = Vector2(120, 44)
-			btn.add_theme_font_size_override("font_size", 18)
-			btn.pressed.connect(func():
-				popup.visible = false
-				card_effects.confirm_convert_any_any_type_selected(spec["type"])
-			)
-			row.add_child(btn)
-
-		add_child(popup)
-
-	var row_node = popup.get_node("VBoxContainer/ButtonsRow") if popup.has_node("VBoxContainer/ButtonsRow") else popup.get_child(0).get_child(1)
-	for btn in row_node.get_children():
-		if btn is Button:
-			match btn.name:
-				"ForestBtn":
-					btn.disabled = (current_type == GameState.TileType.FOREST)
-				"HumanBtn":
-					btn.disabled = (current_type == GameState.TileType.HUMAN)
-				"PlantationBtn":
-					btn.disabled = (current_type == GameState.TileType.PLANTATION)
-
-	popup.visible = true
 
 func _ensure_recent_player_buckets(player_count: int) -> void:
 	var target_count: int = maxi(4, player_count)
@@ -1267,6 +1213,9 @@ func _recent_uid_exists(uid: String) -> bool:
 
 
 
+func _set_play_btn_disabled(disabled: bool) -> void:
+	play_btn.disabled = disabled
+
 func _switch_to_end_turn_mode() -> void:
 	_play_btn_is_end_turn = true
 	play_btn.texture_normal   = TEX_END_NORMAL
@@ -1274,7 +1223,7 @@ func _switch_to_end_turn_mode() -> void:
 	play_btn.texture_hover    = TEX_END_NORMAL
 	play_btn.texture_disabled = TEX_END_DISABLED
 	play_btn.texture_focused  = TEX_END_NORMAL
-	play_btn.disabled = false
+	play_btn.disabled = true  # stays disabled until set_end_turn_ready() is called after effects resolve
 
 func _switch_to_play_mode() -> void:
 	_play_btn_is_end_turn = false
@@ -1293,23 +1242,6 @@ func set_end_turn_ready() -> void:
 	if _play_btn_is_end_turn:
 		_set_play_btn_disabled(false)
 
-func _on_play_btn_pressed():
-	if play_btn.disabled:
-		return
-
-	if _play_btn_is_end_turn:
-		_switch_to_play_mode()
-		end_turn_requested.emit()
-		return
-
-	if pending_card:
-		pending_card.visible = false
-		var card_id = pending_card.card_id
-		cards_played_this_turn += 1
-		add_recent_card_for_player(GameState.current_player_index, card_id)
-		_switch_to_end_turn_mode()
-		card_activated.emit(card_id)
-
 # --- Bot turn lock ---
 
 func _on_bot_turn_started() -> void:
@@ -1319,26 +1251,6 @@ func _on_bot_turn_started() -> void:
 func _on_bot_turn_ended() -> void:
 	bot_turn_active = false
 
-# --- Turn management ---
-
-func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool) -> void:
-	if user_role_label:
-		user_role_label.text = "Player " + str(player_index + 1) + " (" + role_name + ")"
-	play_card = not is_skipped
-
-	var skip_label = $Skipped
-	if skip_label:
-		skip_label.visible = is_skipped
-
-	time_left = 60
-	if timer_label:
-		timer_label.text = str(time_left)
-	cards_played_this_turn = 0
-	bot_turn_active = false
-	_switch_to_play_mode()
-	spawn_cards()
-
-
 # --- Instruction label (shown during tile selection) ---
 
 func show_instruction(text: String) -> void:
@@ -1346,16 +1258,13 @@ func show_instruction(text: String) -> void:
 		instruction_label.text = text
 		instruction_label.get_parent().visible = true
 
-func hide_instruction() -> void:
-	if instruction_label:
-		instruction_label.get_parent().visible = false
-
 func show_steal_popup(card_effects_node: Node) -> void:
 	var steal_node = get_node_or_null("Steal")
 		
 	if not steal_node:
 		print("Steal popup not working")
-	
+		return
+
 	var player_buttons = [
 		steal_node.get_node("Player1"),
 		steal_node.get_node("Player2"),

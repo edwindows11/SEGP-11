@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://c6soa4g4ojqjl"]
+[gd_scene load_steps=23 format=3 uid="uid://c6soa4g4ojqjl"]
 
 [ext_resource type="Script" uid="uid://b5fykedev53t2" path="res://scripts/Card Table/card_table.gd" id="1_fbsjb"]
 [ext_resource type="Script" uid="uid://oti8gk6h0m1r" path="res://scripts/Card Table/card_table_ui.gd" id="1_script"]
@@ -8,14 +8,16 @@
 [ext_resource type="Texture2D" uid="uid://btarkqtbmpr2x" path="res://assets/CardTable/Steal/Steal container.png" id="4_i3jup"]
 [ext_resource type="Texture2D" uid="uid://cgqxld4isd01" path="res://assets/CardTable/Skipped.png" id="4_ssruq"]
 [ext_resource type="Texture2D" uid="uid://dtcmw3h1jhbnt" path="res://assets/CardTable/Steal/Player container.png" id="5_aa74e"]
-[ext_resource type="Script" path="res://scripts/CameraControls.gd" id="5_camera"]
+[ext_resource type="Script" uid="uid://dh6r7eebvovxe" path="res://scripts/CameraControls.gd" id="5_camera"]
 [ext_resource type="Texture2D" uid="uid://b6ugg1cs8clv0" path="res://assets/CardTable/Steal/Player container hover.png" id="6_aa74e"]
 [ext_resource type="Texture2D" uid="uid://c1aemo1creo1i" path="res://assets/CardTable/PLAY (1).png" id="6_hreq3"]
 [ext_resource type="PackedScene" uid="uid://02nmxj2l05xh" path="res://scenes/PauseMenu.tscn" id="6_pause"]
 [ext_resource type="FontFile" uid="uid://camxy31gjo2vv" path="res://assets/Font/IntroHeadR-Base.otf" id="7_06q53"]
 [ext_resource type="Texture2D" uid="uid://s6nbqxu400wx" path="res://assets/CardTable/PLAY (1) Hover.png" id="7_oadbx"]
 [ext_resource type="Texture2D" uid="uid://ckhos8y525rsj" path="res://assets/CardTable/PLAY Disable.png" id="8_i6iax"]
-[ext_resource type="Texture2D" path="res://assets/CardTable/Pause.png" id="9_pause"]
+[ext_resource type="Texture2D" uid="uid://b7arqou58uulu" path="res://assets/CardTable/PAUSE.png" id="9_pause"]
+[ext_resource type="Texture2D" uid="uid://bf1yk1nhgw672" path="res://assets/CardTable/Special Ability.png" id="14_v88e8"]
+[ext_resource type="Texture2D" uid="uid://df1dw6qutaro5" path="res://assets/CardTable/Special Abilit_Hover.png" id="15_fae68"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fbsjb"]
 sky_top_color = Color(0.29079154, 0.43925896, 0.73398376, 1)
@@ -246,31 +248,6 @@ grow_vertical = 2
 theme_override_constants/separation = 50
 alignment = 1
 
-[node name="PlacementMode" type="OptionButton" parent="CanvasLayer/Control/TopBar"]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -15.0
-offset_right = -150.0
-offset_bottom = 15.0
-grow_horizontal = 0
-grow_vertical = 2
-tooltip_text = "Select piece to place"
-selected = 0
-item_count = 4
-popup/item_0/text = "Select Mode"
-popup/item_0/id = 0
-popup/item_1/text = "Place Elephant"
-popup/item_1/id = 1
-popup/item_2/text = "Place Meeple"
-popup/item_2/id = 2
-popup/item_3/text = "Remove Piece"
-popup/item_3/id = 3
-
 [node name="EndTurnButton" type="Button" parent="CanvasLayer/Control/TopBar"]
 layout_mode = 1
 anchors_preset = 6
@@ -315,6 +292,27 @@ offset_top = 70.0
 offset_right = 220.0
 offset_bottom = 170.0
 
+[node name="Special Abitlity" type="TextureButton" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.78900003
+anchor_top = 0.901
+anchor_right = 0.87900007
+anchor_bottom = 0.975
+offset_left = -0.88012695
+offset_top = -0.08001709
+offset_right = -0.56018066
+offset_bottom = -0.031982422
+grow_horizontal = 2
+grow_vertical = 2
+texture_normal = ExtResource("14_v88e8")
+texture_pressed = ExtResource("14_v88e8")
+texture_hover = ExtResource("15_fae68")
+texture_disabled = ExtResource("15_fae68")
+texture_focused = ExtResource("14_v88e8")
+ignore_texture_size = true
+stretch_mode = 4
+
 [node name="PlayCard" type="TextureButton" parent="CanvasLayer/Control"]
 layout_mode = 1
 anchors_preset = -1
@@ -325,10 +323,9 @@ anchor_bottom = 0.975
 offset_left = -0.1920166
 offset_top = 0.15197754
 offset_right = 0.12792969
-offset_bottom = 0.2000122
+offset_bottom = 0.19995117
 grow_horizontal = 2
 grow_vertical = 2
-disabled = true
 texture_normal = ExtResource("6_hreq3")
 texture_pressed = ExtResource("6_hreq3")
 texture_hover = ExtResource("7_oadbx")

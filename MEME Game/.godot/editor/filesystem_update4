@@ -1,1 +1,3 @@
 res://scripts/Card Table/card_table_ui.gd
+res://scripts/Card Table/card_table.gd
+res://scenes/CardTable.tscn
