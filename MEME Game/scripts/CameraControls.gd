@@ -18,6 +18,14 @@ var _mouse_held: bool = false
 var _drag_total: float = 0.0
 const DRAG_THRESHOLD: float = 5.0  # pixels mouse must move before rotation begins
 
+# When true, all rotation input is ignored (drag, Q/E snap rotate). Used by
+# the UI layer to freeze the background while a fullscreen overlay is open.
+var rotation_locked: bool = false
+
+# When true, mouse-wheel zoom is ignored. Used together with rotation_locked
+# to fully freeze the board view while a fullscreen overlay is open.
+var zoom_locked: bool = false
+
 func _ready() -> void:
 	# Calculate initial rotation/zoom based on EDITOR transform if you wanted, 
 	# but setting defaults is safer for consistent behavior.
@@ -70,10 +78,11 @@ func update_camera_transform() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			target_zoom = clamp(target_zoom - zoom_speed, zoom_min, zoom_max)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			target_zoom = clamp(target_zoom + zoom_speed, zoom_min, zoom_max)
+		if not zoom_locked:
+			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+				target_zoom = clamp(target_zoom - zoom_speed, zoom_min, zoom_max)
+			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				target_zoom = clamp(target_zoom + zoom_speed, zoom_min, zoom_max)
 		
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
@@ -88,13 +97,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		_drag_total += event.relative.length()
 		if _drag_total >= DRAG_THRESHOLD:
 			is_dragging = true
-		if is_dragging:
+		if is_dragging and not rotation_locked:
 			target_rotation.x += event.relative.x * rotation_speed * 0.01
 			target_rotation.y += event.relative.y * rotation_speed * 0.01
 			target_rotation.y = clamp(target_rotation.y, deg_to_rad(10), deg_to_rad(85))
 
 	# Q / E — snap-rotate 90° to cycle through the 4 cardinal sides
-	if event is InputEventKey and event.pressed and not event.echo:
+	if event is InputEventKey and event.pressed and not event.echo and not rotation_locked:
 		if event.keycode == KEY_Q:
 			_snap_rotate(-90.0)
 		elif event.keycode == KEY_E:

@@ -33,6 +33,7 @@ const TEX_END_NORMAL    = preload("res://assets/CardTable/End_Turn.png")
 const TEX_END_DISABLED  = preload("res://assets/CardTable/End_Turn_Disabled.png")
 var recent_cards_toggle_button: Button = null
 var recent_cards_overlay_panel: PanelContainer = null
+var recent_cards_overlay_blocker: ColorRect = null
 var recent_cards_sections_container: HBoxContainer = null
 var recent_cards_by_player: Array = []
 const RECENT_HISTORY_LIMIT: int = 5
@@ -684,10 +685,38 @@ func _refresh_role_panel_ui():
 	tex_rect.texture = load(tex_path) if ResourceLoader.exists(tex_path) else null
 
 		
+var _trackers_reordered: bool = false
+
 func _process(_delta):
 	if is_game_over: return
+	if not _trackers_reordered and not GameState.player_roles.is_empty():
+		_reorder_trackers_by_player_order()
+		_trackers_reordered = true
 	_hide_all_trackers()
 	_update_goals()
+
+# Reorder the tracker panels inside trackers_vbox so they appear in player
+# order (Player 1's role on top, Player 2's next, etc.). Trackers belonging
+# to roles that are not in the current game keep their original position
+# below the in-game ones — they stay hidden anyway.
+func _reorder_trackers_by_player_order() -> void:
+	var role_to_panel := {
+		"Conservationist": cons_tracker_panel,
+		"Village Head": vh_tracker_panel,
+		"Plantation Owner": po_tracker_panel,
+		"Land Developer": ld_tracker_panel,
+		"Environmental Consultant": ec_tracker_panel,
+		"Ecotourism Manager": em_tracker_panel,
+		"Wildlife Department": wd_tracker_panel,
+		"Researcher": res_tracker_panel,
+		"Government": gov_tracker_panel,
+	}
+	var idx := 0
+	for role in GameState.player_roles:
+		var panel: PanelContainer = role_to_panel.get(role, null)
+		if panel and panel.get_parent():
+			panel.get_parent().move_child(panel, idx)
+			idx += 1
 
 func _hide_all_trackers():
 	for p in [cons_tracker_panel, vh_tracker_panel, po_tracker_panel, ld_tracker_panel, ec_tracker_panel, em_tracker_panel, wd_tracker_panel, res_tracker_panel, gov_tracker_panel]:
@@ -1071,6 +1100,19 @@ func _setup_recent_cards_overlay_ui() -> void:
 	recent_cards_toggle_button.pressed.connect(_toggle_recent_cards_overlay)
 	add_child(recent_cards_toggle_button)
 
+	# Fullscreen click-blocker drawn behind the panel. Absorbs every mouse
+	# event before it can reach _unhandled_input on the camera or card_table,
+	# so the 3D board cannot be interacted with while the overlay is open.
+	# Slight dim for visual feedback that the rest of the UI is inert.
+	recent_cards_overlay_blocker = ColorRect.new()
+	recent_cards_overlay_blocker.name = "_recent_cards_overlay_blocker"
+	recent_cards_overlay_blocker.color = Color(0, 0, 0, 0.45)
+	recent_cards_overlay_blocker.set_anchors_preset(Control.PRESET_FULL_RECT)
+	recent_cards_overlay_blocker.mouse_filter = Control.MOUSE_FILTER_STOP
+	recent_cards_overlay_blocker.visible = false
+	recent_cards_overlay_blocker.z_index = 89  # one below the panel
+	add_child(recent_cards_overlay_blocker)
+
 	recent_cards_overlay_panel = PanelContainer.new()
 	recent_cards_overlay_panel.name = "_recent_cards_overlay"
 	recent_cards_overlay_panel.visible = false
@@ -1155,14 +1197,45 @@ func _setup_recent_cards_overlay_ui() -> void:
 
 	add_child(recent_cards_overlay_panel)
 
+	# Push the toggle button to the end of the sibling order so it's drawn
+	# (and receives input) on top of the fullscreen blocker. Without this,
+	# the blocker — which is added after the button — would absorb clicks on
+	# the button area while the overlay is open, and the user could not close
+	# the overlay by clicking the button again.
+	move_child(recent_cards_toggle_button, get_child_count() - 1)
+
 func _toggle_recent_cards_overlay() -> void:
 	if recent_cards_overlay_panel == null:
 		return
 	recent_cards_overlay_panel.visible = not recent_cards_overlay_panel.visible
+	# Show/hide the fullscreen click-blocker in lockstep so all board input is
+	# absorbed by GUI dispatch before reaching _unhandled_input.
+	if recent_cards_overlay_blocker:
+		recent_cards_overlay_blocker.visible = recent_cards_overlay_panel.visible
+	# Lock background camera rotation while the overlay is open as a second
+	# line of defence (covers Q/E key rotation, which the GUI blocker cannot
+	# absorb since keys aren't routed by mouse hit-testing).
+	_set_camera_rotation_locked(recent_cards_overlay_panel.visible)
 	if recent_cards_overlay_panel.visible:
 		_rebuild_recent_cards_overlay()
 	else:
 		_clear_recent_cards_preview()
+
+func _set_camera_rotation_locked(locked: bool) -> void:
+	# UI is at $CanvasLayer/Control under card_table; the camera lives at
+	# card_table/Camera3D. Walk up to the card_table root and grab it.
+	var card_table_root: Node = get_parent()
+	while card_table_root and not card_table_root.has_node("Camera3D"):
+		card_table_root = card_table_root.get_parent()
+	if card_table_root == null:
+		return
+	var cam: Node = card_table_root.get_node_or_null("Camera3D")
+	if cam == null:
+		return
+	if "rotation_locked" in cam:
+		cam.rotation_locked = locked
+	if "zoom_locked" in cam:
+		cam.zoom_locked = locked
 
 func add_recent_card_for_player(player_index: int, card_id: String) -> void:
 	if card_id == "":

@@ -7,3 +7,5 @@ res://scripts/Pieces/elephant.gd
 res://scripts/Pieces/outline.gd
 res://scripts/PlayerDisplay.gd
 res://scripts/RoleSelection.gd
+res://scripts/CameraControls.gd
+res://scenes/CardTable.tscn
