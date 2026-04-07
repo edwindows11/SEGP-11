@@ -130,6 +130,35 @@ func _bot_take_turn(player_index: int) -> void:
 	var difficulty: Difficulty = bot_players.get(player_index, Difficulty.EASY)
 	var hand: Array = GameState.player_hands[player_index]
 
+	# Make sure the effects-complete and tile-selection handlers are connected
+	# before any ability or card play, so abilities (Cons/LD/PO) that drive
+	# tile selection or fire effects_complete still work via the same code
+	# paths the card-play branch uses below.
+	if not card_effects.effects_complete.is_connected(_on_bot_effects_complete):
+		card_effects.effects_complete.connect(_on_bot_effects_complete)
+	if not card_effects.request_tile_selection.is_connected(_on_bot_tile_selection_requested):
+		card_effects.request_tile_selection.connect(_on_bot_tile_selection_requested)
+
+	# --- Optional role ability ---
+	# The bot may choose to use its role's special action instead of playing
+	# a card. The black-card rule below still wins if any black cards are in
+	# hand (those MUST be played). Otherwise, with a difficulty-scaled chance
+	# the bot tries to use its ability; if successful, the ability is the
+	# bot's whole action this turn.
+	var role: String = GameState.player_roles[player_index] if player_index < GameState.player_roles.size() else ""
+	var hand_has_black: bool = false
+	for cid in hand:
+		if CardData.ALL_CARDS[cid].get("color", Color.WHITE) == Color.BLACK:
+			hand_has_black = true
+			break
+	if not hand_has_black and _maybe_use_role_ability(player_index, role, difficulty):
+		# Ability used. The ability either fires effects_complete itself
+		# (Cons/LD/PO) which lands in _on_bot_effects_complete and ends the
+		# turn, or it's a "fire-and-forget" ability (Government) which has
+		# already scheduled the turn end below. Either way, the bot does NOT
+		# play a card this turn.
+		return
+
 	if hand.is_empty():
 		_announce_bot_message(player_index, "has no cards and passes", false)
 		await get_tree().create_timer(end_turn_delay, false).timeout
@@ -702,6 +731,128 @@ func _bot_confirm_convert_any_any_type() -> void:
 				card_effects.confirm_convert_any_any_type_selected(GameState.TileType.PLANTATION)
 		Difficulty.HARD:
 			card_effects.confirm_convert_any_any_type_selected(GameState.TileType.FOREST)
+
+# ────────────────────────────────────────────────────────────────────────────
+# Optional role-ability use
+# ────────────────────────────────────────────────────────────────────────────
+
+# Difficulty-scaled chance the bot will *consider* using its role ability
+# this turn. Returns true only if an ability was actually fired and the bot
+# turn should NOT also play a card.
+func _maybe_use_role_ability(player_index: int, role: String, difficulty: Difficulty) -> bool:
+	if role == "":
+		return false
+
+	var chance: float = 0.25
+	match difficulty:
+		Difficulty.EASY:    chance = 0.25
+		Difficulty.MEDIUM:  chance = 0.50
+		Difficulty.HARD:    chance = 0.75
+	if randf() > chance:
+		return false  # bot decided not to use the ability this turn
+
+	match role:
+		"Plantation Owner":
+			return _bot_use_po_ability(player_index)
+		"Government":
+			return _bot_use_gov_ability(player_index)
+		"Conservationist":
+			return _bot_use_cons_ability(player_index)
+		"Land Developer":
+			return _bot_use_ld_ability(player_index)
+		"Environmental Consultant":
+			# Recursively try the borrowed role's ability (with the same dice
+			# roll already made — we want a single overall decision per turn).
+			var borrowed: String = GameState.ec_borrowed_ability
+			if borrowed == "" or borrowed == "Environmental Consultant":
+				return false
+			match borrowed:
+				"Plantation Owner":     return _bot_use_po_ability(player_index)
+				"Government":           return _bot_use_gov_ability(player_index)
+				"Conservationist":      return _bot_use_cons_ability(player_index)
+				"Land Developer":       return _bot_use_ld_ability(player_index)
+			return false
+	return false
+
+# Plantation Owner: pick a target with a valid lastCard, then call
+# execute_reversed_card. The ability fires effects_complete when done, which
+# is already wired to _on_bot_effects_complete to end the turn.
+func _bot_use_po_ability(player_index: int) -> bool:
+	var candidates: Array = []
+	for i in range(GameState.player_count):
+		if i == player_index:
+			continue
+		if card_effects.lastCard[i] != null:
+			candidates.append(i)
+	if candidates.is_empty():
+		return false
+	var target: int = candidates[randi() % candidates.size()]
+	_announce_bot_message(player_index, "uses Plantation Owner ability (reverse Player " + str(target + 1) + "'s last card)", true)
+	card_effects.execute_reversed_card(target, ui)
+	return true
+
+# Government: pick a target with a valid colored lastCard that hasn't been
+# replayed, then call execute_government_steal. This call does NOT fire
+# effects_complete, so the bot turn is ended manually after a short delay.
+func _bot_use_gov_ability(player_index: int) -> bool:
+	var candidates: Array = []
+	for i in range(GameState.player_count):
+		if i == player_index:
+			continue
+		var lc = card_effects.lastCard[i]
+		if lc == null:
+			continue
+		var col = CardData.ALL_CARDS.get(lc, {}).get("color", Color.WHITE)
+		if not col in [Color.GREEN, Color.YELLOW, Color.RED]:
+			continue
+		if not GameState.government_can_replay(lc):
+			continue
+		candidates.append(i)
+	if candidates.is_empty():
+		return false
+	# Refuse if the bot's hand is already at the absolute cap — government_steal_card
+	# would reject it anyway and the bot would just waste its turn.
+	const MAX_HAND_SIZE := 8
+	if GameState.player_hands[player_index].size() >= MAX_HAND_SIZE:
+		return false
+	var target: int = candidates[randi() % candidates.size()]
+	_announce_bot_message(player_index, "uses Government ability (steal Player " + str(target + 1) + "'s last played card)", true)
+	card_effects.execute_government_steal(target, ui)
+	# Government steal doesn't fire effects_complete — end the turn ourselves.
+	_finish_bot_ability_turn()
+	return true
+
+# Conservationist: expand-forest. Bails if no valid tiles. Tile selection is
+# routed through the existing _on_bot_tile_selection_requested handler.
+func _bot_use_cons_ability(player_index: int) -> bool:
+	# Probe for valid tiles via the same private helper CardEffects uses. If
+	# we cannot reach it, fall back to attempting the call and trusting the
+	# CardEffects-side guard to bail cleanly.
+	if card_effects.has_method("_get_cons_valid_tiles"):
+		var valid: Array = card_effects.call("_get_cons_valid_tiles")
+		if valid.is_empty():
+			return false
+	_announce_bot_message(player_index, "uses Conservationist ability (expand forest)", true)
+	card_effects.execute_conservationist_ability(ui)
+	return true
+
+# Land Developer: expand-human. Same shape as the Conservationist helper.
+func _bot_use_ld_ability(player_index: int) -> bool:
+	if card_effects.has_method("_get_ld_valid_tiles"):
+		var valid: Array = card_effects.call("_get_ld_valid_tiles")
+		if valid.is_empty():
+			return false
+	_announce_bot_message(player_index, "uses Land Developer ability (expand human)", true)
+	card_effects.execute_land_developer_ability(ui)
+	return true
+
+# For abilities that don't fire effects_complete on their own (Government),
+# wait the same delay the card-play branch uses, then end the bot turn.
+func _finish_bot_ability_turn() -> void:
+	await get_tree().create_timer(end_turn_delay, false).timeout
+	if _bot_is_acting:
+		_end_bot_turn()
+
 
 func _bot_confirm_steal_target() -> void:
 	var thief := _current_bot_player
