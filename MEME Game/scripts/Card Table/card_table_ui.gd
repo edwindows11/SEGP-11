@@ -784,7 +784,7 @@ func _setup_recent_cards_overlay_ui() -> void:
 
 	var root_vbox := VBoxContainer.new()
 	root_vbox.name = "RootVBox"
-	root_vbox.add_theme_constant_override("separation", 14)
+	root_vbox.add_theme_constant_override("separation", 3)
 	recent_cards_overlay_panel.add_child(root_vbox)
 
 	var title := Label.new()
@@ -912,9 +912,9 @@ func _rebuild_recent_cards_overlay() -> void:
 		section_panel.add_child(section_vbox)
 
 		var header := Label.new()
-		header.text = "Player %d" % [player_index + 1]
+		header.text = "You (Player 1)" if player_index == 0 else "Player %d" % [player_index + 1]
 		header.add_theme_font_size_override("font_size", 18)
-		header.add_theme_color_override("font_color", Color(0.92, 0.92, 0.92))
+		header.add_theme_color_override("font_color", Color(1.0, 0.92, 0.25) if player_index == 0 else Color(0.92, 0.92, 0.92))
 		section_vbox.add_child(header)
 
 		var cards_column := VBoxContainer.new()
@@ -1207,6 +1207,7 @@ func _on_play_btn_pressed():
 		pending_card.visible = false
 		var card_id = pending_card.card_id
 		cards_played_this_turn += 1
+		add_recent_card_for_player(GameState.current_player_index, card_id)
 		_switch_to_end_turn_mode()
 		card_activated.emit(card_id)
 

@@ -1,1 +1,3 @@
-res://scenes/PauseMenu.tscn
+res://scripts/Card Table/card_table.gd
+res://scripts/Card Table/card_table_ui.gd
+res://scenes/RoleSelection.tscn
