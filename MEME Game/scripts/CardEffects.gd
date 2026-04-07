@@ -154,7 +154,7 @@ func _advance_effect() -> void:
 		"move_e":          _begin_move("elephant", current_effect)
 		"move_v":          _begin_move("villager", current_effect)
 		"em_extra_move":   _do_em_extra_move()
-		"move_all_e_auto":   _do_move_all_e_auto(current_effect)
+		"move_all_e_auto", "move_all_e_to": _do_move_all_e_auto(current_effect)
 		"steal":           _do_steal()
 		"return_to_hand":  _do_return_card()
 		"skip"          :  _do_skip()
@@ -233,10 +233,16 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 
 	for elephant in elephants:
 		var from_key: Vector2i = elephant.tile_key
-		# Find nearest valid destination
+		# Find best valid destination.
+		# For "towards" moves we prefer lower distance-to-target (can land on target),
+		# then shorter move distance as tie-breaker.
 		var best_key = Vector2i(-1, -1)
 		var best_dist = INF
+		var best_target_dist = INF
 		var blocked_by_immunity := false
+		var from_target_dist := 0
+		if is_towards_move:
+			from_target_dist = _min_distance_to_types(from_key, to_types)
 		for key in GameState.tile_registry:
 			if key == from_key:
 				continue
@@ -248,19 +254,23 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			var dist = abs(key.x - from_key.x) + abs(key.y - from_key.y)
 			if max_dist > 0 and dist > max_dist:
 				continue
+			var target_dist := 0
 			if is_towards_move:
-				var from_dist := _min_distance_to_types(from_key, to_types)
-				var to_dist := _min_distance_to_types(key, to_types)
-				if to_dist >= from_dist:
-					continue
-				if entry["type"] in to_types:
+				target_dist = _min_distance_to_types(key, to_types)
+				if target_dist >= from_target_dist:
 					continue
 			if GameState.is_elephant_immune(elephant) and _is_move_closer_to_human_or_plantation(from_key, key):
 				blocked_by_immunity = true
 				continue
-			if dist < best_dist:
-				best_dist = dist
-				best_key = key
+			if is_towards_move:
+				if target_dist < best_target_dist or (target_dist == best_target_dist and dist < best_dist):
+					best_target_dist = target_dist
+					best_dist = dist
+					best_key = key
+			else:
+				if dist < best_dist:
+					best_dist = dist
+					best_key = key
 
 		if best_key != Vector2i(-1, -1):
 			var dest_pos = GameState.tile_registry[best_key]["world_pos"]
@@ -777,7 +787,6 @@ func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary,
 			if _min_distance_to_types(key, from_types) <= _min_distance_to_types(source_key, from_types): continue
 		if is_towards_move:
 			if _min_distance_to_types(key, to_types) >= _min_distance_to_types(source_key, to_types): continue
-			if entry["type"] in to_types: continue
 		if enforce_immunity and piece_type == "elephant" and piece_node != null and GameState.is_elephant_immune(piece_node):
 			if _is_move_closer_to_human_or_plantation(source_key, key): continue
 		valid_dest_keys.append(key)
