@@ -471,6 +471,8 @@ func _begin_move(piece_type: String, effect: Dictionary) -> void:
 func _request_source_selection_move(effect: Dictionary) -> void:
 	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
 	var is_away_move := _is_away_move_effect(effect, from_types)
+	if board:
+		board.clear_all_highlights()
 
 	var valid_source_keys: Array = []
 	var source_piece_count := 0
