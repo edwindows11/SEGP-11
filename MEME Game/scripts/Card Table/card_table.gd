@@ -387,16 +387,18 @@ func _on_end_turn_button_pressed() -> void:
 		UI.show_wildlife_discard_popup()
 		return
 
-	if UI.pending_card:
-		_track_card_stats_and_discard(UI.pending_card.card_id)
-		UI.remove_played_card_and_draw_replacement()
-	
-	# Refill hand up to 5 cards (unless ability skips draw)
+	# Draw at most one replacement card per turn, and only if the player actually
+	# played a card (skipped for abilities that replace the draw). The refill
+	# target is the standard "draw hand" size (TOTAL_CARDS = 5), not the absolute
+	# MAX_HAND_SIZE — players only top up to 5 here even though the hand can hold
+	# up to 8 via steals/returns. If the drawn card is black, that still counts
+	# as the player's draw — they do not get to redraw to avoid a black card.
 	var p_index = GameState.current_player_index
-	if not UI.po_used_ability_this_turn and not UI.gov_used_ability_this_turn:
-		while GameState.player_hands[p_index].size() < UI.TOTAL_CARDS:
-			if GameState.draw_card(p_index) == "":
-				break
+	if UI.cards_played_this_turn > 0 \
+			and not UI.po_used_ability_this_turn \
+			and not UI.gov_used_ability_this_turn \
+			and GameState.player_hands[p_index].size() < UI.TOTAL_CARDS:
+		GameState.draw_card(p_index)
 
 	GameState.advance_turn()
 	UI.currently_viewing_card = false

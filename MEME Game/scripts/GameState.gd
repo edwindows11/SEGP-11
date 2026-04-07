@@ -320,10 +320,16 @@ func draw_card(player_index: int) -> String:
 		player_hands[player_index].append(card)
 	return card
 
-# Wildlife Dept: draw 2 bonus cards (any color including black) at turn start
+# Wildlife Dept: draw 2 bonus cards (any color including black) at turn start.
+# Honours the 8-card maximum hand size — if the player is already at the cap,
+# no bonus card is drawn for that slot. The player still discards from whatever
+# was drawn (possibly zero) before ending the turn.
 func wildlife_dept_draw_bonus(player_index: int) -> void:
+	const MAX_HAND_SIZE := 8
 	wildlife_dept_drawn_cards = []
 	for _i in range(2):
+		if player_hands[player_index].size() >= MAX_HAND_SIZE:
+			break
 		var card = _pop_from_draw_pile()
 		if card != "":
 			player_hands[player_index].append(card)
@@ -340,12 +346,18 @@ func discard_card(player_index: int, card_id: String) -> void:
 	player_hands[player_index].erase(card_id)
 	discard_pile.append(card_id)
 
-# Government: add a stolen card to the Government player's stash and hand
-func government_steal_card(gov_player_index: int, card_id: String) -> void:
+# Government: add a stolen card to the Government player's stash and hand.
+# Honours the 8-card maximum hand size — if Government is already at the cap
+# the steal is refused so the hand never grows past 8.
+func government_steal_card(gov_player_index: int, card_id: String) -> bool:
+	const MAX_HAND_SIZE := 8
+	if player_hands[gov_player_index].size() >= MAX_HAND_SIZE:
+		return false
 	if not government_stolen_cards.has(gov_player_index):
 		government_stolen_cards[gov_player_index] = []
 	government_stolen_cards[gov_player_index].append(card_id)
 	player_hands[gov_player_index].append(card_id)
+	return true
 
 # Government: mark a stolen card as replayed (can only replay each once)
 func government_mark_replayed(card_id: String) -> void:

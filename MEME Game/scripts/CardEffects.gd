@@ -318,7 +318,9 @@ func execute_government_steal(target_index: int, ui_node: Node) -> void:
 		ui_node.show_instruction("That card has already been replayed!")
 		return
 
-	GameState.government_steal_card(GameState.current_player_index, stolen)
+	if not GameState.government_steal_card(GameState.current_player_index, stolen):
+		ui_node.show_instruction("Your hand is full — discard or play a card before stealing.")
+		return
 	ui_node.gov_used_ability_this_turn = true
 	var card_name = card_def.get("name", stolen)
 	_log("Government stole \"" + card_name + "\" from Player " + str(target_index + 1), true)
@@ -380,10 +382,16 @@ func confirm_steal_target(target_player_index: int) -> void:
 
 	var stolen_card: String = hand[randi() % hand.size()]
 	hand.erase(stolen_card)
-	GameState.player_hands[thief].append(stolen_card)
-
+	# Maximum hand size is 8 — if the thief is already at the cap, the stolen
+	# card is sent to the discard pile instead of overflowing the hand.
+	const MAX_HAND_SIZE := 8
 	var card_name = CardData.ALL_CARDS.get(stolen_card, {}).get("name", stolen_card)
-	_log("Stole \"" + card_name + "\" from Player " + str(target_player_index + 1), true)
+	if GameState.player_hands[thief].size() < MAX_HAND_SIZE:
+		GameState.player_hands[thief].append(stolen_card)
+		_log("Stole \"" + card_name + "\" from Player " + str(target_player_index + 1), true)
+	else:
+		GameState.discard_pile.append(stolen_card)
+		_log("Stole \"" + card_name + "\" from Player " + str(target_player_index + 1) + " (hand full — discarded)", true)
 
 	state = State.IDLE
 	emit_signal("steal_complete")
@@ -392,11 +400,15 @@ func confirm_steal_target(target_player_index: int) -> void:
 
 func _do_return_card() -> void:
 	var owner_player := GameState.current_player_index
+	# Maximum hand size is 8. If a recipient is already at the cap, their
+	# returned card stays in the discard pile rather than overflowing the hand.
+	const MAX_HAND_SIZE := 8
 	for player in GameState.player_count:
 		if player != owner_player:
 			var prev_card = lastCard[player]
 			if prev_card:
-				GameState.player_hands[player].append(prev_card)
+				if GameState.player_hands[player].size() < MAX_HAND_SIZE:
+					GameState.player_hands[player].append(prev_card)
 	_log("Return previously played cards",false)
 	effect_index += 1
 	_advance_effect()

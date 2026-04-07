@@ -1,5 +1,9 @@
 res://scripts/Card Table/card_table.gd
-res://scenes/CardTable.tscn
 res://scripts/Card Table/card_table_ui.gd
-res://scripts/bot.gd
+res://scripts/GameState.gd
+res://scripts/ActionLog.gd
+res://scripts/Card Table/card_functions.gd
+res://scripts/Pieces/elephant.gd
+res://scripts/Pieces/outline.gd
+res://scripts/PlayerDisplay.gd
 res://scripts/RoleSelection.gd
