@@ -811,6 +811,9 @@ func _parse_type_string(s) -> int:
 		"PLANTATION": return GameState.TileType.PLANTATION
 	return GameState.TileType.FOREST
 
+func preview_func(text:String) -> void:
+	pass
+
 func _log(text: String, is_positive: bool) -> void:
 	if action_log and action_log.has_method("add_action"): action_log.add_action(text, is_positive)
 	else: print("[CardEffects] ", text)

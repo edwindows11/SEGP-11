@@ -72,16 +72,8 @@ func _ready() -> void:
 
 	# Show the correct ability button for the first player's role on turn 1
 	var initial_role = player_roles[0] if player_roles.size() > 0 else ""
-	if UI.cons_ability_btn:
-		UI.cons_ability_btn.visible = (initial_role == "Conservationist")
-	if UI.po_ability_btn:
-		UI.po_ability_btn.visible = (initial_role == "Plantation Owner")
-	if UI.gov_ability_btn:
-		UI.gov_ability_btn.visible = (initial_role == "Government")
-	if UI.ld_ability_btn:
-		UI.ld_ability_btn.visible = (initial_role == "Land Developer")
-	if UI.ec_ability_btn:
-		UI.ec_ability_btn.visible = (initial_role == "Environmental Consultant")
+	if UI.special_ability_btn:
+		UI.special_ability_btn.visible = initial_role in ["Conservationist", "Plantation Owner", "Government", "Land Developer", "Environmental Consultant"]
 	# If Player 1 is EC, show the borrow-choice popup immediately
 	if initial_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "":
 		UI.show_ec_choice_popup.call_deferred()
@@ -270,9 +262,8 @@ func _on_card_activated(card_id: String) -> void:
 
 func _on_card_effects_complete() -> void:
 	if _is_bot_turn():
-		if UI.end_turn_button: UI.end_turn_button.disabled = true
+		if UI.play_btn: UI.play_btn.disabled = true
 	else:
-		if UI.end_turn_button: UI.end_turn_button.disabled = false
 		UI.set_end_turn_ready()  # enables play btn when it's in End Turn mode
 
 func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void:
@@ -392,7 +383,7 @@ func _on_end_turn_button_pressed() -> void:
 		if GameState.current_player_index < GameState.player_roles.size() else ""
 	var _ec_with_wd := (cur_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
 	if (cur_role == "Wildlife Department" or _ec_with_wd) and GameState.wildlife_dept_drawn_cards.size() > 0:
-		if UI.end_turn_button: UI.end_turn_button.disabled = true
+		if UI.play_btn: UI.play_btn.disabled = true
 		UI.show_wildlife_discard_popup()
 		return
 
@@ -470,21 +461,14 @@ func _on_turn_changed_for_input_locks(player_index: int, _role_name: String, is_
 	var is_bot_turn := _is_bot_turn_for_player(player_index) and not is_skipped
 	if is_bot_turn:
 		UI.play_btn.disabled = true
-		if UI.end_turn_button: UI.end_turn_button.disabled = true
-		# Hide ability buttons so human driver can't click them for the bot
-		if UI.po_ability_btn: UI.po_ability_btn.visible = false
-		if UI.gov_ability_btn: UI.gov_ability_btn.visible = false
-		if UI.cons_ability_btn: UI.cons_ability_btn.visible = false
-		if UI.ld_ability_btn: UI.ld_ability_btn.visible = false
-		if UI.ec_ability_btn: UI.ec_ability_btn.visible = false
+		if UI.special_ability_btn: UI.special_ability_btn.visible = false
 		return
 
 	if is_skipped:
 		UI.play_btn.disabled = true
 	else:
-		# Ensure end turn button is re-enabled for the human player
-		if UI.end_turn_button: UI.end_turn_button.disabled = false
-
+		UI.set_end_turn_ready()
+		
 # --- Initial board setup ---
 
 func _spawn_initial_pieces() -> void:

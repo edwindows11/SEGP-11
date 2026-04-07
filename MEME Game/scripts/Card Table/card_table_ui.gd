@@ -18,7 +18,6 @@ const PLAYER_DISPLAY_SCENE = preload("res://scenes/PlayerDisplay.tscn")
 @onready var cards_container = $CardsContainer
 @onready var players_container = $TopBar/PlayersContainer
 @onready var user_role_label = $UserRoleLabel
-@onready var end_turn_button = get_node_or_null("TopBar/EndTurnButton")
 @onready var timer_label = $TopBar/TimerLabel
 @onready var turn_timer = $TurnTimer
 @onready var placement_options = $TopBar/PlacementMode
@@ -43,6 +42,7 @@ var selected_recent_uid: String = ""
 var _recent_uid_counter: int = 0
 
 var player_role: String = "Unknown"
+var role_image_rect: TextureRect = null
 var time_left = 60
 var cards_played_this_turn = 0
 var pending_card: Control = null
@@ -53,14 +53,10 @@ var bot_turn_active: bool = false
 var vh_villagers_increased_this_turn: bool = false
 var po_used_ability_this_turn: bool = false
 
-var po_ability_btn: Button = null
-var gov_ability_btn: Button = null
+@onready var special_ability_btn = $"Special Abitlity"
 var gov_used_ability_this_turn: bool = false
-var cons_ability_btn: Button = null
 var cons_used_ability_this_turn: bool = false
-var ld_ability_btn: Button = null
 var ld_used_ability_this_turn: bool = false
-var ec_ability_btn: Button = null
 var ec_used_ability_this_turn: bool = false
 var ec_choice_popup: PanelContainer = null
 
@@ -115,6 +111,11 @@ var win_screen_panel: PanelContainer = null
 var win_screen_label: Label = null
 var is_game_over: bool = false
 
+# Role card overlay
+var _role_card_overlay: ColorRect = null
+var _role_card_overlay_rect: TextureRect = null
+var _role_card_overlay_tween: Tween = null
+
 # Popups
 var steal_popup: PanelContainer = null
 var em_choice_popup: PanelContainer = null
@@ -139,6 +140,8 @@ const ROLE_ABILITIES: Dictionary = {
 func _ready():
 	pause_btn.pressed.connect(_pause)
 	play_btn.pressed.connect(_on_play_btn_pressed)
+	special_ability_btn.pressed.connect(_on_special_ability_pressed)
+	special_ability_btn.visible = false
 	if user_role_label:
 		user_role_label.text = "My Role: " + player_role
 		user_role_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -171,13 +174,59 @@ func _init_all_ui_elements():
 	_build_instruction_banner()
 	_setup_recent_cards_overlay_ui()
 	_build_all_trackers()
-	_build_all_special_ability_buttons()
 	_build_win_screen()
 	_build_wildlife_discard_popup()
 	_build_steal_popup()
 	_build_ec_choice_popup()
 	_build_em_choice_popup()
 	_build_role_ability_dropdown()
+	_build_role_card_overlay()
+
+func _build_role_card_overlay():
+	_role_card_overlay = ColorRect.new()
+	_role_card_overlay.color = Color(0, 0, 0, 0.75)
+	_role_card_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_role_card_overlay.visible = false
+	_role_card_overlay.z_index = 200
+	_role_card_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_role_card_overlay.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			_hide_role_card_overlay()
+	)
+	add_child(_role_card_overlay)
+
+	_role_card_overlay_rect = TextureRect.new()
+	_role_card_overlay_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_role_card_overlay_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_role_card_overlay_rect.set_anchors_preset(Control.PRESET_CENTER)
+	_role_card_overlay_rect.offset_left = -250
+	_role_card_overlay_rect.offset_top = -350
+	_role_card_overlay_rect.offset_right = 250
+	_role_card_overlay_rect.offset_bottom = 350
+	_role_card_overlay_rect.pivot_offset = Vector2(250, 350)
+	_role_card_overlay_rect.scale = Vector2.ZERO
+	_role_card_overlay_rect.mouse_filter = Control.MOUSE_FILTER_PASS
+	_role_card_overlay.add_child(_role_card_overlay_rect)
+
+func _show_role_card_overlay(tex: Texture2D):
+	_role_card_overlay_rect.texture = tex
+	_role_card_overlay.modulate = Color(1, 1, 1, 0)
+	_role_card_overlay_rect.scale = Vector2(0.1, 0.1)
+	_role_card_overlay.visible = true
+	if _role_card_overlay_tween:
+		_role_card_overlay_tween.kill()
+	_role_card_overlay_tween = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	_role_card_overlay_tween.tween_property(_role_card_overlay, "modulate", Color(1, 1, 1, 1), 0.3)
+	_role_card_overlay_tween.tween_property(_role_card_overlay_rect, "scale", Vector2(1, 1), 0.4)
+
+func _hide_role_card_overlay():
+	if _role_card_overlay_tween:
+		_role_card_overlay_tween.kill()
+	_role_card_overlay_tween = create_tween().set_parallel(true).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+	_role_card_overlay_tween.tween_property(_role_card_overlay, "modulate", Color(1, 1, 1, 0), 0.25)
+	_role_card_overlay_tween.tween_property(_role_card_overlay_rect, "scale", Vector2(0.1, 0.1), 0.25)
+	await _role_card_overlay_tween.finished
+	_role_card_overlay.visible = false
 
 func _build_instruction_banner():
 	var banner = PanelContainer.new()
@@ -225,69 +274,69 @@ func _build_all_trackers():
 	add_child(right_margin)
 
 	# Conservationist
-	cons_tracker_panel = _create_tracker_panel("Conservationist Goal", Color(0.1, 0.3, 0.1, 0.8), Color(0.6, 1.0, 0.6))
+	cons_tracker_panel = _create_tracker_panel("Conservationist Goal", Color(0.1, 0.3, 0.1, 0.8), Color(0.6, 1.0, 0.6), "Conservationist")
 	cons_green_label = _add_tracker_label(cons_tracker_panel, "Green Cards: 0 / 4")
 	cons_forest_label = _add_tracker_label(cons_tracker_panel, "Forest Increase: 0 / 2")
 	cons_status_label = _add_tracker_status(cons_tracker_panel)
 	trackers_vbox.add_child(cons_tracker_panel)
 
 	# Village Head
-	vh_tracker_panel = _create_tracker_panel("Village Head Goal", Color(0.3, 0.1, 0.1, 0.8), Color(1.0, 0.6, 0.6))
+	vh_tracker_panel = _create_tracker_panel("Village Head Goal", Color(0.3, 0.1, 0.1, 0.8), Color(1.0, 0.6, 0.6), "Village Head")
 	vh_cards_label = _add_tracker_label(vh_tracker_panel, "Action Cards: 0 / 7")
 	vh_pop_label = _add_tracker_label(vh_tracker_panel, "Population: 0 / 16")
 	vh_status_label = _add_tracker_status(vh_tracker_panel)
 	trackers_vbox.add_child(vh_tracker_panel)
 
 	# Plantation Owner
-	po_tracker_panel = _create_tracker_panel("Plantation Owner Goal", Color(0.3, 0.25, 0.1, 0.8), Color(1.0, 0.8, 0.4))
+	po_tracker_panel = _create_tracker_panel("Plantation Owner Goal", Color(0.3, 0.25, 0.1, 0.8), Color(1.0, 0.8, 0.4), "Plantation Owner")
 	po_cards_label = _add_tracker_label(po_tracker_panel, "Cards: 0G, 0R, 0Y / 2G, 1R, 1Y")
 	po_plant_label = _add_tracker_label(po_tracker_panel, "Plantations: 0 / 2")
 	po_status_label = _add_tracker_status(po_tracker_panel)
 	trackers_vbox.add_child(po_tracker_panel)
 
 	# Land Developer
-	ld_tracker_panel = _create_tracker_panel("Land Developer Goal", Color(0.1, 0.1, 0.3, 0.8), Color(0.6, 0.8, 1.0))
+	ld_tracker_panel = _create_tracker_panel("Land Developer Goal", Color(0.1, 0.1, 0.3, 0.8), Color(0.6, 0.8, 1.0), "Land Developer")
 	ld_cards_label = _add_tracker_label(ld_tracker_panel, "Cards: 0G, 0R, 0Y / (2G+2R) or (2Y+2R)")
 	ld_human_label = _add_tracker_label(ld_tracker_panel, "Human Areas: 0 / 2")
 	ld_status_label = _add_tracker_status(ld_tracker_panel)
 	trackers_vbox.add_child(ld_tracker_panel)
 
 	# Env Consultant
-	ec_tracker_panel = _create_tracker_panel("Env Consultant Goal", Color(0.2, 0.4, 0.2, 0.8), Color(0.6, 1.0, 0.6))
+	ec_tracker_panel = _create_tracker_panel("Env Consultant Goal", Color(0.2, 0.4, 0.2, 0.8), Color(0.6, 1.0, 0.6), "Environmental Consultant")
 	ec_cards_label = _add_tracker_label(ec_tracker_panel, "Cards: 0G, 0R / 2G, 2R")
 	ec_vacant_label = _add_tracker_label(ec_tracker_panel, "Vacant Goals Met: 0 / 2")
 	ec_status_label = _add_tracker_status(ec_tracker_panel)
 	trackers_vbox.add_child(ec_tracker_panel)
 
 	# Ecotourism Manager
-	em_tracker_panel = _create_tracker_panel("Ecotourism Manager Goal", Color(0.1, 0.5, 0.5, 0.8), Color(0.4, 0.9, 0.9))
+	em_tracker_panel = _create_tracker_panel("Ecotourism Manager Goal", Color(0.1, 0.5, 0.5, 0.8), Color(0.4, 0.9, 0.9), "Ecotourism Manager")
 	em_cards_label = _add_tracker_label(em_tracker_panel, "Cards: 0G, 0Y / 3G, 2Y")
 	em_elephants_label = _add_tracker_label(em_tracker_panel, "Elephants / Dist: No / <3")
 	em_status_label = _add_tracker_status(em_tracker_panel)
 	trackers_vbox.add_child(em_tracker_panel)
 
 	# Wildlife Department
-	wd_tracker_panel = _create_tracker_panel("Wildlife Dept Goal", Color(0.6, 0.2, 0.0, 0.8), Color(1.0, 0.5, 0.2))
+	wd_tracker_panel = _create_tracker_panel("Wildlife Dept Goal", Color(0.6, 0.2, 0.0, 0.8), Color(1.0, 0.5, 0.2), "Wildfire Department")
 	wd_cards_label = _add_tracker_label(wd_tracker_panel, "Green Cards: 0 / 4")
 	wd_elephants_label = _add_tracker_label(wd_tracker_panel, "Forest Elephants: 0 / 4")
 	wd_status_label = _add_tracker_status(wd_tracker_panel)
 	trackers_vbox.add_child(wd_tracker_panel)
 
 	# Researcher
-	res_tracker_panel = _create_tracker_panel("Researcher Goal", Color(0.4, 0.1, 0.5, 0.8), Color(0.8, 0.5, 1.0))
+	res_tracker_panel = _create_tracker_panel("Researcher Goal", Color(0.4, 0.1, 0.5, 0.8), Color(0.8, 0.5, 1.0), "Researcher")
 	res_cards_label = _add_tracker_label(res_tracker_panel, "+Ele|+Hum|+Both: 0/0/0")
 	res_tiles_label = _add_tracker_label(res_tracker_panel, "Separation: >= 2 tiles")
 	res_status_label = _add_tracker_status(res_tracker_panel)
 	trackers_vbox.add_child(res_tracker_panel)
 
 	# Government
-	gov_tracker_panel = _create_tracker_panel("Government Goal", Color(0.05, 0.1, 0.3, 0.85), Color(0.6, 0.85, 1.0))
+	gov_tracker_panel = _create_tracker_panel("Government Goal", Color(0.05, 0.1, 0.3, 0.85), Color(0.6, 0.85, 1.0), "Government")
 	gov_cards_label = _add_tracker_label(gov_tracker_panel, "Cards: 0R, 0Y / 2R, 2Y")
 	gov_ratio_label = _add_tracker_label(gov_tracker_panel, "Villagers / Elephants: 0 / 0")
 	gov_status_label = _add_tracker_status(gov_tracker_panel)
 	trackers_vbox.add_child(gov_tracker_panel)
 
-func _create_tracker_panel(title_text: String, bg_color: Color, title_color: Color) -> PanelContainer:
+func _create_tracker_panel(title_text: String, bg_color: Color, title_color: Color, role_name: String = "") -> PanelContainer:
 	var panel = PanelContainer.new()
 	panel.visible = false
 	var style = StyleBoxFlat.new()
@@ -301,12 +350,35 @@ func _create_tracker_panel(title_text: String, bg_color: Color, title_color: Col
 	style.content_margin_top = 15
 	style.content_margin_bottom = 15
 	panel.add_theme_stylebox_override("panel", style)
-	
+
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	panel.add_child(hbox)
+
+	# Role card image on the left
+	if role_name != "":
+		var tex_path = "res://assets/Role Card/%s.png" % role_name
+		var tex = load(tex_path)
+		if tex != null:
+			var tex_rect = TextureRect.new()
+			tex_rect.texture = tex
+			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tex_rect.custom_minimum_size = Vector2(60, 80)
+			tex_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+			var captured_tex = tex
+			tex_rect.gui_input.connect(func(event: InputEvent):
+				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+					_show_role_card_overlay(captured_tex)
+			)
+			hbox.add_child(tex_rect)
+
 	var vbox = VBoxContainer.new()
 	vbox.name = "VBox"
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", 10)
-	panel.add_child(vbox)
-	
+	hbox.add_child(vbox)
+
 	var title = Label.new()
 	title.text = title_text
 	title.add_theme_font_size_override("font_size", 18)
@@ -319,7 +391,7 @@ func _add_tracker_label(panel: PanelContainer, text: String) -> Label:
 	var lbl = Label.new()
 	lbl.text = text
 	lbl.add_theme_font_size_override("font_size", 16)
-	panel.get_node("VBox").add_child(lbl)
+	panel.find_child("VBox", true, false).add_child(lbl)
 	return lbl
 
 func _add_tracker_status(panel: PanelContainer) -> Label:
@@ -328,46 +400,25 @@ func _add_tracker_status(panel: PanelContainer) -> Label:
 	lbl.add_theme_font_size_override("font_size", 16)
 	lbl.add_theme_color_override("font_color", Color(1.0, 0.8, 0.2))
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	panel.get_node("VBox").add_child(lbl)
+	panel.find_child("VBox", true, false).add_child(lbl)
 	return lbl
 
-func _build_all_special_ability_buttons():
-	po_ability_btn = _create_ability_button("Steal & Reverse Card", Color(0.1, 0.4, 0.2, 0.95), _on_po_ability_btn_pressed)
-	gov_ability_btn = _create_ability_button("⚖ Steal Card", Color(0.1, 0.2, 0.5, 0.95), _on_gov_ability_btn_pressed)
-	cons_ability_btn = _create_ability_button("🌿 Expand Forest", Color(0.05, 0.35, 0.1, 0.95), _on_cons_ability_btn_pressed)
-	ld_ability_btn = _create_ability_button("🏙 Expand City", Color(0.35, 0.2, 0.05, 0.95), _on_ld_ability_btn_pressed)
-	ec_ability_btn = _create_ability_button("🌍 Choose Ability", Color(0.08, 0.32, 0.32, 0.95), _on_ec_ability_btn_pressed)
-
-func _create_ability_button(text: String, bg_color: Color, callback: Callable) -> Button:
-	var btn = Button.new()
-	btn.text = text
-	btn.visible = false
-	btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	btn.offset_right = -220
-	btn.offset_bottom = -27
-	btn.offset_top = -107
-	btn.offset_left = -420
-	btn.z_index = 50
-	
-	var style = StyleBoxFlat.new()
-	style.bg_color = bg_color
-	style.corner_radius_top_left = 10
-	style.corner_radius_top_right = 10
-	style.corner_radius_bottom_left = 10
-	style.corner_radius_bottom_right = 10
-	style.content_margin_left = 15
-	style.content_margin_right = 15
-	style.content_margin_top = 10
-	style.content_margin_bottom = 10
-	style.border_width_top = 2
-	style.border_width_bottom = 2
-	style.border_width_left = 2
-	style.border_width_right = 2
-	style.border_color = Color(1.0, 1.0, 1.0, 0.3)
-	btn.add_theme_stylebox_override("normal", style)
-	btn.pressed.connect(callback)
-	add_child(btn)
-	return btn
+func _on_special_ability_pressed():
+	match player_role:
+		"Plantation Owner":
+			if cards_played_this_turn == 0:
+				request_po_ability.emit()
+		"Government":
+			if not gov_used_ability_this_turn:
+				request_gov_ability.emit()
+		"Conservationist":
+			if not cons_used_ability_this_turn:
+				request_cons_ability.emit()
+		"Land Developer":
+			if not ld_used_ability_this_turn:
+				request_ld_ability.emit()
+		"Environmental Consultant":
+			request_ec_ability.emit()
 
 func _build_win_screen():
 	win_screen_panel = PanelContainer.new()
@@ -510,9 +561,9 @@ func show_ec_choice_popup() -> void:
 		btn.pressed.connect(func():
 			GameState.ec_borrowed_ability = role
 			ec_choice_popup.visible = false
-			# Update the EC ability button label to reflect the chosen ability
-			if ec_ability_btn:
-				ec_ability_btn.text = "🌍 Use: " + role
+			# Update the special ability button tooltip to reflect the chosen ability
+			if special_ability_btn:
+				special_ability_btn.tooltip_text = "Use: " + role
 		)
 		vbox.add_child(btn)
 
@@ -566,12 +617,14 @@ func _build_role_ability_dropdown():
 	ability_dropdown_btn.add_theme_stylebox_override("normal", style)
 	ability_dropdown_btn.pressed.connect(_toggle_ability_dropdown)
 	add_child(ability_dropdown_btn)
+
 	ability_dropdown_panel = PanelContainer.new()
 	ability_dropdown_panel.visible = false
 	ability_dropdown_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	ability_dropdown_panel.offset_right = -20
-	ability_dropdown_panel.offset_left = -300
-	ability_dropdown_panel.offset_top = 150; ability_dropdown_panel.z_index = 80
+	ability_dropdown_panel.offset_left = -420   # widened to fit role card image
+	ability_dropdown_panel.offset_top = 150
+	ability_dropdown_panel.z_index = 80
 	var pstyle = StyleBoxFlat.new()
 	pstyle.bg_color = Color(0.08, 0.12, 0.18, 0.95)
 	pstyle.content_margin_left = 15
@@ -579,19 +632,51 @@ func _build_role_ability_dropdown():
 	pstyle.content_margin_top = 12
 	pstyle.content_margin_bottom = 12
 	ability_dropdown_panel.add_theme_stylebox_override("panel", pstyle)
+
+	# HBox: role card image on the left, text on the right
+	var hbox = HBoxContainer.new()
+	hbox.name = "DropdownHBox"
+	hbox.add_theme_constant_override("separation", 14)
+	ability_dropdown_panel.add_child(hbox)
+
+	# Role card TextureRect
+	var tex_rect = TextureRect.new()
+	tex_rect.name = "RoleCardImage"
+	tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex_rect.custom_minimum_size = Vector2(80, 112)
+	tex_rect.mouse_filter = Control.MOUSE_FILTER_STOP  # ← was IGNORE, must be STOP to receive clicks
+	tex_rect.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			var img: TextureRect = ability_dropdown_panel.get_node("DropdownHBox/RoleCardImage")
+			if img.texture != null:
+				_show_role_card_overlay(img.texture)
+	)
+	hbox.add_child(tex_rect)
+
+	# Ability text label
 	var lbl = Label.new()
 	lbl.name = "AbilityText"
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	ability_dropdown_panel.add_child(lbl)
-	add_child(ability_dropdown_panel)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(lbl)
 
+	add_child(ability_dropdown_panel)
+	
 func _toggle_ability_dropdown():
 	ability_dropdown_panel.visible = !ability_dropdown_panel.visible
 	ability_dropdown_btn.text = "Role Ability ▴" if ability_dropdown_panel.visible else "Role Ability ▾"
 	if ability_dropdown_panel.visible:
-		var cur = GameState.player_roles[GameState.current_player_index] if GameState.current_player_index < GameState.player_roles.size() else "Unknown"
-		ability_dropdown_panel.get_node("AbilityText").text = ROLE_ABILITIES.get(cur, "")
+		var cur = GameState.player_roles[GameState.current_player_index] \
+			if GameState.current_player_index < GameState.player_roles.size() else "Unknown"
 
+		ability_dropdown_panel.get_node("DropdownHBox/AbilityText").text = ROLE_ABILITIES.get(cur, "")
+
+		var tex_rect: TextureRect = ability_dropdown_panel.get_node("DropdownHBox/RoleCardImage")
+		var tex_path = "res://assets/Role Card/%s.png" % cur
+		tex_rect.texture = load(tex_path) if ResourceLoader.exists(tex_path) else null
+		# ← no gui_input.connect here anymore
+		
 func _process(_delta):
 	if is_game_over: return
 	_hide_all_trackers()
@@ -726,11 +811,8 @@ func _on_timer_timeout():
 	else: timer_label.text = str(time_left)
 
 func spawn_players():
-	for child in players_container.get_children(): child.queue_free()
 	for i in range(1, GameState.player_count):
 		var player = PLAYER_DISPLAY_SCENE.instantiate()
-		players_container.add_child(player)
-		player.setup("Player " + str(i + 1), GameState.player_roles[i])
 
 func spawn_cards():
 	for child in cards_container.get_children(): child.queue_free()
@@ -776,9 +858,11 @@ func _on_card_selected(selected_card):
 	selected_card.original_position = selected_card.position
 	selected_card.z_index = 10
 	var win_size = get_viewport_rect().size
+	var scale_factor := Vector2(3.0, 3.0)
+	var target_pos: Vector2 = (win_size - selected_card.custom_minimum_size * scale_factor) / 2.0
 	var tween = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(selected_card, "position", (win_size - selected_card.custom_minimum_size)/2.0, 0.5)
-	tween.tween_property(selected_card, "scale", Vector2(3,3), 0.5)
+	tween.tween_property(selected_card, "position", target_pos, 0.5)
+	tween.tween_property(selected_card, "scale", scale_factor, 0.5)
 	play_btn.disabled = false
 
 func _on_play_btn_pressed():
@@ -836,11 +920,8 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 	player_role = role_name
 	user_role_label.text = "Player %d | %s" % [player_index + 1, role_name]
 
-	po_ability_btn.visible = (role_name == "Plantation Owner" and not is_skipped)
-	gov_ability_btn.visible = (role_name == "Government" and not is_skipped)
-	cons_ability_btn.visible = (role_name == "Conservationist" and not is_skipped)
-	ld_ability_btn.visible = (role_name == "Land Developer" and not is_skipped)
-	ec_ability_btn.visible = (role_name == "Environmental Consultant" and not is_skipped)
+	var _has_ability = role_name in ["Plantation Owner", "Government", "Conservationist", "Land Developer", "Environmental Consultant"]
+	special_ability_btn.visible = _has_ability and not is_skipped
 
 	var _is_wd = (role_name == "Wildlife Department") or (role_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
 	if _is_wd and not is_skipped:
@@ -888,24 +969,6 @@ func show_player_select_popup(title_text, disabled_func, callback):
 		vbox.add_child(btn)
 	steal_popup.visible = true
 
-func _on_po_ability_btn_pressed():
-	if cards_played_this_turn == 0:
-		request_po_ability.emit()
-
-func _on_gov_ability_btn_pressed():
-	if not gov_used_ability_this_turn:
-		request_gov_ability.emit()
-
-func _on_cons_ability_btn_pressed():
-	if not cons_used_ability_this_turn:
-		request_cons_ability.emit()
-
-func _on_ld_ability_btn_pressed():
-	if not ld_used_ability_this_turn:
-		request_ld_ability.emit()
-
-func _on_ec_ability_btn_pressed():
-	request_ec_ability.emit()
 
 func spawn_stolen_gov_card():
 	# Mark stolen card with tint

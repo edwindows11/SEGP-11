@@ -1,11 +1,11 @@
+RichTextLabel
+Panel
 Button
 TextureButton
 TextureRect
 Control
 VBoxContainer
 Label
-RichTextLabel
-Panel
 Camera3D
 Node3D
 MarginContainer

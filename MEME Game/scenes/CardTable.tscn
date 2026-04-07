@@ -248,23 +248,6 @@ grow_vertical = 2
 theme_override_constants/separation = 50
 alignment = 1
 
-[node name="EndTurnButton" type="Button" parent="CanvasLayer/Control/TopBar"]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -190.0
-offset_top = -20.0
-offset_right = -90.0
-offset_bottom = 20.0
-grow_horizontal = 0
-grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(0.8, 1, 0.8, 1)
-text = "End Turn"
-
 [node name="PauseButton" type="TextureButton" parent="CanvasLayer/Control/TopBar"]
 layout_mode = 1
 anchors_preset = 6
@@ -291,6 +274,23 @@ offset_left = 20.0
 offset_top = 70.0
 offset_right = 220.0
 offset_bottom = 170.0
+
+[node name="Card Effect" type="Panel" parent="CanvasLayer/Control"]
+visible = false
+layout_mode = 0
+offset_left = 28.0
+offset_top = 76.0
+offset_right = 345.0
+offset_bottom = 298.0
+
+[node name="RichTextLabel" type="RichTextLabel" parent="CanvasLayer/Control/Card Effect"]
+layout_mode = 0
+offset_right = 314.0
+offset_bottom = 220.0
+text = "Move _ to / from _ : n
+Add _ :  n
+Convert _ : n
+"
 
 [node name="Special Abitlity" type="TextureButton" parent="CanvasLayer/Control"]
 layout_mode = 1
@@ -368,7 +368,6 @@ script = ExtResource("5_camera")
 
 [connection signal="gui_input" from="CanvasLayer/Control" to="." method="_on_control_gui_input"]
 [connection signal="gui_input" from="CanvasLayer/Control" to="Play" method="_on_control_gui_input"]
-[connection signal="pressed" from="CanvasLayer/Control/TopBar/EndTurnButton" to="." method="_on_end_turn_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/Control/TopBar/PauseButton" to="." method="_on_pause_button_pressed"]
 [connection signal="increase_total_Elephant" from="Play" to="." method="_on_play_increase_total_elephant"]
 [connection signal="increase_total_Meeple" from="Play" to="." method="_on_play_increase_total_meeple"]
