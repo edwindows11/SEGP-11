@@ -73,7 +73,7 @@ func _ready() -> void:
 	# Show the correct ability button for the first player's role on turn 1
 	var initial_role = player_roles[0] if player_roles.size() > 0 else ""
 	if UI.special_ability_btn:
-		UI.special_ability_btn.visible = initial_role in ["Conservationist", "Plantation Owner", "Government", "Land Developer", "Environmental Consultant"]
+		UI.special_ability_btn.visible = initial_role in ["Conservationist", "Plantation Owner", "Government", "Land Developer", "Environmental Consultant", "Ecotourism Manager"]
 	# If Player 1 is EC, show the borrow-choice popup immediately
 	if initial_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "":
 		UI.show_ec_choice_popup.call_deferred()
@@ -89,6 +89,7 @@ func _ready() -> void:
 	UI.request_cons_ability.connect(_on_cons_ability_requested)
 	UI.request_ld_ability.connect(_on_ld_ability_requested)
 	UI.request_ec_ability.connect(_on_ec_ability_requested)
+	UI.request_em_ability.connect(_on_em_ability_requested)
 
 	# --- Wire GameState turn signal to UI ---
 	GameState.turn_changed.connect(UI._on_turn_changed)
@@ -312,6 +313,9 @@ func _on_cons_ability_requested() -> void:
 func _on_ld_ability_requested() -> void:
 	card_effects.execute_land_developer_ability(UI)
 
+func _on_em_ability_requested() -> void:
+	card_effects.execute_em_ability(UI)
+
 func _on_ec_ability_requested() -> void:
 	# Delegate to the handler for the borrowed role's ability
 	match GameState.ec_borrowed_ability:
@@ -323,6 +327,8 @@ func _on_ec_ability_requested() -> void:
 			card_effects.execute_conservationist_ability(UI)
 		"Land Developer":
 			card_effects.execute_land_developer_ability(UI)
+		"Ecotourism Manager":
+			card_effects.execute_em_ability(UI)
 		"Wildlife Department":
 			UI.show_instruction("Wildlife Department: Bonus draw happens automatically at turn start.")
 		"Village Head":
@@ -387,18 +393,16 @@ func _on_end_turn_button_pressed() -> void:
 		UI.show_wildlife_discard_popup()
 		return
 
-	# Draw at most one replacement card per turn, and only if the player actually
-	# played a card (skipped for abilities that replace the draw). The refill
-	# target is the standard "draw hand" size (TOTAL_CARDS = 5), not the absolute
-	# MAX_HAND_SIZE — players only top up to 5 here even though the hand can hold
-	# up to 8 via steals/returns. If the drawn card is black, that still counts
-	# as the player's draw — they do not get to redraw to avoid a black card.
+	if UI.pending_card:
+		_track_card_stats_and_discard(UI.pending_card.card_id)
+		UI.remove_played_card_and_draw_replacement()
+	
+	# Refill hand up to 5 cards (unless ability skips draw)
 	var p_index = GameState.current_player_index
-	if UI.cards_played_this_turn > 0 \
-			and not UI.po_used_ability_this_turn \
-			and not UI.gov_used_ability_this_turn \
-			and GameState.player_hands[p_index].size() < UI.TOTAL_CARDS:
-		GameState.draw_card(p_index)
+	if not UI.po_used_ability_this_turn and not UI.gov_used_ability_this_turn:
+		while GameState.player_hands[p_index].size() < UI.TOTAL_CARDS:
+			if GameState.draw_card(p_index) == "":
+				break
 
 	GameState.advance_turn()
 	UI.currently_viewing_card = false

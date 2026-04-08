@@ -81,19 +81,42 @@ func execute_card(card_id: String) -> void:
 				"max_dist": -1 
 			})
 
-	# Ecotourism Manager Special Ability
-	if (role == "Ecotourism Manager" or (role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Ecotourism Manager")) and color in [Color.BLACK, Color.YELLOW, Color.RED, Color.GREEN]:
-		var added_pieces = false
-		for fx in pending_effects:
-			var op = fx.get("op", "")
-			if op in ["add_e", "add_v", "add_v_in"]:
-				added_pieces = true
-				break
-		if added_pieces:
-			pending_effects.append({
-				"op": "em_extra_move"
-			})
 	
+	_advance_effect()
+
+func execute_em_ability(ui_node: Node) -> void:
+	if ui_node.has_method("get"):
+		if ui_node.get("em_used_ability_this_turn"):
+			ui_node.show_instruction("You already used your Ecotourism Manager ability this turn!")
+			return
+
+	var lc = lastCard[GameState.current_player_index]
+	if not lc:
+		ui_node.show_instruction("You must play a piece-increasing action card first!")
+		return
+	
+	var card_def = CardData.ALL_CARDS.get(lc, {})
+	var color = card_def.get("color", Color.WHITE)
+	if not (color in [Color.BLACK, Color.YELLOW, Color.RED, Color.GREEN]):
+		ui_node.show_instruction("You must play a piece-increasing action card first!")
+		return
+		
+	var added_pieces = false
+	for fx in card_def.get("sub_effects", []):
+		var op = fx.get("op", "")
+		if op in ["add_e", "add_v", "add_v_in"]:
+			added_pieces = true
+			break
+			
+	if not added_pieces:
+		ui_node.show_instruction("The card you played this turn didn't increase elephants or humans!")
+		return
+		
+	ui_node.set("em_used_ability_this_turn", true)
+	_ability_ui_node = ui_node
+	pending_effects = [{"op": "em_extra_move"}]
+	effect_index = 0
+	state = State.IDLE
 	_advance_effect()
 
 func execute_reversed_card(target_index: int, ui_node: Node) -> void:
@@ -154,7 +177,7 @@ func _advance_effect() -> void:
 		"move_e":          _begin_move("elephant", current_effect)
 		"move_v":          _begin_move("villager", current_effect)
 		"em_extra_move":   _do_em_extra_move()
-		"move_all_e_auto", "move_all_e_to": _do_move_all_e_auto(current_effect)
+		"move_all_e_auto":   _do_move_all_e_auto(current_effect)
 		"steal":           _do_steal()
 		"return_to_hand":  _do_return_card()
 		"skip"          :  _do_skip()
@@ -233,16 +256,10 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 
 	for elephant in elephants:
 		var from_key: Vector2i = elephant.tile_key
-		# Find best valid destination.
-		# For "towards" moves we prefer lower distance-to-target (can land on target),
-		# then shorter move distance as tie-breaker.
+		# Find nearest valid destination
 		var best_key = Vector2i(-1, -1)
 		var best_dist = INF
-		var best_target_dist = INF
 		var blocked_by_immunity := false
-		var from_target_dist := 0
-		if is_towards_move:
-			from_target_dist = _min_distance_to_types(from_key, to_types)
 		for key in GameState.tile_registry:
 			if key == from_key:
 				continue
@@ -254,23 +271,19 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 			var dist = abs(key.x - from_key.x) + abs(key.y - from_key.y)
 			if max_dist > 0 and dist > max_dist:
 				continue
-			var target_dist := 0
 			if is_towards_move:
-				target_dist = _min_distance_to_types(key, to_types)
-				if target_dist >= from_target_dist:
+				var from_dist := _min_distance_to_types(from_key, to_types)
+				var to_dist := _min_distance_to_types(key, to_types)
+				if to_dist >= from_dist:
+					continue
+				if entry["type"] in to_types:
 					continue
 			if GameState.is_elephant_immune(elephant) and _is_move_closer_to_human_or_plantation(from_key, key):
 				blocked_by_immunity = true
 				continue
-			if is_towards_move:
-				if target_dist < best_target_dist or (target_dist == best_target_dist and dist < best_dist):
-					best_target_dist = target_dist
-					best_dist = dist
-					best_key = key
-			else:
-				if dist < best_dist:
-					best_dist = dist
-					best_key = key
+			if dist < best_dist:
+				best_dist = dist
+				best_key = key
 
 		if best_key != Vector2i(-1, -1):
 			var dest_pos = GameState.tile_registry[best_key]["world_pos"]
@@ -318,9 +331,7 @@ func execute_government_steal(target_index: int, ui_node: Node) -> void:
 		ui_node.show_instruction("That card has already been replayed!")
 		return
 
-	if not GameState.government_steal_card(GameState.current_player_index, stolen):
-		ui_node.show_instruction("Your hand is full — discard or play a card before stealing.")
-		return
+	GameState.government_steal_card(GameState.current_player_index, stolen)
 	ui_node.gov_used_ability_this_turn = true
 	var card_name = card_def.get("name", stolen)
 	_log("Government stole \"" + card_name + "\" from Player " + str(target_index + 1), true)
@@ -382,16 +393,10 @@ func confirm_steal_target(target_player_index: int) -> void:
 
 	var stolen_card: String = hand[randi() % hand.size()]
 	hand.erase(stolen_card)
-	# Maximum hand size is 8 — if the thief is already at the cap, the stolen
-	# card is sent to the discard pile instead of overflowing the hand.
-	const MAX_HAND_SIZE := 8
+	GameState.player_hands[thief].append(stolen_card)
+
 	var card_name = CardData.ALL_CARDS.get(stolen_card, {}).get("name", stolen_card)
-	if GameState.player_hands[thief].size() < MAX_HAND_SIZE:
-		GameState.player_hands[thief].append(stolen_card)
-		_log("Stole \"" + card_name + "\" from Player " + str(target_player_index + 1), true)
-	else:
-		GameState.discard_pile.append(stolen_card)
-		_log("Stole \"" + card_name + "\" from Player " + str(target_player_index + 1) + " (hand full — discarded)", true)
+	_log("Stole \"" + card_name + "\" from Player " + str(target_player_index + 1), true)
 
 	state = State.IDLE
 	emit_signal("steal_complete")
@@ -400,15 +405,11 @@ func confirm_steal_target(target_player_index: int) -> void:
 
 func _do_return_card() -> void:
 	var owner_player := GameState.current_player_index
-	# Maximum hand size is 8. If a recipient is already at the cap, their
-	# returned card stays in the discard pile rather than overflowing the hand.
-	const MAX_HAND_SIZE := 8
 	for player in GameState.player_count:
 		if player != owner_player:
 			var prev_card = lastCard[player]
 			if prev_card:
-				if GameState.player_hands[player].size() < MAX_HAND_SIZE:
-					GameState.player_hands[player].append(prev_card)
+				GameState.player_hands[player].append(prev_card)
 	_log("Return previously played cards",false)
 	effect_index += 1
 	_advance_effect()
@@ -787,6 +788,7 @@ func _build_valid_dest_keys_for_source(source_key: Vector2i, effect: Dictionary,
 			if _min_distance_to_types(key, from_types) <= _min_distance_to_types(source_key, from_types): continue
 		if is_towards_move:
 			if _min_distance_to_types(key, to_types) >= _min_distance_to_types(source_key, to_types): continue
+			if entry["type"] in to_types: continue
 		if enforce_immunity and piece_type == "elephant" and piece_node != null and GameState.is_elephant_immune(piece_node):
 			if _is_move_closer_to_human_or_plantation(source_key, key): continue
 		valid_dest_keys.append(key)

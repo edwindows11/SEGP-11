@@ -222,7 +222,7 @@ static var ALL_CARDS: Dictionary = {
 		"color": Color.YELLOW,
 		"sub_effects": [
 			{"op": "remove_e", "count": 1},
-			{"op": "move_e", "count": 2, "from": ["PLANTATION"], "to": "ANY", "max_dist": 1}
+			{"op": "move_e", "count": 2, "from": ["PLANTATION"], "to": "ANY", "max_dist": -1}
 		]
 	},
 	"yellow_elephant_sanctuary": {
@@ -230,7 +230,7 @@ static var ALL_CARDS: Dictionary = {
 		"color": Color.YELLOW,
 		"sub_effects": [
 			{"op": "add_v", "count": 2},
-			{"op": "move_e", "count": 1, "from": ["ANY"], "to": "PLANTATION", "max_dist": 1}
+			{"op": "move_e", "count": 1, "from": ["ANY"], "to": "PLANTATION", "max_dist": -1}
 		]
 	},
 	"yellow_improper_waste": {
@@ -338,11 +338,7 @@ static var ALL_CARDS: Dictionary = {
 		]
 	},
 	
-	# ---- BLACK CARDS ----
-	# Black cards introduce special meta ops not listed in the header table:
-	#   "steal"          - take a card from another player's hand
-	#   "return_to_hand" - send a played card back to its owner's hand
-	#   "skip"           - cause a player to lose their next turn
+	# -- Black --
 	"black_corruption": {
 		"name": "Corruption",
 		"color": Color.BLACK,
@@ -350,7 +346,7 @@ static var ALL_CARDS: Dictionary = {
 			{"op": "steal"}
 		]
 	},
-
+	
 	"black_disagreement": {
 		"name": "Disagreement",
 		"color": Color.BLACK,

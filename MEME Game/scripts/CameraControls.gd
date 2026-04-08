@@ -1,52 +1,35 @@
 extends Camera3D
 
-# --- Camera Settings ---
+# Camera Settings
 var rotation_speed: float = 0.5
 var zoom_speed: float = 2.0
 var zoom_min: float = 5.0
 var zoom_max: float = 30.0
 var smoothing: float = 10.0
 
-# --- State ---
-# Point the camera orbits around (centre of the board).
+# State
 var pivot_point: Vector3 = Vector3(0, 0, 0)
-# current_* is what the camera shows now; target_* is what it lerps toward.
 var current_rotation: Vector2 = Vector2(0, deg_to_rad(45)) # Yaw (X), Pitch (Y)
 var target_rotation: Vector2 = Vector2(0, deg_to_rad(45))
 var current_zoom: float = 15.0
 var target_zoom: float = 15.0
 var is_dragging: bool = false
-# Tracks whether LMB is currently down so we can detect drag-vs-click.
 var _mouse_held: bool = false
 var _drag_total: float = 0.0
 const DRAG_THRESHOLD: float = 5.0  # pixels mouse must move before rotation begins
-
-# When true, all rotation input is ignored (drag, Q/E snap rotate). Used by
-# the UI layer to freeze the background while a fullscreen overlay is open.
-var rotation_locked: bool = false
-
-# When true, mouse-wheel zoom is ignored. Used together with rotation_locked
-# to fully freeze the board view while a fullscreen overlay is open.
-var zoom_locked: bool = false
-
-# --- Lifecycle ---
 
 func _ready() -> void:
 	# Calculate initial rotation/zoom based on EDITOR transform if you wanted, 
 	# but setting defaults is safer for consistent behavior.
 	update_camera_transform()
 
-# Each frame, ease current values toward their targets for smooth motion.
 func _process(delta: float) -> void:
 	# Smoothly interpolate values
 	current_rotation = current_rotation.lerp(target_rotation, smoothing * delta)
 	current_zoom = lerp(current_zoom, target_zoom, smoothing * delta)
-
+	
 	update_camera_transform()
 
-# --- Camera transform ---
-
-# Rebuild the camera position by orbiting `pivot_point` using yaw/pitch/zoom.
 func update_camera_transform() -> void:
 	# Convert spherical coordinates to Cartesian
 	# Y is pitch (vertical angle), X is yaw (horizontal angle)
@@ -77,26 +60,21 @@ func update_camera_transform() -> void:
 	# -90 deg (looking straight down) to 0 (horizon) roughly.
 	# Let's effectively rotate the offset vector.
 	
-	# Build a fresh basis (avoids accumulating gimbal-lock from per-frame Euler edits).
 	var basis = Basis()
 	basis = basis.rotated(Vector3(1, 0, 0), -current_rotation.y) # Pitch
 	basis = basis.rotated(Vector3(0, 1, 0), -current_rotation.x) # Yaw
-
+	
 	position = pivot_point + (basis * offset)
 	look_at(pivot_point)
 
 
-# --- Input handling ---
-
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
-		if not zoom_locked:
-			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-				target_zoom = clamp(target_zoom - zoom_speed, zoom_min, zoom_max)
-			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				target_zoom = clamp(target_zoom + zoom_speed, zoom_min, zoom_max)
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			target_zoom = clamp(target_zoom - zoom_speed, zoom_min, zoom_max)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			target_zoom = clamp(target_zoom + zoom_speed, zoom_min, zoom_max)
 		
-		# Track LMB so we can distinguish a click from a drag-rotate.
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				_mouse_held = true
@@ -106,18 +84,17 @@ func _unhandled_input(event: InputEvent) -> void:
 				_mouse_held = false
 				is_dragging = false
 
-	# Only count motion as a drag once cursor has moved past DRAG_THRESHOLD.
 	if event is InputEventMouseMotion and _mouse_held:
 		_drag_total += event.relative.length()
 		if _drag_total >= DRAG_THRESHOLD:
 			is_dragging = true
-		if is_dragging and not rotation_locked:
+		if is_dragging:
 			target_rotation.x += event.relative.x * rotation_speed * 0.01
 			target_rotation.y += event.relative.y * rotation_speed * 0.01
 			target_rotation.y = clamp(target_rotation.y, deg_to_rad(10), deg_to_rad(85))
 
 	# Q / E — snap-rotate 90° to cycle through the 4 cardinal sides
-	if event is InputEventKey and event.pressed and not event.echo and not rotation_locked:
+	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_Q:
 			_snap_rotate(-90.0)
 		elif event.keycode == KEY_E:

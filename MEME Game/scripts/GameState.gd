@@ -1,20 +1,14 @@
 extends Node
 
-# ── Constants & Enums ──
-
 enum TileType { FOREST, HUMAN, PLANTATION }
 
-# Per-tile occupancy limits — elephants and villagers cannot share a tile.
 const MAX_ELEPHANTS_PER_TILE := 1
 const MAX_VILLAGERS_PER_TILE := 2
 
-# Local-space slot offsets so two villagers on one tile don't visually overlap.
 const VILLAGER_SLOT_OFFSETS := [
 	Vector3(-0.45, 0.5, 0.0),
 	Vector3(0.45, 0.5, 0.0)
 ]
-
-# ── Global State ──
 
 # Tile registry
 # Key: Vector2i(grid_x, grid_z)
@@ -30,11 +24,10 @@ var tile_registry: Dictionary = {}
 # Scenario selection (-1 = not chosen yet, 0..4 = preset, 5 = random)
 var selected_scenario_index: int = -1
 
-# --- Turn State ---
+# Turn state
 var current_player_index: int = 0
 var player_count: int = 4
 var player_roles: Array = []
-# Per-player tally of cards played, broken down by colour and effect category.
 var player_stats: Array = [
 	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0, "e_inc_cards": 0, "v_inc_cards": 0, "both_inc_cards": 0},
 	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0, "e_inc_cards": 0, "v_inc_cards": 0, "both_inc_cards": 0},
@@ -42,7 +35,6 @@ var player_stats: Array = [
 	{"green_cards_played": 0, "red_cards_played": 0, "yellow_cards_played": 0, "action_cards_played": 0, "e_inc_cards": 0, "v_inc_cards": 0, "both_inc_cards": 0}
 ]
 var cards_played_this_turn: int = 0
-# Consumed once on the next advance_turn — used by skip-turn effects.
 var skip_next_turn = false
 
 # Wildlife Department special ability state
@@ -58,16 +50,14 @@ var government_replayed_cards: Array = []
 # "" = not chosen yet, "None" = chose no ability, otherwise = role name borrowed
 var ec_borrowed_ability: String = ""
 
-# --- Baseline Tile Counts ---
-# Snapshotted at game start so role objectives can compare current vs initial.
+# Track forest increase
 var initial_forest_count: int = 0
 var initial_plantation_count: int = 0
 var initial_human_count: int = 0
 
-# --- Deck ---
+# Deck
 var draw_pile: Array = []
 var discard_pile: Array = []
-# One hand per seat (max 4 players); each entry is an array of card IDs.
 var player_hands: Array = [[], [], [], []]
 
 # Elephant immunity: instance_id -> owner player index that applied immunity.
@@ -79,7 +69,6 @@ signal turn_changed(player_index: int, role_name: String, is_skipped: bool)
 
 # --- Tile Registration ---
 
-# Record a tile in the registry with empty piece slots ready to fill.
 func register_tile(x: int, z: int, tile_type: int, node: Node3D, world_pos: Vector3) -> void:
 	var key = Vector2i(x, z)
 	tile_registry[key] = {
@@ -97,10 +86,8 @@ func get_tiles_of_type(tile_type: int) -> Array:
 			result.append(key)
 	return result
 
-# Like get_tiles_of_type, but accepts a mixed list of ints or string names.
 func get_tiles_matching(types: Array) -> Array:
 	var int_types: Array = []
-	# Normalise any string entries into TileType ints first.
 	for t in types:
 		if t is int:
 			int_types.append(t)
@@ -119,9 +106,6 @@ func count_tiles_of_type(tile_type: int) -> int:
 			c += 1
 	return c
 
-# --- Tile Stats & Objectives ---
-
-# Capture starting tile counts so role objectives can compute deltas later.
 func setup_stats() -> void:
 	initial_forest_count = count_tiles_of_type(TileType.FOREST)
 	initial_plantation_count = count_tiles_of_type(TileType.PLANTATION)
@@ -143,7 +127,6 @@ func get_total_villagers() -> int:
 		total += tile_registry[key]["villager_nodes"].size()
 	return total
 
-# Return every tile where a new piece of this type could legally be placed.
 func get_valid_add_tiles(piece_type: String) -> Array:
 	var result: Array = []
 	for key in tile_registry:
@@ -151,7 +134,6 @@ func get_valid_add_tiles(piece_type: String) -> Array:
 			result.append(key)
 	return result
 
-# Same as get_valid_add_tiles but restricted to tiles of the given types.
 func get_valid_add_tiles_in(piece_type: String, type_filter: Array) -> Array:
 	var result: Array = []
 	for key in tile_registry:
@@ -162,19 +144,15 @@ func get_valid_add_tiles_in(piece_type: String, type_filter: Array) -> Array:
 			result.append(key)
 	return result
 
-# Core placement rule: elephants and villagers cannot share a tile,
-# and each piece type has its own per-tile cap.
 func can_place_piece(tile_key: Vector2i, piece_type: String) -> bool:
 	if not tile_registry.has(tile_key):
 		return false
 	var entry = tile_registry[tile_key]
 	var is_elephant = piece_type == "elephant" or piece_type == "Elephant"
 	if is_elephant:
-		# Elephants refuse to share a tile with any villager.
 		if entry["villager_nodes"].size() > 0:
 			return false
 		return entry["elephant_nodes"].size() < MAX_ELEPHANTS_PER_TILE
-	# Villagers refuse to share a tile with any elephant.
 	if entry["elephant_nodes"].size() > 0:
 		return false
 	return entry["villager_nodes"].size() < MAX_VILLAGERS_PER_TILE
@@ -342,16 +320,10 @@ func draw_card(player_index: int) -> String:
 		player_hands[player_index].append(card)
 	return card
 
-# Wildlife Dept: draw 2 bonus cards (any color including black) at turn start.
-# Honours the 8-card maximum hand size — if the player is already at the cap,
-# no bonus card is drawn for that slot. The player still discards from whatever
-# was drawn (possibly zero) before ending the turn.
+# Wildlife Dept: draw 2 bonus cards (any color including black) at turn start
 func wildlife_dept_draw_bonus(player_index: int) -> void:
-	const MAX_HAND_SIZE := 8
 	wildlife_dept_drawn_cards = []
 	for _i in range(2):
-		if player_hands[player_index].size() >= MAX_HAND_SIZE:
-			break
 		var card = _pop_from_draw_pile()
 		if card != "":
 			player_hands[player_index].append(card)
@@ -368,18 +340,12 @@ func discard_card(player_index: int, card_id: String) -> void:
 	player_hands[player_index].erase(card_id)
 	discard_pile.append(card_id)
 
-# Government: add a stolen card to the Government player's stash and hand.
-# Honours the 8-card maximum hand size — if Government is already at the cap
-# the steal is refused so the hand never grows past 8.
-func government_steal_card(gov_player_index: int, card_id: String) -> bool:
-	const MAX_HAND_SIZE := 8
-	if player_hands[gov_player_index].size() >= MAX_HAND_SIZE:
-		return false
+# Government: add a stolen card to the Government player's stash and hand
+func government_steal_card(gov_player_index: int, card_id: String) -> void:
 	if not government_stolen_cards.has(gov_player_index):
 		government_stolen_cards[gov_player_index] = []
 	government_stolen_cards[gov_player_index].append(card_id)
 	player_hands[gov_player_index].append(card_id)
-	return true
 
 # Government: mark a stolen card as replayed (can only replay each once)
 func government_mark_replayed(card_id: String) -> void:

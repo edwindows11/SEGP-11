@@ -1,10 +1,8 @@
 extends Node3D
 
-# --- Board constants ---
 const BOARD_SIZE = 8
 const TILE_SIZE = 2.0
 
-# --- Tile scenes ---
 const FOREST_TILE = preload("res://assets/Tiles/ForestTile.glb")
 const HUMAN_TILE = preload("res://assets/Tiles/HumanDominatedTile.glb")
 const PLANTATION_TILE = preload("res://assets/Tiles/PlantationTile.glb")
@@ -13,12 +11,9 @@ const PLANTATION_TILE = preload("res://assets/Tiles/PlantationTile.glb")
 # FOREST=26, HUMAN=19, PLANTATION=19
 const TILE_QUOTAS = [26, 19, 19]
 
-# --- Board generation ---
-
 func _ready() -> void:
 	generate_board()
 
-# Builds the full 8x8 board, either from a scenario or randomly.
 func generate_board() -> void:
 	var type_map: Dictionary
 	var scenario_idx: int = GameState.selected_scenario_index
@@ -35,7 +30,6 @@ func generate_board() -> void:
 			var tile_instance = tile_scene.instantiate()
 			add_child(tile_instance)
 
-			# Centre the board around the world origin.
 			var offset = (BOARD_SIZE * TILE_SIZE) / 2.0
 			var world_pos = Vector3(x * TILE_SIZE - offset, 0, z * TILE_SIZE - offset)
 			tile_instance.position = world_pos
@@ -53,14 +47,12 @@ func generate_board() -> void:
 # --- Regional blob generation ---
 # Grows one contiguous region per tile type so same-type tiles cluster together.
 
-# Flood-fill grow three regions until quotas are met.
 func _generate_type_map() -> Dictionary:
 	var type_map: Dictionary = {}
 	var remaining: Array = TILE_QUOTAS.duplicate()
 
 	# One seed per type, spread across the grid
 	var seed_positions: Array = _pick_spread_seeds(3)
-	# Per-type frontier of cells with potential to expand into.
 	var frontiers: Array = [[], [], []]
 
 	for i in range(3):
@@ -70,7 +62,6 @@ func _generate_type_map() -> Dictionary:
 
 	var total = BOARD_SIZE * BOARD_SIZE
 
-	# Hard iteration cap to guarantee termination.
 	for _iter in range(total * 20):
 		if type_map.size() >= total:
 			break
@@ -123,7 +114,6 @@ func _generate_type_map() -> Dictionary:
 	return type_map
 
 
-# Returns 4-neighbour cells inside bounds that aren't yet typed.
 func _get_unassigned_neighbors(cell: Vector2i, type_map: Dictionary) -> Array:
 	var result: Array = []
 	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -134,7 +124,6 @@ func _get_unassigned_neighbors(cell: Vector2i, type_map: Dictionary) -> Array:
 	return result
 
 
-# Picks `count` cells that are mutually far apart for region seeding.
 func _pick_spread_seeds(count: int) -> Array:
 	# Shuffle all positions then pick ones at least BOARD_SIZE/2 apart (Manhattan)
 	var candidates: Array = []
@@ -169,7 +158,6 @@ func _pick_spread_seeds(count: int) -> Array:
 
 # --- Scenario-based type map ---
 
-# Converts a preset scenario grid into a Board type map.
 func _type_map_from_scenario(scenario_idx: int) -> Dictionary:
 	var scenario = ScenarioData.get_scenario(scenario_idx)
 	var grid: Array = scenario["grid"]
@@ -182,14 +170,12 @@ func _type_map_from_scenario(scenario_idx: int) -> Dictionary:
 	return type_map
 
 
-# Maps integer tile-type to its PackedScene.
 func _scene_for_type(tile_type: int) -> PackedScene:
 	match tile_type:
 		1:  return HUMAN_TILE
 		2:  return PLANTATION_TILE
 	return FOREST_TILE  # 0 = FOREST (default)
 
-# Adds a flat StaticBody3D collider so the tile can be raycast/clicked.
 func create_tile_collider(tile_node: Node3D) -> void:
 	var static_body = StaticBody3D.new()
 	tile_node.add_child(static_body)
@@ -205,7 +191,6 @@ func create_tile_collider(tile_node: Node3D) -> void:
 
 # --- Convert a tile to a new type in place ---
 
-# Replaces the tile mesh at tile_key with a new type and updates registry.
 func convert_tile(tile_key: Vector2i, new_type: int) -> void:
 	if not GameState.tile_registry.has(tile_key):
 		push_warning("convert_tile: key not in registry: " + str(tile_key))
@@ -235,7 +220,6 @@ func convert_tile(tile_key: Vector2i, new_type: int) -> void:
 # --- Highlight System ---
 # Adds a translucent flat plane on top of specified tiles.
 
-# Adds a translucent coloured plane on top of each given tile.
 func highlight_tiles(tile_keys: Array, color: Color) -> void:
 	for key in tile_keys:
 		if not GameState.tile_registry.has(key):
@@ -247,7 +231,6 @@ func highlight_tiles(tile_keys: Array, color: Color) -> void:
 			continue  # Already highlighted
 		_apply_highlight(tile_node, color)
 
-# Removes any existing highlight planes from every registered tile.
 func clear_all_highlights() -> void:
 	for key in GameState.tile_registry:
 		var tile_node: Node3D = GameState.tile_registry[key]["node"]

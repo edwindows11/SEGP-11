@@ -1,29 +1,49 @@
 extends VBoxContainer
 
-# --- Setup ---
-
 func _ready():
-	# Seed the log with sample entries so it isn't empty on game start
-	add_action("+1 elephant", true)
-	add_action("-2 villagers", false)
+	pass
 
-# --- Log Entry API ---
-
-# Append a coloured log line; green for positive actions, red for negative
 func add_action(text: String, is_positive: bool):
-	var label = Label.new() #create label to show cards played by user
-	label.text = "-> " + text
+	var panel = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.12, 0.16, 0.88) 
+	style.border_width_left = 4
+	style.border_color = Color(0.2, 0.85, 0.4) if is_positive else Color(0.95, 0.35, 0.3)
+	style.corner_radius_top_left = 2
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 2
+	style.corner_radius_bottom_right = 8
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	style.shadow_color = Color(0, 0, 0, 0.3)
+	style.shadow_size = 3
+	style.shadow_offset = Vector2(1, 2)
+	panel.add_theme_stylebox_override("panel", style)
 
-	if is_positive:
-		label.add_theme_color_override("font_color", Color.GREEN)
-	else:
-		label.add_theme_color_override("font_color", Color.RED)
+	var label = Label.new()
+	var icon = "✓ " if is_positive else "✗ "
+	label.text = icon + text
+	label.add_theme_color_override("font_color", Color(0.92, 0.94, 0.96))
+	label.add_theme_font_size_override("font_size", 13)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
-	label.add_theme_font_size_override("font_size", 20)
+	panel.add_child(label)
+	add_child(panel)
 
-	add_child(label)
+	# Pop-in + scale animation
+	panel.modulate = Color(1, 1, 1, 0)
+	panel.scale = Vector2(0.95, 0.95)
+	panel.pivot_offset = Vector2(0, panel.size.y / 2.0)
+	var tw = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(panel, "modulate", Color(1, 1, 1, 1), 0.35)
+	tw.tween_property(panel, "scale", Vector2(1.0, 1.0), 0.35)
 
-	# Optional: Limit number of log entries
-	# Drop the oldest entry once we exceed the cap so the log doesn't grow forever
-	if get_child_count() > 5:
-		get_child(0).queue_free()
+	# Limit number of log entries
+	if get_child_count() > 8:
+		var old_panel = get_child(0)
+		var out_tw = create_tween().set_ease(Tween.EASE_IN)
+		out_tw.tween_property(old_panel, "modulate", Color(1, 1, 1, 0), 0.2)
+		out_tw.tween_property(old_panel, "scale", Vector2(0.95, 0.95), 0.15)
+		out_tw.tween_callback(old_panel.queue_free)

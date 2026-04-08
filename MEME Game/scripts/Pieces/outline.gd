@@ -1,34 +1,24 @@
 extends Node3D
 
-# --- Exports ---
-
 @export var mesh: MeshInstance3D
 @export var material: StandardMaterial3D
 
-# --- State ---
-# True while delete-mode is active for the owning piece.
 var delete = false
 var parent:Node3D
 
 
-# --- Setup ---
 # before you call any function in this script, always call the new function first
-# Duplicates the material so each piece can be tinted independently.
 func new(mesh_instance, material_instance) -> void:
 	material = material_instance
 	mesh = mesh_instance
-
+	
 	parent = get_parent_node_3d()
-	# Duplicate so highlight changes don't bleed onto other pieces sharing the resource.
 	material = material.duplicate(true)
 	mesh.material_overlay= material
-
+	
 	if parent != null:
-		parent.delete.connect(deleteFunc)
+		parent.delete.connect(deleteFunc)	
 
-# --- Highlight control ---
-
-# Switch the outline tint; grow_amount drives the shader-based outline thickness.
 func colour(colour: String):
 	if colour == "red":
 		material.albedo_color = Color("d30000ff")
@@ -40,8 +30,7 @@ func colour(colour: String):
 	elif colour == "black":
 		material.albedo_color = Color("000000ff")
 		material.grow_amount = 0.0 # Invisible
-
-# Toggle delete-mode highlight; thicker outline signals "click to delete".
+	
 func deleteFunc():
 	if (delete):
 		delete = false

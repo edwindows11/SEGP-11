@@ -1,14 +1,11 @@
 extends Node3D
 
-# --- Exports ---
 @export var grid_size: float = 2.0
 @export var elephant_scene: PackedScene
 
-# --- Drag state ---
 var current_dragged_unit: Node3D = null
-var placed_unit: Node3D = null
 
-# --- Input handling ---
+var placed_unit: Node3D = null
 
 func _unhandled_input(event):
 	# Handle Mouse Button Inputs (Press/Release)
@@ -24,9 +21,6 @@ func _unhandled_input(event):
 	elif event is InputEventMouseMotion and current_dragged_unit:
 		update_drag_position(event.position)
 
-# --- Dragging ---
-
-# Starts dragging the existing unit, or spawns a new one if none placed.
 func start_dragging(screen_pos: Vector2):
 	if placed_unit:
 		# Pick up existing unit
