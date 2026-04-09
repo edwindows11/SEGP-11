@@ -784,6 +784,57 @@ func spawn_cards():
 		card.card_selected.connect(_on_card_selected)
 	call_deferred("reposition_cards")
 
+func _collapse_pending_card_preview() -> void:
+	if not currently_viewing_card:
+		return
+	if pending_card == null or not is_instance_valid(pending_card):
+		currently_viewing_card = false
+		pending_card = null
+		return
+	var old: Control = pending_card
+	old.set("is_selected", false)
+	old.z_index = 0
+	var tween := create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(old, "position", old.original_position, 0.2)
+	tween.tween_property(old, "scale", Vector2(1, 1), 0.2)
+
+func _focus_card_for_play(selected_card: Control, enable_play_button: bool = true) -> Tween:
+	_collapse_pending_card_preview()
+	currently_viewing_card = true
+	pending_card = selected_card
+	selected_card.original_position = selected_card.position
+	selected_card.z_index = 10
+	var win_size := get_viewport_rect().size
+	var scale_factor := Vector2(4.0, 4.0)
+	var target_pos: Vector2 = win_size / 2 - selected_card.pivot_offset
+	target_pos.x += 10
+	var tween := create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(selected_card, "position", target_pos, 0.2)
+	tween.tween_property(selected_card, "scale", scale_factor, 0.2)
+	if enable_play_button:
+		play_btn.disabled = false
+	else:
+		_set_play_btn_disabled(true)
+	return tween
+
+func animate_bot_card_popup(card_id: String) -> bool:
+	if card_id == "":
+		return false
+	var selected_card: Control = null
+	for child in cards_container.get_children():
+		if child is Control and not child.is_queued_for_deletion():
+			if str(child.get("card_id")) == card_id:
+				selected_card = child
+				break
+	if selected_card == null:
+		return false
+	selected_card.set("is_selected", true)
+	var tween := _focus_card_for_play(selected_card, false)
+	if tween:
+		await tween.finished
+		return true
+	return false
+
 func _on_card_selected(selected_card):
 	if not play_card or is_bot_turn: return
 	
@@ -810,27 +861,7 @@ func _on_card_selected(selected_card):
 	if r_name == "Village Head" and GameState.player_hands[p_idx].size() <= 1 and pending_card == null:
 		show_instruction("Village Head must keep at least 1 card in hand.")
 		return
-
-	if currently_viewing_card and pending_card:
-		var old = pending_card
-		old.is_selected = false
-		old.z_index = 0
-		var t = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-		t.tween_property(old, "position", old.original_position, 0.2)
-		t.tween_property(old, "scale", Vector2(1,1), 0.2)
-	
-	currently_viewing_card = true
-	pending_card = selected_card
-	selected_card.original_position = selected_card.position
-	selected_card.z_index = 10
-	var win_size = get_viewport_rect().size
-	var scale_factor := Vector2(4.0, 4.0)
-	var target_pos: Vector2 = win_size / 2 - selected_card.pivot_offset
-	target_pos.x += 10  # Adjust for exact centering
-	var tween = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(selected_card, "position", target_pos, 0.2)
-	tween.tween_property(selected_card, "scale", scale_factor, 0.2)
-	play_btn.disabled = false
+	_focus_card_for_play(selected_card)
 
 func _on_play_btn_pressed():
 	if _play_btn_is_end_turn:
