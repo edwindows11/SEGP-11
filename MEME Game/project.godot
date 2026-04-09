@@ -21,6 +21,7 @@ config/features=PackedStringArray("4.5", "Forward Plus")
 [autoload]
 
 GameState="*res://scripts/GameState.gd"
+RoleEffect="*res://scripts/RoleEffect.gd"
 
 [display]
 

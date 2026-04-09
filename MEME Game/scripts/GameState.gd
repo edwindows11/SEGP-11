@@ -40,12 +40,6 @@ var skip_next_turn = false
 # Wildlife Department special ability state
 var wildlife_dept_drawn_cards: Array = []  # the 2 bonus card IDs drawn each turn
 
-# Government special ability state
-# Key: player index (int) -> Array of stolen card IDs still available to replay
-var government_stolen_cards: Dictionary = {}
-# Card IDs already replayed (cannot be replayed again)
-var government_replayed_cards: Array = []
-
 # Environmental Consultant special ability state
 # "" = not chosen yet, "None" = chose no ability, otherwise = role name borrowed
 var ec_borrowed_ability: String = ""
@@ -59,6 +53,7 @@ var initial_human_count: int = 0
 var draw_pile: Array = []
 var discard_pile: Array = []
 var player_hands: Array = [[], [], [], []]
+var government_stolen_cards: Dictionary = {}
 
 # Elephant immunity: instance_id -> owner player index that applied immunity.
 # Expires when turn returns to that same player.
@@ -342,21 +337,20 @@ func discard_card(player_index: int, card_id: String) -> void:
 
 # Government: add a stolen card to the Government player's stash and hand
 func government_steal_card(gov_player_index: int, card_id: String) -> void:
+	if gov_player_index < player_hands.size():
+		if not player_hands[gov_player_index].has(card_id):
+			player_hands[gov_player_index].append(card_id)
 	if not government_stolen_cards.has(gov_player_index):
 		government_stolen_cards[gov_player_index] = []
-	government_stolen_cards[gov_player_index].append(card_id)
-	player_hands[gov_player_index].append(card_id)
+	if not government_stolen_cards[gov_player_index].has(card_id):
+		government_stolen_cards[gov_player_index].append(card_id)
 
-# Government: mark a stolen card as replayed (can only replay each once)
 func government_mark_replayed(card_id: String) -> void:
-	government_replayed_cards.append(card_id)
-	# Remove from all players' stolen stashes so it won't be replayed again
 	for key in government_stolen_cards.keys():
-		government_stolen_cards[key].erase(card_id)
-
-# Government: check if a card has already been replayed
-func government_can_replay(card_id: String) -> bool:
-	return not (card_id in government_replayed_cards)
+		var stolen_list = government_stolen_cards[key]
+		if stolen_list.has(card_id):
+			stolen_list.erase(card_id)
+			government_stolen_cards[key] = stolen_list
 
 func _pop_from_draw_pile() -> String:
 	if draw_pile.is_empty():

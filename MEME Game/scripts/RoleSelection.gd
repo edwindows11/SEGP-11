@@ -50,8 +50,6 @@ var bot_difficulty_by_player: Dictionary = {
 }
 
 # Stores the texture for each role so we only load it once
-# Key: role name (String), Value: Texture2D
-# e.g. role_textures["Government"] = <loaded texture>
 var role_textures: Dictionary = {}
 
 func _ready():
@@ -59,8 +57,7 @@ func _ready():
 	if root_vbox:
 		root_vbox.add_theme_constant_override("separation", 24)
 
-	# Pre-load all role card images once at startup so hover feels instant
-	# Files must be named exactly: res://assets/Role Card/Conservationist.png etc.
+	# Pre-load all role card images 
 	_preload_role_textures()
 
 	setup_role_buttons()
@@ -72,10 +69,7 @@ func _ready():
 	_refresh_bot_difficulty_controls()
 	_connect_bot_container_controls() 
 
-
-# ---- PRELOAD ROLE TEXTURES ----
 # Loads every role's card image into memory at the start
-# This avoids any delay/stutter when the player hovers for the first time
 func _preload_role_textures():
 	for role in roles:
 		var path = "res://assets/Role Card/%s.png" % role
@@ -86,6 +80,7 @@ func _preload_role_textures():
 			print("WARNING: Could not load texture for role: ", role, " at path: ", path)
 
 
+# BOT
 func _connect_bot_container_controls():
 	bot_count_option = bot_count
 	bot_speed_option = bot_speed
@@ -103,6 +98,7 @@ func _connect_bot_container_controls():
 	_connect_difficulty_option(bot_player4, 3)
 
 
+# Choose Difficulty
 func _connect_difficulty_option(option_node: OptionButton, player_idx: int):
 	if option_node == null:
 		return
@@ -117,7 +113,7 @@ func _connect_difficulty_option(option_node: OptionButton, player_idx: int):
 		bot_difficulty_panels[player_idx] = parent_container
 
 
-# ---- ROLE BUTTON SETUP ----
+#  ROLE BUTTON SETUP 
 # Creates buttons AND wires up hover signals so the active player slot
 # previews whichever role the mouse is currently over
 func setup_role_buttons():
@@ -165,13 +161,8 @@ func setup_role_buttons():
 
 		button.pressed.connect(_on_role_button_pressed.bind(role))
 
-		# --- HOVER SIGNALS ---
-		# mouse_entered fires when the cursor moves onto the button
-		# We show a preview of this role's card image in the active player's slot
+		# when mouse hovers
 		button.mouse_entered.connect(_on_role_button_hovered.bind(role))
-
-		# mouse_exited fires when the cursor leaves the button
-		# We restore the slot back to whatever is actually selected (or blank)
 		button.mouse_exited.connect(_on_role_button_unhovered)
 
 		role_grid.add_child(button)
@@ -215,12 +206,7 @@ func _on_role_button_unhovered():
 		texture_rect.texture = null
 		texture_rect.visible = false
 
-
-# ---- HELPER: GET TEXTURE RECT FOR A SLOT ----
-# The TextureRect ("PlayerRole") node lives at different paths depending on the slot
-# Player 1: PlayerSlots/Player1/SelectButton/PlayerRole
-# Others:   PlayerSlots/Player2/SelectButton/PlayerRole  (same structure actually)
-# We centralise the lookup here so we don't repeat this path logic everywhere
+#Texture rect to show player role when hovered
 func _get_slot_texture_rect(slot_index: int) -> TextureRect:
 	var slot = player_slots_container.get_child(slot_index)
 	if slot == null:
@@ -230,6 +216,7 @@ func _get_slot_texture_rect(slot_index: int) -> TextureRect:
 		tex_rect = slot.get_node_or_null("PlayerRole")
 	return tex_rect
 	
+# In case texture rect does not show
 func _get_slot_role_label(slot_index: int) -> Label:
 	var slot = player_slots_container.get_child(slot_index)
 	if slot == null:
@@ -412,6 +399,7 @@ func update_ui():
 	var all_selected = player_selections.all(func(r): return r != null)
 	start_game_button.disabled = not all_selected
 
+# start game and set values to card table
 func _on_start_game_pressed():
 	var card_table_scene = load("res://scenes/CardTable.tscn")
 	var card_table = card_table_scene.instantiate()

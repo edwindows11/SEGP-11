@@ -14,14 +14,11 @@ const TOTAL_CARDS = 5
 const CARD_SPACING = 200.0
 const BOTTOM_MARGIN = 50.0
 
-const PLAYER_DISPLAY_SCENE = preload("res://scenes/PlayerDisplay.tscn")
-
 @onready var cards_container = $CardsContainer
 @onready var players_container = $TopBar/PlayersContainer
 @onready var user_role_label = $UserRoleLabel
 @onready var timer_label = $TopBar/TimerLabel
 @onready var turn_timer = $TurnTimer
-@onready var placement_options = $TopBar/PlacementMode
 @onready var play_btn = $PlayCard
 @onready var pause_btn = $TopBar/PauseButton
 
@@ -49,6 +46,7 @@ var cards_played_this_turn = 0
 var pending_card: Control = null
 var instruction_label: Label = null
 var play_card: bool = true
+var is_bot_turn: bool = false
 var currently_viewing_card: bool = false
 var bot_turn_active: bool = false
 var vh_villagers_increased_this_turn: bool = false
@@ -62,51 +60,10 @@ var ec_used_ability_this_turn: bool = false
 var em_used_ability_this_turn: bool = false
 var ec_choice_popup: PanelContainer = null
 
-# Trackers
-var cons_tracker_panel: PanelContainer = null
-var cons_green_label: Label = null
-var cons_forest_label: Label = null
-var cons_status_label: Label = null
-
-var vh_tracker_panel: PanelContainer = null
-var vh_cards_label: Label = null
-var vh_pop_label: Label = null
-var vh_status_label: Label = null
-
-var po_tracker_panel: PanelContainer = null
-var po_cards_label: Label = null
-var po_plant_label: Label = null
-var po_status_label: Label = null
-
-var ld_tracker_panel: PanelContainer = null
-var ld_cards_label: Label = null
-var ld_human_label: Label = null
-var ld_status_label: Label = null
-
-var ec_tracker_panel: PanelContainer = null
-var ec_cards_label: Label = null
-var ec_vacant_label: Label = null
-var ec_status_label: Label = null
-
-var em_tracker_panel: PanelContainer = null
-var em_cards_label: Label = null
-var em_elephants_label: Label = null
-var em_status_label: Label = null
-
-var wd_tracker_panel: PanelContainer = null
-var wd_cards_label: Label = null
-var wd_elephants_label: Label = null
-var wd_status_label: Label = null
-
-var res_tracker_panel: PanelContainer = null
-var res_cards_label: Label = null
-var res_tiles_label: Label = null
-var res_status_label: Label = null
-
-var gov_tracker_panel: PanelContainer = null
-var gov_cards_label: Label = null
-var gov_ratio_label: Label = null
-var gov_status_label: Label = null
+# Goal trackers — one panel per player slot, populated via RoleEffect.compute_goal.
+# Each entry is { panel: PanelContainer, title: Label, line1: Label, line2: Label,
+# status: Label, role: String, image: TextureRect }.
+var _player_tracker_panels: Array = []
 
 # Winning Screen
 var win_screen_panel: PanelContainer = null
@@ -149,22 +106,18 @@ func _ready():
 
 	turn_timer.timeout.connect(_on_timer_timeout)
 	get_tree().root.size_changed.connect(_on_window_resize)
-	
-	if placement_options:
-		placement_options.visible = false
 
 	_init_all_ui_elements()
 	
 
 func _pause():
-	var pause_menu = $CanvasLayer/PauseMenu
+	var pause_menu = $PauseMenu
 	if pause_menu:
 		pause_menu.toggle_pause()
 		return
 
 func _init_all_ui_elements():
 	if has_node("TopBar/TimerLabel"):
-		var timer_label = get_node("TopBar/TimerLabel")
 		timer_label.set_anchors_preset(Control.PRESET_CENTER)
 		timer_label.offset_left = -50
 		timer_label.offset_right = 50
@@ -188,6 +141,8 @@ func _init_all_ui_elements():
 	_build_em_choice_popup()
 	_build_role_ability_dropdown()
 	_build_role_card_overlay()
+
+	_update_dropdown_btn_text()
 
 func _build_role_card_overlay():
 	_role_card_overlay = ColorRect.new()
@@ -295,7 +250,7 @@ func _build_all_trackers():
 	style.corner_radius_top_right = 6
 	style.corner_radius_bottom_right = 6
 	trackers_toggle_btn.add_theme_stylebox_override("normal", style)
-	trackers_toggle_btn.z_index = 90
+	trackers_toggle_btn.z_index = 10
 	
 	trackers_toggle_btn.pressed.connect(func():
 		right_margin.visible = !right_margin.visible
@@ -303,73 +258,38 @@ func _build_all_trackers():
 	)
 	add_child(trackers_toggle_btn)
 
-	# Conservationist
-	cons_tracker_panel = _create_tracker_panel("Conservationist Goal", Color(0.1, 0.3, 0.1, 0.8), Color(0.6, 1.0, 0.6), "Conservationist")
-	cons_green_label = _add_tracker_label(cons_tracker_panel, "Green Cards: 0 / 4")
-	cons_forest_label = _add_tracker_label(cons_tracker_panel, "Forest Increase: 0 / 2")
-	cons_status_label = _add_tracker_status(cons_tracker_panel)
-	trackers_vbox.add_child(cons_tracker_panel)
+	# Build tracker panel per player slot. The role-specific
 
-	# Village Head
-	vh_tracker_panel = _create_tracker_panel("Village Head Goal", Color(0.3, 0.1, 0.1, 0.8), Color(1.0, 0.6, 0.6), "Village Head")
-	vh_cards_label = _add_tracker_label(vh_tracker_panel, "Action Cards: 0 / 7")
-	vh_pop_label = _add_tracker_label(vh_tracker_panel, "Population: 0 / 16")
-	vh_status_label = _add_tracker_status(vh_tracker_panel)
-	trackers_vbox.add_child(vh_tracker_panel)
+	_trackers_vbox_ref = trackers_vbox
 
-	# Plantation Owner
-	po_tracker_panel = _create_tracker_panel("Plantation Owner Goal", Color(0.3, 0.25, 0.1, 0.8), Color(1.0, 0.8, 0.4), "Plantation Owner")
-	po_cards_label = _add_tracker_label(po_tracker_panel, "Cards: 0G, 0R, 0Y / 2G, 1R, 1Y")
-	po_plant_label = _add_tracker_label(po_tracker_panel, "Plantations: 0 / 2")
-	po_status_label = _add_tracker_status(po_tracker_panel)
-	trackers_vbox.add_child(po_tracker_panel)
+# Holds a reference to the trackers VBox built in the same function as the panels.
+# Set by the build code above so build_player_trackers() can populate it later.
+var _trackers_vbox_ref: VBoxContainer = null
 
-	# Land Developer
-	ld_tracker_panel = _create_tracker_panel("Land Developer Goal", Color(0.1, 0.1, 0.3, 0.8), Color(0.6, 0.8, 1.0), "Land Developer")
-	ld_cards_label = _add_tracker_label(ld_tracker_panel, "Cards: 0G, 0R, 0Y / (2G+2R) or (2Y+2R)")
-	ld_human_label = _add_tracker_label(ld_tracker_panel, "Human Areas: 0 / 2")
-	ld_status_label = _add_tracker_status(ld_tracker_panel)
-	trackers_vbox.add_child(ld_tracker_panel)
+# Build N generic player tracker panels (one per active player). Each panel is
+# styled and populated from RoleEffect for the player's current role. Call once
+# after GameState.player_roles is set up. Idempotent — wipes existing panels.
+func build_player_trackers() -> void:
+	if _trackers_vbox_ref == null:
+		return
+	for entry in _player_tracker_panels:
+		if entry.has("panel") and is_instance_valid(entry["panel"]):
+			entry["panel"].queue_free()
+	_player_tracker_panels.clear()
 
-	# Env Consultant
-	ec_tracker_panel = _create_tracker_panel("Env Consultant Goal", Color(0.2, 0.4, 0.2, 0.8), Color(0.6, 1.0, 0.6), "Environmental Consultant")
-	ec_cards_label = _add_tracker_label(ec_tracker_panel, "Cards: 0G, 0R / 2G, 2R")
-	ec_vacant_label = _add_tracker_label(ec_tracker_panel, "Vacant Goals Met: 0 / 2")
-	ec_status_label = _add_tracker_status(ec_tracker_panel)
-	trackers_vbox.add_child(ec_tracker_panel)
+	for i in range(GameState.player_count):
+		var role: String = GameState.player_roles[i] if i < GameState.player_roles.size() else ""
+		var entry := _create_player_tracker_panel(i, role)
+		_trackers_vbox_ref.add_child(entry["panel"])
+		_player_tracker_panels.append(entry)
 
-	# Ecotourism Manager
-	em_tracker_panel = _create_tracker_panel("Ecotourism Manager Goal", Color(0.1, 0.5, 0.5, 0.8), Color(0.4, 0.9, 0.9), "Ecotourism Manager")
-	em_cards_label = _add_tracker_label(em_tracker_panel, "Cards: 0G, 0Y / 3G, 2Y")
-	em_elephants_label = _add_tracker_label(em_tracker_panel, "Elephants / Dist: No / <3")
-	em_status_label = _add_tracker_status(em_tracker_panel)
-	trackers_vbox.add_child(em_tracker_panel)
-
-	# Wildlife Department
-	wd_tracker_panel = _create_tracker_panel("Wildlife Dept Goal", Color(0.6, 0.2, 0.0, 0.8), Color(1.0, 0.5, 0.2), "Wildlife Department")
-	wd_cards_label = _add_tracker_label(wd_tracker_panel, "Green Cards: 0 / 4")
-	wd_elephants_label = _add_tracker_label(wd_tracker_panel, "Forest Elephants: 0 / 4")
-	wd_status_label = _add_tracker_status(wd_tracker_panel)
-	trackers_vbox.add_child(wd_tracker_panel)
-
-	# Researcher
-	res_tracker_panel = _create_tracker_panel("Researcher Goal", Color(0.4, 0.1, 0.5, 0.8), Color(0.8, 0.5, 1.0), "Researcher")
-	res_cards_label = _add_tracker_label(res_tracker_panel, "+Ele|+Hum|+Both: 0/0/0")
-	res_tiles_label = _add_tracker_label(res_tracker_panel, "Separation: >= 2 tiles")
-	res_status_label = _add_tracker_status(res_tracker_panel)
-	trackers_vbox.add_child(res_tracker_panel)
-
-	# Government
-	gov_tracker_panel = _create_tracker_panel("Government Goal", Color(0.05, 0.1, 0.3, 0.85), Color(0.6, 0.85, 1.0), "Government")
-	gov_cards_label = _add_tracker_label(gov_tracker_panel, "Cards: 0R, 0Y / 2R, 2Y")
-	gov_ratio_label = _add_tracker_label(gov_tracker_panel, "Villagers / Elephants: 0 / 0")
-	gov_status_label = _add_tracker_status(gov_tracker_panel)
-	trackers_vbox.add_child(gov_tracker_panel)
-
-func _create_tracker_panel(title_text: String, bg_color: Color, title_color: Color, role_name: String = "") -> PanelContainer:
-	var panel = PanelContainer.new()
-	panel.visible = false
-	var style = StyleBoxFlat.new()
+# Create one tracker panel for `player_index`. Title, border colour and role
+# card image come from RoleEffect; the two stat lines start blank and are
+# updated each tick by _update_goals().
+func _create_player_tracker_panel(player_index: int, role: String) -> Dictionary:
+	var title_color: Color = RoleEffect.goal_color(role)
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.1, 0.12, 0.16, 0.88)
 	style.border_width_left = 4
 	style.border_color = title_color
@@ -386,82 +306,84 @@ func _create_tracker_panel(title_text: String, bg_color: Color, title_color: Col
 	style.shadow_offset = Vector2(1, 2)
 	panel.add_theme_stylebox_override("panel", style)
 
-	var hbox = HBoxContainer.new()
+	var hbox := HBoxContainer.new()
 	hbox.add_theme_constant_override("separation", 10)
 	panel.add_child(hbox)
 
-	# Role card image on the left
-	if role_name != "":
-		var tex_path = "res://assets/Role Card/%s.png" % role_name
-		var tex = null
+	# Role card image on the left (clickable to enlarge).
+	var image_rect: TextureRect = null
+	if role != "":
+		var tex: Texture2D = null
+		var tex_path = "res://assets/Role Card/%s.png" % role
 		if ResourceLoader.exists(tex_path):
 			tex = load(tex_path)
-		elif ResourceLoader.exists("res://assets/Roles/%s.png" % role_name):
-			tex = load("res://assets/Roles/%s.png" % role_name)
-		
+		elif ResourceLoader.exists("res://assets/Roles/%s.png" % role):
+			tex = load("res://assets/Roles/%s.png" % role)
 		if tex != null:
-			var tex_rect = TextureRect.new()
-			tex_rect.texture = tex
-			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			tex_rect.custom_minimum_size = Vector2(60, 80)
-			tex_rect.mouse_filter = Control.MOUSE_FILTER_STOP
-			var captured_tex = tex
-			tex_rect.gui_input.connect(func(event: InputEvent):
+			image_rect = TextureRect.new()
+			image_rect.texture = tex
+			image_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			image_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			image_rect.custom_minimum_size = Vector2(60, 80)
+			image_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+			var captured_tex := tex
+			image_rect.gui_input.connect(func(event: InputEvent):
 				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 					_show_role_card_overlay(captured_tex)
 			)
-			hbox.add_child(tex_rect)
+			hbox.add_child(image_rect)
 
-	var vbox = VBoxContainer.new()
-	vbox.name = "VBox"
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 8)
-	hbox.add_child(vbox)
+	var inner_vbox := VBoxContainer.new()
+	inner_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner_vbox.add_theme_constant_override("separation", 8)
+	hbox.add_child(inner_vbox)
 
-	var title = Label.new()
-	title.text = title_text
-	title.add_theme_font_size_override("font_size", 14)
-	title.add_theme_color_override("font_color", title_color)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(title)
-	return panel
+	var title_label := Label.new()
+	title_label.text = "Player %d — %s" % [player_index + 1, RoleEffect.goal_title(role)]
+	title_label.add_theme_font_size_override("font_size", 14)
+	title_label.add_theme_color_override("font_color", title_color)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	inner_vbox.add_child(title_label)
 
-func _add_tracker_label(panel: PanelContainer, text: String) -> Label:
-	var lbl = Label.new()
-	lbl.text = text
-	lbl.add_theme_font_size_override("font_size", 12)
-	panel.find_child("VBox", true, false).add_child(lbl)
-	return lbl
+	var line1 := Label.new()
+	line1.add_theme_font_size_override("font_size", 12)
+	inner_vbox.add_child(line1)
 
-func _add_tracker_status(panel: PanelContainer) -> Label:
-	var lbl = Label.new()
-	lbl.text = "In Progress"
-	lbl.add_theme_font_size_override("font_size", 12)
-	lbl.add_theme_color_override("font_color", Color(1.0, 0.8, 0.2))
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	panel.find_child("VBox", true, false).add_child(lbl)
-	return lbl
+	var line2 := Label.new()
+	line2.add_theme_font_size_override("font_size", 12)
+	inner_vbox.add_child(line2)
+
+	var status := Label.new()
+	status.text = "In Progress"
+	status.add_theme_font_size_override("font_size", 12)
+	status.add_theme_color_override("font_color", Color(1.0, 0.8, 0.2))
+	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	inner_vbox.add_child(status)
+
+	return {
+		"panel": panel,
+		"title": title_label,
+		"line1": line1,
+		"line2": line2,
+		"status": status,
+		"role":  role,
+		"image": image_rect,
+	}
 
 func _on_special_ability_pressed():
+	# Environmental Consultant always opens the borrow popup; other roles must
+	# pass the per-turn cooldown check in RoleEffect before firing their signal.
+	if player_role == RoleEffect.ENVIRONMENTAL_CONSULT:
+		request_ec_ability.emit()
+		return
+	if not RoleEffect.can_use_button(player_role, self):
+		return
 	match player_role:
-		"Plantation Owner":
-			if cards_played_this_turn == 0:
-				request_po_ability.emit()
-		"Government":
-			if not gov_used_ability_this_turn:
-				request_gov_ability.emit()
-		"Conservationist":
-			if not cons_used_ability_this_turn:
-				request_cons_ability.emit()
-		"Land Developer":
-			if not ld_used_ability_this_turn:
-				request_ld_ability.emit()
-		"Ecotourism Manager":
-			if not em_used_ability_this_turn:
-				request_em_ability.emit()
-		"Environmental Consultant":
-			request_ec_ability.emit()
+		RoleEffect.PLANTATION_OWNER:    request_po_ability.emit()
+		RoleEffect.GOVERNMENT:          request_gov_ability.emit()
+		RoleEffect.CONSERVATIONIST:     request_cons_ability.emit()
+		RoleEffect.LAND_DEVELOPER:      request_ld_ability.emit()
+		RoleEffect.ECOTOURISM_MANAGER:  request_em_ability.emit()
 
 func _build_win_screen():
 	win_screen_panel = PanelContainer.new()
@@ -661,12 +583,13 @@ func show_ec_choice_popup() -> void:
 	for role in borrowable_roles:
 		var btn = Button.new()
 		btn.text = role
+		var chosen_role = role
 		btn.pressed.connect(func():
-			GameState.ec_borrowed_ability = role
+			GameState.ec_borrowed_ability = chosen_role
 			ec_choice_popup.visible = false
 			# Update the special ability button tooltip to reflect the chosen ability
 			if special_ability_btn:
-				special_ability_btn.tooltip_text = "Use: " + role
+				special_ability_btn.tooltip_text = "Use: " + chosen_role
 			_refresh_role_panel_ui()
 		)
 		vbox.add_child(btn)
@@ -773,6 +696,17 @@ func _update_dropdown_btn_text():
 	var arrow = "▴" if ability_dropdown_panel.visible else "▾"
 	ability_dropdown_btn.text = "Player %d | %s %s" % [p_idx + 1, role, arrow]
 	
+func _update_special_ability_button_state() -> void:
+	if not special_ability_btn:
+		return
+	if not special_ability_btn.visible:
+		return
+	# EC's borrow popup is always available; everyone else routes through RoleEffect.
+	if player_role == RoleEffect.ENVIRONMENTAL_CONSULT:
+		special_ability_btn.disabled = false
+	else:
+		special_ability_btn.disabled = not RoleEffect.can_use_button(player_role, self)
+	
 func _refresh_role_panel_ui():
 	var cur = GameState.player_roles[GameState.current_player_index] \
 		if GameState.current_player_index < GameState.player_roles.size() else "Unknown"
@@ -791,118 +725,33 @@ func _refresh_role_panel_ui():
 		tex_rect.texture = null
 
 		
-func _process(_delta):
+# Goals/trackers UI is throttled — the game is turn-based so re-running every
+# frame wastes ~10 board walks + 9 label updates per tick. ~5 Hz is plenty.
+const _GOALS_UPDATE_INTERVAL: float = 0.2
+var _goals_update_accum: float = 0.0
+
+func _process(delta):
 	if is_game_over: return
-	_hide_all_trackers()
+	_goals_update_accum += delta
+	if _goals_update_accum < _GOALS_UPDATE_INTERVAL: return
+	_goals_update_accum = 0.0
 	_update_goals()
 
-func _hide_all_trackers():
-	for p in [cons_tracker_panel, vh_tracker_panel, po_tracker_panel, ld_tracker_panel, ec_tracker_panel, em_tracker_panel, wd_tracker_panel, res_tracker_panel, gov_tracker_panel]:
-		if p: p.visible = false
-
+# Loop over the per-player tracker panels and refresh each from RoleEffect.
+# All role-specific computation lives in RoleEffect.compute_goal — this just
+# pushes the resulting strings into the labels and triggers wins.
 func _update_goals():
-	# Conservationist
-	var idx = GameState.player_roles.find("Conservationist")
-	if idx != -1:
-		cons_tracker_panel.visible = true
-		var g = GameState.player_stats[idx]["green_cards_played"]
-		var f = GameState.get_forest_increase()
-		cons_green_label.text = "Green Cards: %d / 4" % g
-		cons_forest_label.text = "Forest Increase: %d / 2" % f
-		if g >= 4 and f >= 2: _trigger_win(idx, "Conservationist")
-
-	# Village Head
-	idx = GameState.player_roles.find("Village Head")
-	if idx != -1:
-		vh_tracker_panel.visible = true
-		var a = GameState.player_stats[idx]["action_cards_played"]
-		var p = GameState.get_total_villagers()
-		vh_cards_label.text = "Action Cards: %d / 7" % a
-		vh_pop_label.text = "Population: %d / 16" % p
-		if a >= 7 and p >= 16: _trigger_win(idx, "Village Head")
-
-	# Plantation Owner
-	idx = GameState.player_roles.find("Plantation Owner")
-	if idx != -1:
-		po_tracker_panel.visible = true
-		var s = GameState.player_stats[idx]
-		var g = s.get("green_cards_played",0); var r = s.get("red_cards_played",0); var y = s.get("yellow_cards_played",0)
-		var p = GameState.get_plantation_increase()
-		po_cards_label.text = "Cards: %dG, %dR, %dY / 2G, 1R, 1Y" % [g, r, y]
-		po_plant_label.text = "Plantations: %d / 2" % p
-		if g >= 2 and r >= 1 and y >= 1 and p >= 2: _trigger_win(idx, "Plantation Owner")
-
-	# Land Developer
-	idx = GameState.player_roles.find("Land Developer")
-	if idx != -1:
-		ld_tracker_panel.visible = true
-		var s = GameState.player_stats[idx]
-		var g = s.get("green_cards_played", 0); var r = s.get("red_cards_played", 0); var y = s.get("yellow_cards_played", 0)
-		var h = GameState.get_human_increase()
-		ld_cards_label.text = "Cards: %dG, %dR, %dY / (2G+2R) or (2Y+2R)" % [g, r, y]
-		ld_human_label.text = "Human Areas: %d / 2" % h
-		if ((g >= 2 and r >= 2) or (y >= 2 and r >= 2)) and h >= 2: _trigger_win(idx, "Land Developer")
-
-	# Environmental Consultant
-	idx = GameState.player_roles.find("Environmental Consultant")
-	if idx != -1:
-		ec_tracker_panel.visible = true
-		var s = GameState.player_stats[idx]
-		var g = s.get("green_cards_played", 0); var r = s.get("red_cards_played", 0)
-		var v = GameState.count_vacant_secondary_met()
-		ec_cards_label.text = "Cards: %dG, %dR / 2G, 2R" % [g, r]
-		ec_vacant_label.text = "Vacant Goals Met: %d / 2" % v
-		if g >= 2 and r >= 2 and v >= 2: _trigger_win(idx, "Environmental Consultant")
-
-	# Ecotourism Manager
-	idx = GameState.player_roles.find("Ecotourism Manager")
-	if idx != -1:
-		em_tracker_panel.visible = true
-		var s = GameState.player_stats[idx]
-		var g = s.get("green_cards_played", 0); var y = s.get("yellow_cards_played", 0)
-		var d = GameState.get_shortest_distance_human_elephant()
-		var total_e = 0
-		for key in GameState.tile_registry:
-			if GameState.tile_registry[key]["elephant_nodes"].size() > 0: total_e += 1
-		var cond_dist = (total_e > 0 and d >= 3)
-		em_cards_label.text = "Cards: %dG, %dY / 3G, 2Y" % [g, y]
-		em_elephants_label.text = "Elephants / Dist: %s / %s" % ["Yes" if total_e > 0 else "No", str(d) if d != -1 else "N/A"]
-		if g >= 3 and y >= 2 and cond_dist: _trigger_win(idx, "Ecotourism Manager")
-
-	# Wildlife Department
-	idx = GameState.player_roles.find("Wildlife Department")
-	if idx != -1:
-		wd_tracker_panel.visible = true
-		var g = GameState.player_stats[idx]["green_cards_played"]
-		var e = GameState.get_elephants_in_forest()
-		wd_cards_label.text = "Green Cards: %d / 4" % g
-		wd_elephants_label.text = "Forest Elephants: %d / 4" % e
-		if g >= 4 and e >= 4: _trigger_win(idx, "Wildlife Department")
-
-	# Researcher
-	idx = GameState.player_roles.find("Researcher")
-	if idx != -1:
-		res_tracker_panel.visible = true
-		var s = GameState.player_stats[idx]
-		var ei = s.get("e_inc_cards", 0); var vi = s.get("v_inc_cards", 0); var both = s.get("both_inc_cards", 0)
-		var d = GameState.get_shortest_distance_human_elephant()
-		res_cards_label.text = "+Ele|+Hum|+Both: %d/%d/%d (Goal 2/3/0)" % [ei, vi, both]
-		res_tiles_label.text = "Separation: %s (Goal >= 2)" % [str(d) if d != -1 else "N/A"]
-		if ei >= 2 and vi >= 3 and d >= 2: _trigger_win(idx, "Researcher")
-
-	# Government
-	idx = GameState.player_roles.find("Government")
-	if idx != -1:
-		gov_tracker_panel.visible = true
-		var s = GameState.player_stats[idx]
-		var r = s.get("red_cards_played", 0); var y = s.get("yellow_cards_played", 0)
-		var v_pop = GameState.get_total_villagers()
-		var total_e = 0
-		for key in GameState.tile_registry:
-			total_e += GameState.tile_registry[key]["elephant_nodes"].size()
-		gov_cards_label.text = "Cards: %dR, %dY / 2R, 2Y" % [r, y]
-		gov_ratio_label.text = "Villagers / Elephants: %d / %d (Goal v>=2e)" % [v_pop, total_e]
-		if r >= 2 and y >= 2 and v_pop >= (2 * total_e): _trigger_win(idx, "Government")
+	for i in range(_player_tracker_panels.size()):
+		var entry: Dictionary = _player_tracker_panels[i]
+		var data: Dictionary = RoleEffect.compute_goal(i)
+		if data.is_empty():
+			continue
+		entry["line1"].text = data.line1
+		entry["line2"].text = data.line2
+		if data.won:
+			entry["status"].text = "WON"
+			entry["status"].add_theme_color_override("font_color", Color(0.4, 1.0, 0.5))
+			_trigger_win(i, entry["role"])
 
 func _on_window_resize(): reposition_cards()
 
@@ -924,10 +773,6 @@ func _on_timer_timeout():
 	if time_left < 0: end_turn_requested.emit()
 	else: timer_label.text = str(time_left)
 
-func spawn_players():
-	for i in range(1, GameState.player_count):
-		var player = PLAYER_DISPLAY_SCENE.instantiate()
-
 func spawn_cards():
 	for child in cards_container.get_children(): child.queue_free()
 	pending_card = null
@@ -940,10 +785,17 @@ func spawn_cards():
 	call_deferred("reposition_cards")
 
 func _on_card_selected(selected_card):
-	if not play_card: return
+	if not play_card or is_bot_turn: return
+	
+	# If a BLACK card is already being viewed, don't allow selecting another one
+	if currently_viewing_card and pending_card:
+		var pending_color = CardData.ALL_CARDS.get(pending_card.card_id, {}).get("color", Color.WHITE)
+		if pending_color == Color.BLACK:
+			return
+	
 	var p_idx = GameState.current_player_index
 	var r_name = GameState.player_roles[p_idx]
-	var max_c = 2 if (r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head")) else 1
+	var max_c = RoleEffect.max_cards_per_turn(r_name)
 	if cards_played_this_turn >= max_c: return
 
 	# Village Head constraints
@@ -964,19 +816,20 @@ func _on_card_selected(selected_card):
 		old.is_selected = false
 		old.z_index = 0
 		var t = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-		t.tween_property(old, "position", old.original_position, 0.5)
-		t.tween_property(old, "scale", Vector2(1,1), 0.5)
+		t.tween_property(old, "position", old.original_position, 0.2)
+		t.tween_property(old, "scale", Vector2(1,1), 0.2)
 	
 	currently_viewing_card = true
 	pending_card = selected_card
 	selected_card.original_position = selected_card.position
 	selected_card.z_index = 10
 	var win_size = get_viewport_rect().size
-	var scale_factor := Vector2(3.0, 3.0)
-	var target_pos: Vector2 = (win_size - selected_card.custom_minimum_size * scale_factor) / 2.0
-	var tween = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(selected_card, "position", target_pos, 0.5)
-	tween.tween_property(selected_card, "scale", scale_factor, 0.5)
+	var scale_factor := Vector2(4.0, 4.0)
+	var target_pos: Vector2 = win_size / 2 - selected_card.pivot_offset
+	target_pos.x += 10  # Adjust for exact centering
+	var tween = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(selected_card, "position", target_pos, 0.2)
+	tween.tween_property(selected_card, "scale", scale_factor, 0.2)
 	play_btn.disabled = false
 
 func _on_play_btn_pressed():
@@ -984,6 +837,7 @@ func _on_play_btn_pressed():
 		end_turn_requested.emit()
 		return
 
+	if is_bot_turn or bot_turn_active: return
 	if not pending_card: return
 	var p_idx = GameState.current_player_index
 	var r_name = GameState.player_roles[p_idx]
@@ -994,15 +848,22 @@ func _on_play_btn_pressed():
 	if r_name == "Government" and pending_card.card_id in GameState.government_stolen_cards.get(p_idx, []):
 		GameState.government_mark_replayed(pending_card.card_id)
 
+	# Determine how many cards this role can play per turn
+	var max_cards = RoleEffect.max_cards_per_turn(r_name)
+
 	var cid = pending_card.card_id
+	var card_color = CardData.ALL_CARDS.get(cid, {}).get("color", Color.WHITE)
 	pending_card.queue_free()
 	pending_card = null
 	currently_viewing_card = false
 	cards_played_this_turn += 1
+	
+	# Black cards always end the turn
+	if card_color == Color.BLACK:
+		cards_played_this_turn = max_cards
+	
 	add_recent_card_for_player(GameState.current_player_index, cid)
 
-	# Determine how many cards this role can play per turn
-	var max_cards = 2 if (r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head")) else 1
 	if cards_played_this_turn >= max_cards:
 		_switch_to_end_turn_mode()  # button becomes disabled End Turn, enabled by set_end_turn_ready()
 	else:
@@ -1010,10 +871,16 @@ func _on_play_btn_pressed():
 		play_btn.disabled = true
 		currently_viewing_card = false
 
+	_update_special_ability_button_state()
+
 	card_activated.emit(cid)
 
+func set_bot_turn(bot_turn: bool) -> void:
+	is_bot_turn = bot_turn
+
 func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
-	play_card = not is_skipped
+	play_card = not is_bot_turn and not is_skipped
+	
 	cards_played_this_turn = 0
 	time_left = 60
 	if timer_label:
@@ -1037,17 +904,42 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 	if ability_dropdown_btn:
 		_update_dropdown_btn_text()
 
-	var _has_ability = role_name in ["Plantation Owner", "Government", "Conservationist", "Land Developer", "Environmental Consultant", "Ecotourism Manager"]
+	var _has_ability = RoleEffect.has_button_ability(role_name)
 	special_ability_btn.visible = _has_ability and not is_skipped
+	if special_ability_btn.visible:
+		match role_name:
+			"Plantation Owner":
+				special_ability_btn.disabled = cards_played_this_turn != 0
+			"Government":
+				special_ability_btn.disabled = gov_used_ability_this_turn
+			"Conservationist":
+				special_ability_btn.disabled = cons_used_ability_this_turn
+			"Land Developer":
+				special_ability_btn.disabled = ld_used_ability_this_turn
+			"Ecotourism Manager":
+				special_ability_btn.disabled = em_used_ability_this_turn
+			"Environmental Consultant":
+				special_ability_btn.disabled = false
+			_:
+				special_ability_btn.disabled = false
 	
 	_refresh_role_panel_ui()
+	_update_special_ability_button_state()
 
 	var _is_wd = (role_name == "Wildlife Department") or (role_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
+	if not _is_wd:
+		# Stale bonus state from a prior WD/EC-borrow turn would otherwise
+		# trigger the discard popup for non-WD players on End Turn.
+		GameState.wildlife_dept_drawn_cards.clear()
 	if _is_wd and not is_skipped:
 		GameState.wildlife_dept_draw_bonus(player_index)
 
 	bot_turn_active = false
-	_switch_to_play_mode()
+	if is_skipped:
+		_switch_to_end_turn_mode()
+		_set_play_btn_disabled(false)
+	else:
+		_switch_to_play_mode()
 	spawn_cards()
 
 func hide_instruction():
@@ -1080,7 +972,10 @@ func show_player_select_popup(title_text, disabled_func, callback):
 		if i == GameState.current_player_index: continue
 		var btn = Button.new()
 		btn.text = "Player %d - %s" % [i+1, GameState.player_roles[i]]
-		btn.disabled = disabled_func.call(i)
+		var is_disabled = disabled_func.call(i)
+		btn.disabled = false  # Keep clickable so callback can handle validation
+		if is_disabled:
+			btn.modulate = Color(0.5, 0.5, 0.5, 1.0)  # Visual feedback for disabled state
 		btn.pressed.connect(func():
 			steal_popup.visible = false
 			callback.call(i)
@@ -1090,11 +985,7 @@ func show_player_select_popup(title_text, disabled_func, callback):
 
 
 func spawn_stolen_gov_card():
-	# Mark stolen card with tint
 	spawn_cards() # refresh
-	for c in cards_container.get_children():
-		if c.card_id in GameState.government_stolen_cards.get(GameState.current_player_index,[]):
-			c.modulate = Color(1.3, 1.1, 0.5, 1.0)
 
 func show_em_choice_popup(callback):
 	var vbox = em_choice_popup.get_meta("_vbox")
@@ -1129,7 +1020,7 @@ func _setup_recent_cards_overlay_ui() -> void:
 	recent_cards_toggle_button.offset_top = -92
 	recent_cards_toggle_button.offset_right = 176
 	recent_cards_toggle_button.offset_bottom = -50
-	recent_cards_toggle_button.z_index = 90
+	recent_cards_toggle_button.z_index = 10
 	recent_cards_toggle_button.pressed.connect(_toggle_recent_cards_overlay)
 	add_child(recent_cards_toggle_button)
 
@@ -1141,7 +1032,7 @@ func _setup_recent_cards_overlay_ui() -> void:
 	recent_cards_overlay_panel.offset_top = -380
 	recent_cards_overlay_panel.offset_right = 560
 	recent_cards_overlay_panel.offset_bottom = 220
-	recent_cards_overlay_panel.z_index = 90
+	recent_cards_overlay_panel.z_index = 10
 
 	var overlay_style := StyleBoxFlat.new()
 	overlay_style.bg_color = Color(0.05, 0.05, 0.05, 0.92)
@@ -1428,10 +1319,13 @@ func set_end_turn_ready() -> void:
 
 func _on_bot_turn_started() -> void:
 	bot_turn_active = true
+	is_bot_turn = true
+	play_card = false
 	_set_play_btn_disabled(true)
 
 func _on_bot_turn_ended() -> void:
 	bot_turn_active = false
+	is_bot_turn = false
 
 # --- Instruction label (shown during tile selection) ---
 
@@ -1440,9 +1334,9 @@ func show_instruction(text: String) -> void:
 		instruction_label.text = text
 		instruction_label.get_parent().visible = true
 
-func show_steal_popup(card_effects_node: Node) -> void:
+func show_steal_popup(card_effects_node: Node, mode: String = "steal") -> void:
 	var steal_node = get_node_or_null("Steal")
-		
+
 	if not steal_node:
 		print("Steal popup not working")
 		return
@@ -1456,7 +1350,7 @@ func show_steal_popup(card_effects_node: Node) -> void:
 	for btn in player_buttons:
 		for sig in btn.get_signal_connection_list("pressed"):
 			btn.disconnect("pressed", sig["callable"])
-	
+
 	var thief := GameState.current_player_index
 	var btn_index := 0
 
@@ -1465,25 +1359,37 @@ func show_steal_popup(card_effects_node: Node) -> void:
 			continue
 		if btn_index >= player_buttons.size():
 			break
-	
-		var hand_size = GameState.player_hands[i].size()
-		var role = GameState.player_roles[i] if i < GameState.player_roles.size() else "Unknown"
 
 		var btn = player_buttons[btn_index]
 		steal_node.visible = true
-		btn.disabled = hand_size == 0
-		btn_index +=1
+		btn_index += 1
 
-  
 		var label = btn.get_node("Label")
-		label.text = "Player %d (%d card%s)" % [i + 1, hand_size, "s" if hand_size != 1 else ""]
-
 		var target_index := i
-		btn.pressed.connect(func():
-			hide_steal_popup(steal_node)
-			card_effects_node.confirm_steal_target(target_index)
-		)
-		
+
+		if mode == "gov":
+			# Government: pick a previously played green/yellow/red card.
+			var lastCardeffect = card_effects_node.lastCard[i] if i < card_effects_node.lastCard.size() else null
+			var card_def = CardData.ALL_CARDS.get(lastCardeffect, {}) if lastCardeffect != null else {}
+			var col = card_def.get("color", Color.WHITE)
+			var valid: bool = lastCardeffect != null and (col in [Color.GREEN, Color.YELLOW, Color.RED])
+			btn.disabled = not valid
+			var hand_size = GameState.player_hands[i].size()
+			label.text = "Player %d (%d card%s)" % [i + 1, hand_size, "s" if hand_size != 1 else ""]
+			btn.pressed.connect(func():
+				hide_steal_popup(steal_node)
+				card_effects_node.confirm_gov_steal_target(target_index)
+			)
+		else:
+			# Default: Corruption — random card from a player's hand.
+			var hand_size = GameState.player_hands[i].size()
+			btn.disabled = hand_size == 0
+			label.text = "Player %d (%d card%s)" % [i + 1, hand_size, "s" if hand_size != 1 else ""]
+			btn.pressed.connect(func():
+				hide_steal_popup(steal_node)
+				card_effects_node.confirm_steal_target(target_index)
+			)
+
 		steal_node.visible = true
 
 func hide_steal_popup(steal_node) -> void:

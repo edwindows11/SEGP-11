@@ -20,8 +20,7 @@ func toggle_pause() -> void:
 	if visible:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	else:
-		# Restore mouse mode if needed (e.g. if we were capturing it for camera)
-		# For this game, we mostly use visible mouse, but camera drag might capture it.
+		# Restore mouse mode if needed
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE) 
 
 func _on_resume_pressed() -> void:
@@ -30,7 +29,6 @@ func _on_resume_pressed() -> void:
 func _on_main_menu_pressed() -> void:
 	get_tree().paused = false # Unpause before changing scene
 	var scene_path = "res://scenes/MainMenu.tscn"
-	# In Godot 4:
 	get_tree().change_scene_to_file(scene_path)
 
 func _on_exit_pressed() -> void:

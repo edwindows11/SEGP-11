@@ -19,8 +19,7 @@ var _drag_total: float = 0.0
 const DRAG_THRESHOLD: float = 5.0  # pixels mouse must move before rotation begins
 
 func _ready() -> void:
-	# Calculate initial rotation/zoom based on EDITOR transform if you wanted, 
-	# but setting defaults is safer for consistent behavior.
+	# Calculate initial rotation/zoom 
 	update_camera_transform()
 
 func _process(delta: float) -> void:
@@ -32,37 +31,25 @@ func _process(delta: float) -> void:
 
 func update_camera_transform() -> void:
 	# Convert spherical coordinates to Cartesian
-	# Y is pitch (vertical angle), X is yaw (horizontal angle)
 	var x = current_zoom * cos(current_rotation.y) * sin(current_rotation.x)
 	var y = current_zoom * sin(current_rotation.y) # Y-up in Godot depends on pitch definition
-	# Actually, standard Spherical to Cartesian (Y-up):
-	# x = r * sin(theta) * sin(phi)
-	# y = r * cos(theta)
-	# z = r * sin(theta) * cos(phi)
-	# But let's stick to a simpler pivot rotation logic often used in games:
 	
 	# Reset Position
 	position = pivot_point
 	rotation = Vector3.ZERO
 	
-	# Apply rotations (Pitch then Yaw) - Order matters for avoiding roll
-	# We'll calculate offset manually to avoid gimbal lock issues if we used Euler directly on the node repeatedly
+	# calculate offset manually to avoid gimbal lock issues if we used Euler directly on the node repeatedly
 	
-	# Simplified Orbit Logic:
-	# 1. Start at (0, 0, zoom)
-	# 2. Rotate around X axis (Pitch)
-	# 3. Rotate around Y axis (Yaw)
+
+	# Start at (0, 0, zoom), 
+	#r otate around X axis (Pitch), rotate around Y axis
 	
 	var offset = Vector3(0, 0, current_zoom)
 	
-	# Pitch (Vertical) - Rotate around X
-	# We want pitch to correspond to looking down. 
-	# -90 deg (looking straight down) to 0 (horizon) roughly.
-	# Let's effectively rotate the offset vector.
-	
+	# start position
 	var basis = Basis()
-	basis = basis.rotated(Vector3(1, 0, 0), -current_rotation.y) # Pitch
-	basis = basis.rotated(Vector3(0, 1, 0), -current_rotation.x) # Yaw
+	basis = basis.rotated(Vector3(1, 0, 0), -current_rotation.y) 
+	basis = basis.rotated(Vector3(0, 1, 0), -current_rotation.x) 
 	
 	position = pivot_point + (basis * offset)
 	look_at(pivot_point)
@@ -70,11 +57,13 @@ func update_camera_transform() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
+		#zoom
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			target_zoom = clamp(target_zoom - zoom_speed, zoom_min, zoom_max)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			target_zoom = clamp(target_zoom + zoom_speed, zoom_min, zoom_max)
 		
+		# drag
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				_mouse_held = true
@@ -93,7 +82,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			target_rotation.y += event.relative.y * rotation_speed * 0.01
 			target_rotation.y = clamp(target_rotation.y, deg_to_rad(10), deg_to_rad(85))
 
-	# Q / E — snap-rotate 90° to cycle through the 4 cardinal sides
+	# Q / E to snap-rotate 90° 
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_Q:
 			_snap_rotate(-90.0)
@@ -101,9 +90,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_snap_rotate(90.0)
 
 
-# Snap the yaw to the nearest multiple of 90° then step by `degrees`.
+# Snap to the nearest multiple of 90°
 func _snap_rotate(degrees: float) -> void:
 	var step: float = deg_to_rad(90.0)
-	# Round current target to the nearest 90° multiple, then step
 	var snapped: float = round(target_rotation.x / step) * step
 	target_rotation.x = snapped + deg_to_rad(degrees)

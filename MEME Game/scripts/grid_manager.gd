@@ -8,16 +8,16 @@ var current_dragged_unit: Node3D = null
 var placed_unit: Node3D = null
 
 func _unhandled_input(event):
-	# Handle Mouse Button Inputs (Press/Release)
+	# Handle Mouse Button Inputs 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			# Start Dragging
 			start_dragging(event.position)
 		elif current_dragged_unit:
-			# Stop Dragging (Place)
+			# Stop Dragging
 			finish_dragging()
 	
-	# Handle Mouse Motion (Dragging)
+	# Handle Dragging
 	elif event is InputEventMouseMotion and current_dragged_unit:
 		update_drag_position(event.position)
 

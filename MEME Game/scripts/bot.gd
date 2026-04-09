@@ -1,42 +1,21 @@
-## BotAI.gd
-## Attach this node to CardTable (or add_child it from card_table.gd).
-## It intercepts turn_changed, decides which card to play, then feeds
-## synthetic tile selections into CardEffects — exactly as if a human clicked.
-##
-## SETUP in card_table.gd _ready():
-##
-##   var bot_ai = load("res://scripts/BotAI.gd").new()
-##   bot_ai.card_effects = card_effects
-##   bot_ai.play       = Play
-##   bot_ai.board      = $Board
-##   add_child(bot_ai)
-##   bot_ai.ui = UI
-##   bot_ai.set_bot_players([1, 2, 3], BotAI.Difficulty.MEDIUM)
-##   # or per-player:  bot_ai.set_player_difficulty(2, BotAI.Difficulty.HARD)
-##
-##   # Also hook the turn signal AFTER connecting the UI one:
-##   GameState.turn_changed.connect(bot_ai._on_turn_changed)
-
 extends Node
 
-signal bot_turn_started
-signal bot_turn_ended
+signal bot_turn_started # signal when bot starts
+signal bot_turn_ended # signal when bot ends
 
-# ── Difficulty enum ──────────────────────────────────────────────────────────
 enum Difficulty { EASY, MEDIUM, HARD }
 
-# ── Public references (set from card_table.gd) ───────────────────────────────
+
 var card_effects: Node = null   # CardEffects instance
 var play: Node3D    = null      # card_functions node
 var board: Node3D   = null      # Board node
 var ui: Control     = null      # card_table_ui node
 
-# ── Per-player config ────────────────────────────────────────────────────────
-# Maps player_index (int) -> Difficulty
+# Maps player_index (int) to difficulty
 var bot_players: Dictionary = {}
 
-# ── Timing ───────────────────────────────────────────────────────────────────
-# Small delays so the bot "thinks" instead of acting instantly (feels natural).
+# Timing 
+# Small delays so the bot thinks and not acting instantly
 var think_delay: float = 2.0
 var card_reveal_delay: float = 1.4
 var action_delay: float = 0.85
@@ -47,25 +26,23 @@ var _action_timer: float = 0.0
 var _waiting_for_action: bool = false
 var _bot_is_acting: bool = false      # True while a bot is mid-turn
 
-# ── Internal ─────────────────────────────────────────────────────────────────
-var _current_bot_player: int = -1
-var _em_used_this_turn: bool = false
+
+var _current_bot_player: int = -1 # number of bots
+var _em_used_this_turn: bool = false #this is for Ecotourism Manager
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Public API
-# ────────────────────────────────────────────────────────────────────────────
 
-## Mark a list of player indices as bots, all with the same difficulty.
+## mark a list of player indices as bots at the start, default to medium difficulty
 func set_bot_players(indices: Array, difficulty: Difficulty = Difficulty.MEDIUM) -> void:
 	for idx in indices:
 		bot_players[idx] = difficulty
 
-## Set the difficulty for a single bot player.
+## Set difficulty
 func set_player_difficulty(player_index: int, difficulty: Difficulty) -> void:
 	bot_players[player_index] = difficulty
 
-## Configure overall bot pacing from pre-game setup.
+## Configure bot pacing
 func set_speed_preset(preset: String) -> void:
 	var normalized: String = preset.strip_edges().to_lower()
 	match normalized:
@@ -85,14 +62,9 @@ func set_speed_preset(preset: String) -> void:
 			action_delay = 0.85
 			end_turn_delay = 1.8
 
-## Returns true if the given player index is a bot.
 func is_bot(player_index: int) -> bool:
 	return bot_players.has(player_index)
 
-
-# ────────────────────────────────────────────────────────────────────────────
-# Turn signal handler
-# ────────────────────────────────────────────────────────────────────────────
 
 func _on_turn_changed(player_index: int, _role_name: String, is_skipped: bool) -> void:
 	_bot_is_acting = false
@@ -116,14 +88,9 @@ func _on_turn_changed(player_index: int, _role_name: String, is_skipped: bool) -
 	if ui and ui.has_method("show_instruction"):
 		ui.show_instruction("Player " + str(player_index + 1) + " (Bot) is thinking...")
 
-	# Wait a beat so the UI can refresh, then begin thinking.
 	await get_tree().create_timer(think_delay, false).timeout
 	_bot_take_turn(player_index)
 
-
-# ────────────────────────────────────────────────────────────────────────────
-# Core bot turn logic
-# ────────────────────────────────────────────────────────────────────────────
 
 func _bot_take_turn(player_index: int) -> void:
 	if not _bot_is_acting:
@@ -137,7 +104,6 @@ func _bot_take_turn(player_index: int) -> void:
 	if role == "Environmental Consultant":
 		ability_role = GameState.ec_borrowed_ability
 
-	# 1. Try extra action abilities first (Cons / LD). Don't end turn.
 	if ability_role == "Conservationist":
 		var valid_tiles = card_effects._get_cons_valid_tiles()
 		if not valid_tiles.is_empty() and randf() > 0.4:
@@ -147,6 +113,7 @@ func _bot_take_turn(player_index: int) -> void:
 			card_effects.execute_conservationist_ability(ui)
 			await card_effects.effects_complete
 			if not _bot_is_acting: return
+
 	elif ability_role == "Land Developer":
 		var valid_tiles = card_effects._get_ld_valid_tiles()
 		if not valid_tiles.is_empty() and randf() > 0.4:
@@ -157,7 +124,6 @@ func _bot_take_turn(player_index: int) -> void:
 			await card_effects.effects_complete
 			if not _bot_is_acting: return
 
-	# 2. Try action-replacing abilities (Gov / PO). Ends turn if true.
 	if _try_use_special_ability(role, player_index):
 		return
 
@@ -167,9 +133,6 @@ func _bot_take_turn(player_index: int) -> void:
 		_end_bot_turn()
 		return
 
-	# --- Black card rule ---
-	# If the hand contains ANY black cards, the bot MUST play one of them
-	# and cannot play anything else this turn
 	var black_cards_in_hand: Array = hand.filter(
 		func(cid): return CardData.ALL_CARDS[cid].get("color", Color.WHITE) == Color.BLACK
 	)
@@ -178,8 +141,7 @@ func _bot_take_turn(player_index: int) -> void:
 	var chosen_card_id: String = ""
 
 	if must_play_black:
-		# Bot must play a black card — pick one (random for all difficulties,
-		# hard bot picks the "best" black card if there are multiple)
+		# must play a black card
 		if difficulty == Difficulty.HARD and black_cards_in_hand.size() > 1:
 			# Hard bot picks the black card with the most sub_effects (most impactful)
 			black_cards_in_hand.sort_custom(func(a, b):
@@ -191,7 +153,7 @@ func _bot_take_turn(player_index: int) -> void:
 			chosen_card_id = black_cards_in_hand[randi() % black_cards_in_hand.size()]
 		_announce_bot_message(player_index, "is forced to play a black card!", false)
 	else:
-		# Normal pick — difficulty-based, black cards are excluded inside each picker
+		# in case more than one black cards appear
 		match difficulty:
 			Difficulty.EASY:
 				chosen_card_id = _pick_card_easy(hand, player_index)
@@ -206,6 +168,7 @@ func _bot_take_turn(player_index: int) -> void:
 		_end_bot_turn()
 		return
 
+	#execute card effect
 	var card_def: Dictionary = CardData.ALL_CARDS.get(chosen_card_id, {})
 	var card_name: String = str(card_def.get("name", chosen_card_id))
 	_announce_bot_message(player_index, "plays: " + card_name, true)
@@ -223,6 +186,7 @@ func _bot_take_turn(player_index: int) -> void:
 
 	card_effects.execute_card(chosen_card_id)
 
+# bot message appear on the instruction
 func _announce_bot_message(player_index: int, message: String, is_positive: bool) -> void:
 	var text := "Player " + str(player_index + 1) + " (Bot) " + message
 
@@ -233,26 +197,6 @@ func _announce_bot_message(player_index: int, message: String, is_positive: bool
 		var action_log_node = card_effects.get("action_log")
 		if action_log_node and action_log_node.has_method("add_action"):
 			action_log_node.add_action(text, is_positive)
-
-func _show_bot_card_preview(card_id: String) -> bool:
-	if ui == null:
-		return false
-
-	var cards_container: Node = ui.get_node_or_null("CardsContainer")
-	if cards_container == null:
-		return false
-
-	for child in cards_container.get_children():
-		if child == null or child.is_queued_for_deletion():
-			continue
-		var child_card_id: String = str(child.get("card_id"))
-		if child_card_id != card_id:
-			continue
-		if ui.has_method("_on_card_selected"):
-			ui.call("_on_card_selected", child)
-			return true
-
-	return false
 
 func _mark_preview_card_as_played(card_id: String) -> void:
 	if ui == null:
@@ -281,18 +225,20 @@ func _try_use_special_ability(role: String, player_index: int) -> bool:
 		"Government":
 			var best_target = -1
 			var best_score = -9999.0
+			# Compute board snapshot once — it doesn't change while we score targets.
+			var snap: Dictionary = _compute_board_snapshot() if difficulty != Difficulty.EASY else {}
 			for i in range(GameState.player_count):
 				if i == player_index: continue
-				var lc = card_effects.lastCard[i]
-				if lc == null: continue
-				var card = CardData.ALL_CARDS.get(lc, {})
+				var lastCardeffect = card_effects.lastCard[i]
+				if lastCardeffect == null: continue
+				var card = CardData.ALL_CARDS.get(lastCardeffect, {})
 				var col = card.get("color", Color.WHITE)
 				if col in [Color.GREEN, Color.YELLOW, Color.RED]:
 					var score = 0.0
 					if difficulty == Difficulty.HARD:
-						score = _score_card_hard(lc, role, player_index)
+						score = _score_card_hard(lastCardeffect, role, player_index, snap)
 					elif difficulty == Difficulty.MEDIUM:
-						score = _score_card_medium(lc, role)
+						score = _score_card_medium(lastCardeffect, role, snap)
 					else:
 						score = randf() * 10
 					
@@ -314,8 +260,8 @@ func _try_use_special_ability(role: String, player_index: int) -> bool:
 			var best_score = -9999.0
 			for i in range(GameState.player_count):
 				if i == player_index: continue
-				var lc = card_effects.lastCard[i]
-				if lc != null:
+				var lastCardeffect = card_effects.lastCard[i]
+				if lastCardeffect != null:
 					var score = randf() * 10
 					if score > best_score:
 						best_score = score
@@ -333,10 +279,8 @@ func _try_use_special_ability(role: String, player_index: int) -> bool:
 var _bot_played_card_id: String = ""
 
 
-# ────────────────────────────────────────────────────────────────────────────
-# Card selection strategies
-# ────────────────────────────────────────────────────────────────────────────
 
+# Chose how likely a bot plays a card
 ## EASY — random non-black card. Black cards are only played when forced (see _bot_take_turn).
 func _pick_card_easy(hand: Array, _player_index: int) -> String:
 	# Filter out black cards entirely — those are handled upstream in _bot_take_turn
@@ -348,33 +292,47 @@ func _pick_card_easy(hand: Array, _player_index: int) -> String:
 	playable.shuffle()
 	return playable[0]
 
-
-
-
 ## MEDIUM — prefers green, avoids harmful red, no black cards.
 func _pick_card_medium(hand: Array, player_index: int) -> String:
 	var role: String = GameState.player_roles[player_index] if player_index < GameState.player_roles.size() else ""
 
 	var best_id   := ""
 	var best_score := -9999.0
+	var snap := _compute_board_snapshot()
 
 	for card_id in hand:
 		var color = CardData.ALL_CARDS[card_id].get("color", Color.WHITE)
 		# Skip black cards — handled upstream in _bot_take_turn
 		if color == Color.BLACK:
 			continue
-		var score := _score_card_medium(card_id, role)
+		var score := _score_card_medium(card_id, role, snap)
 		if score > best_score:
 			best_score = score
 			best_id = card_id
 
 	return best_id
 	
-	
-func _score_card_medium(card_id: String, role: String) -> float:
+# Snapshot of board-wide statistics that the scoring functions read.
+# Loop-invariant within a single decision pass — compute once per pick, not per card.
+func _compute_board_snapshot() -> Dictionary:
+	return {
+		"forest_count":     GameState.count_tiles_of_type(GameState.TileType.FOREST),
+		"plantation_count": GameState.count_tiles_of_type(GameState.TileType.PLANTATION),
+		"human_count":      GameState.count_tiles_of_type(GameState.TileType.HUMAN),
+		"total_elephants":  _all_elephants(),
+		"near_humans":      _elephants_near_humans(),
+		"e_in_forest":      GameState.get_elephants_in_forest(),
+		"total_villagers":  GameState.get_total_villagers(),
+		"shortest_dist":    GameState.get_shortest_distance_human_elephant(),
+	}
+
+func _score_card_medium(card_id: String, role: String, snap: Dictionary = {}) -> float:
+	if snap.is_empty():
+		snap = _compute_board_snapshot()
 	var card    = CardData.ALL_CARDS[card_id]
 	var color   = card.get("color", Color.WHITE)
 	var effects = card.get("sub_effects", [])
+	var near_humans: bool = snap.near_humans
 
 	var score := 0.0
 
@@ -393,14 +351,14 @@ func _score_card_medium(card_id: String, role: String) -> float:
 				score += 3.0
 			"remove_e":
 				# Good only if elephants are near humans
-				if _elephants_near_humans():
+				if near_humans:
 					score += 6.0
 				else:
 					score -= 2.0
 			"remove_v":
 				score -= 4.0
 			"immune":
-				if _elephants_near_humans():
+				if near_humans:
 					score += 8.0
 				else:
 					score += 2.0
@@ -413,7 +371,7 @@ func _score_card_medium(card_id: String, role: String) -> float:
 			"move_e":
 				var to_type = fx.get("to", "ANY")
 				if to_type == "FOREST" or to_type == "ANY":
-					if _elephants_near_humans():
+					if near_humans:
 						score += 5.0
 					else:
 						score += 1.0
@@ -461,20 +419,23 @@ func _pick_card_hard(hand: Array, player_index: int) -> String:
 
 	var best_id    := ""
 	var best_score := -9999.0
+	var snap := _compute_board_snapshot()
 
 	for card_id in hand:
 		var color = CardData.ALL_CARDS[card_id].get("color", Color.WHITE)
 		# Skip black cards — handled upstream in _bot_take_turn
 		if color == Color.BLACK:
 			continue
-		var score := _score_card_hard(card_id, role, player_index)
+		var score := _score_card_hard(card_id, role, player_index, snap)
 		if score > best_score:
 			best_score = score
 			best_id = card_id
 
 	return best_id
 	
-func _score_card_hard(card_id: String, role: String, player_index: int) -> float:
+func _score_card_hard(card_id: String, role: String, player_index: int, snap: Dictionary = {}) -> float:
+	if snap.is_empty():
+		snap = _compute_board_snapshot()
 	var card    = CardData.ALL_CARDS[card_id]
 	var color   = card.get("color", Color.WHITE)
 	var effects = card.get("sub_effects", [])
@@ -486,14 +447,14 @@ func _score_card_hard(card_id: String, role: String, player_index: int) -> float
 	if color == Color.YELLOW: score += 8.0
 	if color == Color.RED:    score -= 8.0
 
-	var forest_count      := GameState.count_tiles_of_type(GameState.TileType.FOREST)
-	var plantation_count  := GameState.count_tiles_of_type(GameState.TileType.PLANTATION)
-	var human_count       := GameState.count_tiles_of_type(GameState.TileType.HUMAN)
-	var total_elephants   := _count_all_elephants()
-	var near_humans       := _elephants_near_humans()
-	var e_in_forest       := GameState.get_elephants_in_forest()
-	var total_villagers   := GameState.get_total_villagers()
-	var shortest_dist     := GameState.get_shortest_distance_human_elephant()
+	var forest_count: int     = snap.forest_count
+	var plantation_count: int = snap.plantation_count
+	var human_count: int      = snap.human_count
+	var total_elephants: int  = snap.total_elephants
+	var near_humans: bool     = snap.near_humans
+	var e_in_forest: int      = snap.e_in_forest
+	var total_villagers: int  = snap.total_villagers
+	var shortest_dist: int    = snap.shortest_dist
 
 	for fx in effects:
 		var op: String = fx.get("op", "")
@@ -642,10 +603,7 @@ func _role_win_score_hard(
 	return bonus
 
 
-# ────────────────────────────────────────────────────────────────────────────
-# Interactive effect handler — feeds tile selections to CardEffects
-# ────────────────────────────────────────────────────────────────────────────
-
+# choose which tile the bots ill place cards in
 func _on_bot_tile_selection_requested(valid_keys: Array, _instruction: String) -> void:
 	if not _bot_is_acting:
 		return
@@ -669,23 +627,21 @@ func _on_bot_tile_selection_requested(valid_keys: Array, _instruction: String) -
 	_action_timer = action_delay
 	_waiting_for_action = true
 
-
-# ── Tile selection heuristics ────────────────────────────────────────────────
-
+# EASY - random
 func _select_tile_easy(valid_keys: Array, _op: String) -> Vector2i:
 	# Completely random
 	return valid_keys[randi() % valid_keys.size()]
 
-
+# MEDIUM 
 func _select_tile_medium(valid_keys: Array, op: String) -> Vector2i:
-	# Simple heuristics: prefer forest tiles for placing elephants,
-	# human tiles for placing villagers, tiles furthest from humans for move_e.
 	match op:
 		"add_e":
+			# prefer forest tiles for placing elephants
 			var forest_keys = valid_keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.FOREST)
 			if not forest_keys.is_empty():
 				return forest_keys[randi() % forest_keys.size()]
 		"add_v", "add_v_in":
+			# human tiles for placing villagers, 
 			var human_keys = valid_keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.HUMAN)
 			if not human_keys.is_empty():
 				return human_keys[randi() % human_keys.size()]
@@ -693,14 +649,14 @@ func _select_tile_medium(valid_keys: Array, op: String) -> Vector2i:
 			# Remove elephant closest to humans
 			return _key_closest_to_human(valid_keys)
 		"remove_v":
-			# Remove from plantation (less painful)
+			# Remove from plantation
 			var plant_keys = valid_keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.PLANTATION)
 			if not plant_keys.is_empty():
 				return plant_keys[randi() % plant_keys.size()]
 		"convert":
 			return valid_keys[randi() % valid_keys.size()]
 		"move_e", "move_all_e_to":
-			# Source: pick elephant closest to humans; Dest: pick forest tile farthest from humans
+			# pick elephant closest to humans then pick forest tile farthest from humans
 			if card_effects.state == 1:  # WAITING_SOURCE
 				return _key_closest_to_human(valid_keys)
 			else:  # WAITING_DEST
@@ -708,6 +664,7 @@ func _select_tile_medium(valid_keys: Array, op: String) -> Vector2i:
 	return valid_keys[randi() % valid_keys.size()]
 
 
+# HARD
 func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 	var role: String = ""
 	if _current_bot_player < GameState.player_roles.size():
@@ -715,7 +672,7 @@ func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 
 	match op:
 		"add_e":
-			# Prefer forest tiles; among those, pick the one farthest from humans
+			# prefer forest tiles farthest from humans
 			var forest_keys = valid_keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.FOREST)
 			var pool: Array = valid_keys
 			if not forest_keys.is_empty():
@@ -731,11 +688,11 @@ func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 			return pool[randi() % pool.size()]
 
 		"remove_e":
-			# Always remove the elephant that is nearest to a human tile
+			# Remove the elephant that is nearest to a human tile
 			return _key_closest_to_human(valid_keys)
 
 		"remove_v":
-			# Remove from plantation first (less strategically costly)
+			# Remove from plantation first 
 			var plant_keys = valid_keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.PLANTATION)
 			if not plant_keys.is_empty():
 				return plant_keys[randi() % plant_keys.size()]
@@ -747,7 +704,7 @@ func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 				# Convert the human/plantation tile that is adjacent to the most forest
 				return _key_most_adjacent_forest(valid_keys)
 			elif to_type_str == "PLANTATION":
-				# Convert the non-forest tile with the fewest neighbours (minimal damage)
+				# Convert the non-forest tile with the fewest neighbours
 				return _key_least_valuable(valid_keys)
 			elif to_type_str == "HUMAN":
 				return _key_least_valuable(valid_keys)
@@ -762,10 +719,10 @@ func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 
 		"move_e", "move_v":
 			if card_effects.state == 1:  # WAITING_SOURCE — pick source
-				# Source: elephant or villager closest to a human tile
+				# elephant or villager closest to a human tile
 				return _key_closest_to_human(valid_keys)
-			else:  # WAITING_DEST — pick destination
-				# Dest: forest tile farthest from humans
+			else:
+				# forest tile farthest from humans
 				var forest_keys = valid_keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.FOREST)
 				var pool: Array = valid_keys
 				if not forest_keys.is_empty():
@@ -775,11 +732,11 @@ func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 	return valid_keys[randi() % valid_keys.size()]
 
 
-# ── convert_any_any type confirmation ────────────────────────────────────────
-# Called from _process when state == WAITING_CHOICE and op == convert_any_any
+# convert_any_any type confirmation 
 
+# Called from _process when state == WAITING_CHOICE and op == convert_any_any
 func _bot_confirm_convert_any_any_type() -> void:
-	# Hard always picks FOREST; medium and easy may vary
+	# Hard always picks FOREST; medium and easy vary
 	var difficulty: Difficulty = bot_players.get(_current_bot_player, Difficulty.EASY)
 	var forest_count := GameState.count_tiles_of_type(GameState.TileType.FOREST)
 	match difficulty:
@@ -803,6 +760,7 @@ func _bot_confirm_steal_target() -> void:
 			continue
 		var hand_size: int = GameState.player_hands[i].size()
 		if hand_size > 0:
+			#append player with hand size more than 0
 			candidates.append({"player": i, "hand_size": hand_size})
 
 	if candidates.is_empty():
@@ -813,13 +771,14 @@ func _bot_confirm_steal_target() -> void:
 
 	match difficulty:
 		Difficulty.EASY:
-			target_player = candidates[randi() % candidates.size()]["player"]
+			target_player = candidates[randi() % candidates.size()]["player"] #random
 		Difficulty.MEDIUM, Difficulty.HARD:
-			candidates.sort_custom(func(a, b): return a["hand_size"] > b["hand_size"])
+			candidates.sort_custom(func(a, b): return a["hand_size"] > b["hand_size"]) #take from the largest hand size
 			target_player = candidates[0]["player"]
 
 	card_effects.confirm_steal_target(target_player)
 
+# ecotourism manager choose base on a 50% chance
 func _bot_confirm_em_choice() -> void:
 	var choice = "skip"
 	if randf() > 0.5:
@@ -828,16 +787,11 @@ func _bot_confirm_em_choice() -> void:
 		choice = "villager"
 	card_effects.confirm_em_choice(choice)
 
-
-# ────────────────────────────────────────────────────────────────────────────
-# _process — drains the _pending_selections queue with delays
-# ────────────────────────────────────────────────────────────────────────────
-
 func _process(delta: float) -> void:
 	if not _bot_is_acting:
 		return
 
-	# Handle popup-style choices in WAITING_CHOICE.
+	# Handle popup-style choices
 	if card_effects and card_effects.state == 3:
 		var wait_op: String = card_effects.current_effect.get("op", "")
 		if wait_op == "convert_any_any":
@@ -864,10 +818,10 @@ func _process(delta: float) -> void:
 		return
 
 	var tile_key: Vector2i = _pending_selections.pop_front()
-	_feed_tile_to_effects(tile_key)
+	_tile_effect_bot(tile_key)
 
-
-func _feed_tile_to_effects(tile_key: Vector2i) -> void:
+# card effect on tiles
+func _tile_effect_bot(tile_key: Vector2i) -> void:
 	if not card_effects:
 		return
 
@@ -884,28 +838,35 @@ func _feed_tile_to_effects(tile_key: Vector2i) -> void:
 			card_effects.confirm_dest_selected(tile_key)
 
 
-# ────────────────────────────────────────────────────────────────────────────
-# Effects complete → end turn
-# ────────────────────────────────────────────────────────────────────────────
-
 func _on_bot_effects_complete() -> void:
 	if not _bot_is_acting:
 		return
 		
+	# Environmental Consultant borrow another role's ability for the round,
+	# use the borrowed role if applicable
 	var role: String = GameState.player_roles[_current_bot_player] if _current_bot_player < GameState.player_roles.size() else ""
 	var ability_role = GameState.ec_borrowed_ability if role == "Environmental Consultant" else role
-	
+
 	if ability_role == "Ecotourism Manager" and not _em_used_this_turn and _bot_played_card_id != "" and card_effects.state == 0:
-		var lc = _bot_played_card_id
-		var card_def = CardData.ALL_CARDS.get(lc, {})
+		# Look up the just-played card's definition so we can inspect its colour
+		# and sub-effects.
+		var lastCardeffect = _bot_played_card_id
+		var card_def = CardData.ALL_CARDS.get(lastCardeffect, {})
 		var col = card_def.get("color", Color.WHITE)
+
+		# only react to action cards 
+		# Color.WHITE is excluded.
 		if col in [Color.BLACK, Color.YELLOW, Color.RED, Color.GREEN]:
+			# scan the sub-effects for any add_e / add_v / add_v_in op.
 			var added = false
 			for fx in card_def.get("sub_effects", []):
 				if fx.get("op", "") in ["add_e", "add_v", "add_v_in"]: added = true
+
+			# 60% chance of playing special ability
 			if added and randf() > 0.4:
-				_em_used_this_turn = true
+				_em_used_this_turn = true  # lock it once-per-turn 
 				_announce_bot_message(_current_bot_player, "uses Ecotourism Manager Special Ability!", true)
+				# Make sure this same handler runs again when the EM ability finishes resolving
 				if not card_effects.effects_complete.is_connected(_on_bot_effects_complete):
 					card_effects.effects_complete.connect(_on_bot_effects_complete)
 				card_effects.execute_em_ability(ui)
@@ -923,26 +884,43 @@ func _end_bot_turn() -> void:
 	_pending_selections.clear()
 	bot_turn_ended.emit()
 
+	# Wildlife Department discard the worst cards of its bonus-drawn cards
 	var role: String = GameState.player_roles[_current_bot_player] if _current_bot_player < GameState.player_roles.size() else ""
 	var _ec_wd = (role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
 	if (role == "Wildlife Department" or _ec_wd) and GameState.wildlife_dept_drawn_cards.size() > 0:
 		var difficulty = bot_players.get(_current_bot_player, Difficulty.EASY)
-		var drawn = GameState.wildlife_dept_drawn_cards
-		var worst_card = drawn[0]
-		var worst_score = 9999.0
-		for c in drawn:
-			var score = 0.0
-			if difficulty == Difficulty.HARD:
-				score = _score_card_hard(c, role, _current_bot_player)
-			elif difficulty == Difficulty.MEDIUM:
-				score = _score_card_medium(c, role)
-			else:
-				score = randf()
-			if score < worst_score:
-				worst_score = score
-				worst_card = c
-		GameState.wildlife_dept_discard_bonus(_current_bot_player, worst_card)
-		GameState.wildlife_dept_drawn_cards.clear()
+		# Only consider bonus cards that are STILL in hand and were NOT the card
+		# the bot just played this turn — otherwise wildlife_dept_discard_bonus
+		# silently no-ops because the card isn't in player_hands anymore.
+		var hand: Array = GameState.player_hands[_current_bot_player]
+		var candidates: Array = []
+		for c in GameState.wildlife_dept_drawn_cards:
+			if c == _bot_played_card_id:
+				continue
+			if c in hand:
+				candidates.append(c)
+		if candidates.is_empty():
+			# Nothing valid to discard — clear stale state and bail.
+			GameState.wildlife_dept_drawn_cards.clear()
+		else:
+			var worst_card: String = candidates[0]
+			var worst_score := 9999.0
+			# Snapshot once — board doesn't change between scoring iterations.
+			var snap: Dictionary = _compute_board_snapshot() if difficulty != Difficulty.EASY else {}
+			for c in candidates:
+				var score := 0.0
+				if difficulty == Difficulty.HARD:
+					score = _score_card_hard(c, role, _current_bot_player, snap)
+				elif difficulty == Difficulty.MEDIUM:
+					score = _score_card_medium(c, role, snap)
+				else:
+					score = randf()
+				if score < worst_score:
+					worst_score = score
+					worst_card = c
+			var worst_card_name = CardData.ALL_CARDS.get(worst_card, {}).get("name", worst_card)
+			GameState.wildlife_dept_discard_bonus(_current_bot_player, worst_card)
+			GameState.wildlife_dept_drawn_cards.clear()
 
 	# Mirror what card_table.gd _on_end_turn_button_pressed does:
 	if _bot_played_card_id != "":
@@ -987,10 +965,7 @@ func _end_bot_turn() -> void:
 	# Advance to next player
 	GameState.advance_turn()
 
-
-# ────────────────────────────────────────────────────────────────────────────
-# Tile-scoring helpers
-# ────────────────────────────────────────────────────────────────────────────
+# Tile-scoring
 
 func _key_closest_to_human(keys: Array) -> Vector2i:
 	var best_key: Vector2i = Vector2i(keys[0])
@@ -1028,7 +1003,7 @@ func _key_most_adjacent_forest(keys: Array) -> Vector2i:
 	return best_key
 
 func _key_least_valuable(keys: Array) -> Vector2i:
-	# Plantation > human > forest for "least strategically costly to lose".
+	# Plantation first then human then forest to simulate which would be least costly to lose
 	var plantation_keys = keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.PLANTATION)
 	if not plantation_keys.is_empty():
 		return plantation_keys[randi() % plantation_keys.size()]
@@ -1058,7 +1033,7 @@ func _elephants_near_humans() -> bool:
 	var dist := GameState.get_shortest_distance_human_elephant()
 	return dist >= 0 and dist <= 2
 
-func _count_all_elephants() -> int:
+func _all_elephants() -> int:
 	var count := 0
 	for k in GameState.tile_registry:
 		count += GameState.tile_registry[k]["elephant_nodes"].size()

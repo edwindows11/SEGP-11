@@ -1,7 +1,9 @@
 extends VBoxContainer
 
 func _ready():
-	pass
+	# Keep entries visually inside the ActionLog's rect even if more accumulate
+	# than fit — anything outside the bounds is clipped instead of overflowing.
+	clip_contents = true
 
 func add_action(text: String, is_positive: bool):
 	var panel = PanelContainer.new()
@@ -40,9 +42,15 @@ func add_action(text: String, is_positive: bool):
 	tw.tween_property(panel, "modulate", Color(1, 1, 1, 1), 0.35)
 	tw.tween_property(panel, "scale", Vector2(1.0, 1.0), 0.35)
 
-	# Limit number of log entries
-	if get_child_count() > 8:
-		var old_panel = get_child(0)
+	# Limit number of log entries (ignore ones already animating out)
+	var live: Array = []
+	for c in get_children():
+		if not c.has_meta("dying"):
+			live.append(c)
+
+	while live.size() > 8:
+		var old_panel = live.pop_front()
+		old_panel.set_meta("dying", true)
 		var out_tw = create_tween().set_ease(Tween.EASE_IN)
 		out_tw.tween_property(old_panel, "modulate", Color(1, 1, 1, 0), 0.2)
 		out_tw.tween_property(old_panel, "scale", Vector2(0.95, 0.95), 0.15)
