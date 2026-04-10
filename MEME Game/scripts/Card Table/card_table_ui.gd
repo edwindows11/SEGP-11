@@ -380,6 +380,8 @@ func _on_special_ability_pressed():
 		RoleEffect.VILLAGE_HEAD:
 			vh_used_ability_this_turn = true
 			show_instruction("Village Head ability activated — you may play a 2nd card this turn.")
+			if _play_btn_is_end_turn:
+				_switch_to_play_mode()
 			_update_special_ability_button_state()
 
 
@@ -833,7 +835,7 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 		_update_dropdown_btn_text()
 
 	var _has_ability = RoleEffect.has_button_ability(role_name)
-	special_ability_btn.visible = _has_ability and not is_skipped
+	special_ability_btn.visible = _has_ability and not is_skipped and not is_bot_turn
 	if special_ability_btn.visible:
 		match role_name:
 			"Plantation Owner":
@@ -878,7 +880,12 @@ func show_wildlife_discard_popup():
 	var drawn = GameState.wildlife_dept_drawn_cards
 	if drawn.is_empty(): end_turn_requested.emit(); return
 	var vbox = wildlife_discard_popup.get_meta("_vbox")
-	while vbox.get_child_count() > 2: vbox.get_child(vbox.get_child_count()-1).queue_free()
+	# remove_child (immediate) instead of queue_free inside a while-loop —
+	# queue_free defers removal, so get_child_count never drops → infinite loop
+	while vbox.get_child_count() > 2:
+		var old = vbox.get_child(vbox.get_child_count() - 1)
+		vbox.remove_child(old)
+		old.queue_free()
 	for cid in drawn:
 		var btn = Button.new()
 		btn.text = CardData.ALL_CARDS.get(cid,{}).get("name", cid)

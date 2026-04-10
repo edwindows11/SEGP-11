@@ -35,7 +35,6 @@ var _pending_convert_any_key: Vector2i = Vector2i(-1, -1)
 signal effects_complete()
 signal request_tile_selection(valid_keys: Array, instruction: String)
 signal clear_tile_selection()
-signal request_steal_target()
 signal request_steal_popup()
 signal request_gov_steal_popup()
 signal request_convert_type_popup(current_type: int)
@@ -64,14 +63,10 @@ func execute_card(card_id: String) -> void:
 		effects_complete.emit()
 		return
 	_ensure_last_card_size()
-	# remember as "last card" for non-black cards (reverse/steal target)
-	# Black cards clear the entry so PO/Gov can't target a stale old card
+	# remember as "last card" for reverse/steal targeting
 	var cpi := GameState.current_player_index
 	if cpi >= 0 and cpi < lastCard.size():
-		if CardData.ALL_CARDS[card_id].get("color", Color.WHITE) != Color.BLACK:
-			lastCard[cpi] = card_id
-		else:
-			lastCard[cpi] = null
+		lastCard[cpi] = card_id
 	pending_effects = card_def["sub_effects"].duplicate(true)
 	effect_index = 0
 	state = State.IDLE
@@ -358,6 +353,7 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 		_log("Conservationist expanded forest!", true)
 		if _ability_ui_node and is_instance_valid(_ability_ui_node):
 			_ability_ui_node.cons_used_ability_this_turn = true
+			_ability_ui_node.special_ability_btn.disabled = true
 			_ability_ui_node = null
 		effect_index += 1
 		_advance_effect()
@@ -371,6 +367,7 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 		_log("Land Developer expanded human-dominated area!", true)
 		if _ability_ui_node and is_instance_valid(_ability_ui_node):
 			_ability_ui_node.ld_used_ability_this_turn = true
+			_ability_ui_node.special_ability_btn.disabled = true
 			_ability_ui_node = null
 		effect_index += 1
 		_advance_effect()
@@ -659,6 +656,7 @@ func execute_reversed_card(target_index: int, ui_node: Node) -> void:
 			fx["to"] = new_to
 
 	ui_node.po_used_ability_this_turn = true
+	ui_node.special_ability_btn.disabled = true
 	ui_node.play_btn.disabled = true
 
 	# discard any preview card so End Turn doesn't try to discard a card the
@@ -712,6 +710,7 @@ func execute_government_steal(target_index: int, ui_node: Node) -> void:
 
 	GameState.government_steal_card(GameState.current_player_index, stolen)
 	ui_node.gov_used_ability_this_turn = true
+	ui_node.special_ability_btn.disabled = true
 	var card_name = card_def.get("name", stolen)
 	_log("Government stole \"" + card_name + "\" from Player " + str(target_index + 1), true)
 	if ui_node.has_method("spawn_cards"):
@@ -781,6 +780,7 @@ func confirm_gov_steal_target(target_index: int) -> void:
 	GameState.government_steal_card(GameState.current_player_index, stolen)
 	if ui_node:
 		ui_node.gov_used_ability_this_turn = true
+		ui_node.special_ability_btn.disabled = true
 	var card_name = card_def.get("name", stolen)
 	_log("Government stole \"" + card_name + "\" from Player " + str(target_index + 1), true)
 	if ui_node and ui_node.has_method("spawn_cards"):
@@ -922,6 +922,7 @@ func execute_em_ability(ui_node: Node) -> void:
 		return
 
 	ui_node.set("em_used_ability_this_turn", true)
+	ui_node.special_ability_btn.disabled = true
 	_ability_ui_node = ui_node
 	pending_effects = [{"op": "em_extra_move"}]
 	effect_index = 0
@@ -1031,10 +1032,6 @@ func _parse_type_string(s) -> int:
 
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-
-# stub kept for older callers — no-op
-func preview_func(text:String) -> void:
-	pass
 
 # log to the in-game action log if connected, otherwise stdout
 func _log(text: String, is_positive: bool) -> void:

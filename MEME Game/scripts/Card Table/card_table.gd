@@ -54,7 +54,6 @@ func _ready() -> void:
 	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
 
 	# Role abilities
-	card_effects.connect("request_steal_target", _on_request_steal_target)
 	card_effects.connect("steal_complete", func():
 		if UI.has_method("reposition_cards"):
 			UI.reposition_cards()
@@ -229,11 +228,6 @@ func _on_clear_tile_selection() -> void:
 	UI.hide_instruction()
 	$Board.clear_all_highlights()
 
-func _on_request_steal_target() -> void:
-	var disable_func = func(i):
-		return GameState.player_hands[i].size() == 0
-	UI.show_player_select_popup("Steal a card from:", disable_func, card_effects.confirm_steal_target)
-	
 func _on_request_em_choice() -> void:
 	UI.show_em_choice_popup(card_effects.confirm_em_choice)
 	
@@ -242,7 +236,7 @@ func _on_po_ability_requested() -> void:
 		return card_effects.lastCard[i] == null
 	var callback_func = func(t_idx):
 		card_effects.execute_reversed_card(t_idx, UI)
-	UI.show_player_select_popup("Reverse player's last card:", disable_func, callback_func)
+	UI.show_player_select_popup("Reverse player's last card:", disable_func, callback_func, card_effects)
 
 func _on_gov_ability_requested() -> void:
 	# Route through the card-effect pipeline (mirrors op:steal flow).

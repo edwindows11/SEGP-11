@@ -276,6 +276,7 @@ expand_mode = 1
 stretch_mode = 4
 
 [node name="How to Play second Page" type="VBoxContainer" parent="Background/How To Play"]
+visible = false
 layout_mode = 0
 offset_left = -1.0
 offset_top = -1.0
@@ -354,7 +355,6 @@ expand_mode = 1
 stretch_mode = 4
 
 [node name="How to Play third Page2" type="VBoxContainer" parent="Background/How To Play"]
-visible = false
 layout_mode = 0
 offset_left = -3.0
 offset_right = 1428.0
