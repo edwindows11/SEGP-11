@@ -185,9 +185,15 @@ func _bot_take_turn(player_index: int) -> void:
 	var card_def: Dictionary = CardData.ALL_CARDS.get(chosen_card_id, {})
 	var card_name: String = str(card_def.get("name", chosen_card_id))
 	_announce_bot_message(player_index, "plays: " + card_name, true)
+	if ui and ui.has_method("animate_bot_card_popup"):
+		await ui.animate_bot_card_popup(chosen_card_id)
+		if not _bot_is_acting:
+			return
 	await get_tree().create_timer(card_reveal_delay, false).timeout
 	if not _bot_is_acting:
 		return
+
+	_mark_preview_card_as_played(chosen_card_id)
 
 	_bot_played_card_id = chosen_card_id
 	ui.cards_played_this_turn += 1
