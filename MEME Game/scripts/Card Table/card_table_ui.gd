@@ -50,6 +50,7 @@ var is_bot_turn: bool = false
 var currently_viewing_card: bool = false
 var bot_turn_active: bool = false
 var vh_villagers_increased_this_turn: bool = false
+var vh_used_ability_this_turn: bool = false
 var po_used_ability_this_turn: bool = false
 
 @onready var special_ability_btn = $"Special Abitlity"
@@ -64,6 +65,7 @@ var ec_choice_popup: PanelContainer = null
 # Each entry is { panel: PanelContainer, title: Label, line1: Label, line2: Label,
 # status: Label, role: String, image: TextureRect }.
 var _player_tracker_panels: Array = []
+var _trackers_vbox_ref: VBoxContainer = null
 
 # Winning Screen
 var win_screen_panel: PanelContainer = null
@@ -76,7 +78,6 @@ var _role_card_overlay_rect: TextureRect = null
 var _role_card_overlay_tween: Tween = null
 
 # Popups
-var steal_popup: PanelContainer = null
 var em_choice_popup: PanelContainer = null
 var wildlife_discard_popup: PanelContainer = null
 
@@ -87,7 +88,7 @@ var ability_dropdown_panel: PanelContainer = null
 const ROLE_ABILITIES: Dictionary = {
 	"Wildlife Department": "Draw 2 bonus cards (any colour) at the start of your turn. Discard 1 before ending the turn.",
 	"Conservationist":     "Special: Once per turn as an extra action, convert 1 non-forest tile adjacent to a forested tile with an elephant into Forest.\nWin by playing at least 4 Green cards AND increasing forested area by 2 tiles.",
-	"Village Head":        "Special: Can play up to 2 colored cards, but max 1 can increase villagers. Must keep >= 1 card in hand.\nWin by playing cards that increase villagers (x2) AND removing 2 constraints.",
+	"Village Head":        "Special: Activate to play a 2nd colored card this turn (max 1 can increase villagers). Must keep >= 1 card in hand.\nWin by playing cards that increase villagers (x2) AND removing 2 constraints.",
 	"Plantation Owner":    "Special: Instead of drawing, steal a played colored card, reverse its effects, and play it immediately. Uses your turn action.\nWin by playing 2G + 1R + 1Y cards AND increasing plantation tiles by 2.",
 	"Land Developer":      "Special: Once per turn as an extra action, convert 1 non-human tile with at least 3 human-dominated neighbours into a Human-Dominated tile.\nWin by playing (2G+2R) or (2Y+2R) AND increasing human-dominated areas by 2.",
 	"Environmental Consultant": "Special: At game start, borrow one special ability from another chosen role and use it for the whole game.\nWin by playing 2G + 2R AND satisfying 2 vacant secondary role goals.",
@@ -136,7 +137,6 @@ func _init_all_ui_elements():
 	_build_all_trackers()
 	_build_win_screen()
 	_build_wildlife_discard_popup()
-	_build_steal_popup()
 	_build_ec_choice_popup()
 	_build_em_choice_popup()
 	_build_role_ability_dropdown()
@@ -144,7 +144,7 @@ func _init_all_ui_elements():
 
 	_update_dropdown_btn_text()
 
-func _build_role_card_overlay():
+func _build_role_card_overlay(): #appears in the middle of the screen when a role card is pressed
 	_role_card_overlay = ColorRect.new()
 	_role_card_overlay.color = Color(0, 0, 0, 0.75)
 	_role_card_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -157,7 +157,7 @@ func _build_role_card_overlay():
 	)
 	add_child(_role_card_overlay)
 
-	_role_card_overlay_rect = TextureRect.new()
+	_role_card_overlay_rect = TextureRect.new() 
 	_role_card_overlay_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_role_card_overlay_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_role_card_overlay_rect.set_anchors_preset(Control.PRESET_CENTER)
@@ -170,7 +170,7 @@ func _build_role_card_overlay():
 	_role_card_overlay_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 	_role_card_overlay.add_child(_role_card_overlay_rect)
 
-func _show_role_card_overlay(tex: Texture2D):
+func _show_role_card_overlay(tex: Texture2D): # to show
 	_role_card_overlay_rect.texture = tex
 	_role_card_overlay.modulate = Color(1, 1, 1, 0)
 	_role_card_overlay_rect.scale = Vector2(0.1, 0.1)
@@ -181,7 +181,7 @@ func _show_role_card_overlay(tex: Texture2D):
 	_role_card_overlay_tween.tween_property(_role_card_overlay, "modulate", Color(1, 1, 1, 1), 0.3)
 	_role_card_overlay_tween.tween_property(_role_card_overlay_rect, "scale", Vector2(1, 1), 0.4)
 
-func _hide_role_card_overlay():
+func _hide_role_card_overlay(): # to hide
 	if _role_card_overlay_tween:
 		_role_card_overlay_tween.kill()
 	_role_card_overlay_tween = create_tween().set_parallel(true).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
@@ -190,7 +190,7 @@ func _hide_role_card_overlay():
 	await _role_card_overlay_tween.finished
 	_role_card_overlay.visible = false
 
-func _build_instruction_banner():
+func _build_instruction_banner(): #intrustion banner is on the top middle with black background and yellow words
 	var banner = PanelContainer.new()
 	banner.name = "_instruction_banner"
 	banner.visible = false
@@ -219,7 +219,7 @@ func _build_instruction_banner():
 	banner.add_child(instruction_label)
 	add_child(banner)
 
-func _build_all_trackers():
+func _build_all_trackers(): #trackers are the ones under objective
 	var right_margin = MarginContainer.new()
 	right_margin.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	right_margin.offset_left = 20
@@ -263,12 +263,6 @@ func _build_all_trackers():
 	_trackers_vbox_ref = trackers_vbox
 
 # Holds a reference to the trackers VBox built in the same function as the panels.
-# Set by the build code above so build_player_trackers() can populate it later.
-var _trackers_vbox_ref: VBoxContainer = null
-
-# Build N generic player tracker panels (one per active player). Each panel is
-# styled and populated from RoleEffect for the player's current role. Call once
-# after GameState.player_roles is set up. Idempotent — wipes existing panels.
 func build_player_trackers() -> void:
 	if _trackers_vbox_ref == null:
 		return
@@ -283,9 +277,7 @@ func build_player_trackers() -> void:
 		_trackers_vbox_ref.add_child(entry["panel"])
 		_player_tracker_panels.append(entry)
 
-# Create one tracker panel for `player_index`. Title, border colour and role
-# card image come from RoleEffect; the two stat lines start blank and are
-# updated each tick by _update_goals().
+# Create one tracker panel for each player
 func _create_player_tracker_panel(player_index: int, role: String) -> Dictionary:
 	var title_color: Color = RoleEffect.goal_color(role)
 	var panel := PanelContainer.new()
@@ -310,7 +302,7 @@ func _create_player_tracker_panel(player_index: int, role: String) -> Dictionary
 	hbox.add_theme_constant_override("separation", 10)
 	panel.add_child(hbox)
 
-	# Role card image on the left (clickable to enlarge).
+	# Role card image on the left
 	var image_rect: TextureRect = null
 	if role != "":
 		var tex: Texture2D = null
@@ -371,8 +363,9 @@ func _create_player_tracker_panel(player_index: int, role: String) -> Dictionary
 	}
 
 func _on_special_ability_pressed():
-	# Environmental Consultant always opens the borrow popup; other roles must
-	# pass the per-turn cooldown check in RoleEffect before firing their signal.
+	if is_bot_turn:
+		return
+	# Environmental Consultant always opens the borrow popup
 	if player_role == RoleEffect.ENVIRONMENTAL_CONSULT:
 		request_ec_ability.emit()
 		return
@@ -384,86 +377,13 @@ func _on_special_ability_pressed():
 		RoleEffect.CONSERVATIONIST:     request_cons_ability.emit()
 		RoleEffect.LAND_DEVELOPER:      request_ld_ability.emit()
 		RoleEffect.ECOTOURISM_MANAGER:  request_em_ability.emit()
+		RoleEffect.VILLAGE_HEAD:
+			vh_used_ability_this_turn = true
+			show_instruction("Village Head ability activated — you may play a 2nd card this turn.")
+			_update_special_ability_button_state()
 
-func _build_win_screen():
-	win_screen_panel = PanelContainer.new()
-	win_screen_panel.visible = false
-	win_screen_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	win_screen_panel.z_index = 100
-	var win_style = StyleBoxFlat.new()
-	win_style.bg_color = Color(0.02, 0.02, 0.08, 0.92)
-	win_style.border_width_top = 4
-	win_style.border_width_bottom = 4
-	win_style.border_color = Color(1.0, 0.75, 0.15, 0.5)
-	win_screen_panel.add_theme_stylebox_override("panel", win_style)
 
-	var win_vbox = VBoxContainer.new()
-	win_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	win_vbox.add_theme_constant_override("separation", 12)
-	win_screen_panel.add_child(win_vbox)
-
-	# Trophy icon
-	var trophy_label = Label.new()
-	trophy_label.text = "🏆"
-	trophy_label.add_theme_font_size_override("font_size", 80)
-	trophy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	win_vbox.add_child(trophy_label)
-
-	# Main winner text
-	win_screen_label = Label.new()
-	win_screen_label.text = "PLAYER X WON!"
-	win_screen_label.add_theme_font_size_override("font_size", 56)
-	win_screen_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
-	win_screen_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	win_vbox.add_child(win_screen_label)
-
-	# Role subtitle (stored as meta for later update)
-	var role_subtitle = Label.new()
-	role_subtitle.name = "RoleSubtitle"
-	role_subtitle.text = ""
-	role_subtitle.add_theme_font_size_override("font_size", 28)
-	role_subtitle.add_theme_color_override("font_color", Color(0.75, 0.88, 1.0, 0.9))
-	role_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	win_vbox.add_child(role_subtitle)
-
-	# Spacer
-	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 20)
-	win_vbox.add_child(spacer)
-
-	# Return to menu button
-	var menu_btn = Button.new()
-	menu_btn.text = "  Return to Menu  "
-	menu_btn.add_theme_font_size_override("font_size", 22)
-	menu_btn.custom_minimum_size = Vector2(260, 52)
-	menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var btn_style = StyleBoxFlat.new()
-	btn_style.bg_color = Color(0.15, 0.35, 0.55, 0.95)
-	btn_style.corner_radius_top_left = 10
-	btn_style.corner_radius_top_right = 10
-	btn_style.corner_radius_bottom_left = 10
-	btn_style.corner_radius_bottom_right = 10
-	btn_style.content_margin_left = 20
-	btn_style.content_margin_right = 20
-	btn_style.content_margin_top = 10
-	btn_style.content_margin_bottom = 10
-	var btn_hover = StyleBoxFlat.new()
-	btn_hover.bg_color = Color(0.2, 0.45, 0.7, 0.95)
-	btn_hover.corner_radius_top_left = 10
-	btn_hover.corner_radius_top_right = 10
-	btn_hover.corner_radius_bottom_left = 10
-	btn_hover.corner_radius_bottom_right = 10
-	btn_hover.content_margin_left = 20
-	btn_hover.content_margin_right = 20
-	btn_hover.content_margin_top = 10
-	btn_hover.content_margin_bottom = 10
-	menu_btn.add_theme_stylebox_override("normal", btn_style)
-	menu_btn.add_theme_stylebox_override("hover", btn_hover)
-	menu_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/MainMenu.tscn"))
-	win_vbox.add_child(menu_btn)
-
-	add_child(win_screen_panel)
-
+# Wildlife Discard Card Popup
 func _build_wildlife_discard_popup():
 	wildlife_discard_popup = PanelContainer.new()
 	wildlife_discard_popup.visible = false
@@ -500,37 +420,7 @@ func _build_wildlife_discard_popup():
 	wildlife_discard_popup.set_meta("_vbox", vbox)
 	add_child(wildlife_discard_popup)
 
-func _build_steal_popup():
-	steal_popup = PanelContainer.new()
-	steal_popup.visible = false
-	steal_popup.set_anchors_preset(Control.PRESET_CENTER)
-	steal_popup.offset_left = -200
-	steal_popup.offset_right = 200
-	steal_popup.offset_top = -160
-	steal_popup.offset_bottom = 160
-	steal_popup.z_index = 70
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.05, 0.18, 0.95)
-	style.corner_radius_top_left = 14
-	style.corner_radius_top_right = 14
-	style.corner_radius_bottom_left = 14
-	style.corner_radius_bottom_right = 14
-	style.content_margin_left = 24
-	style.content_margin_right = 24
-	style.content_margin_top = 20
-	style.content_margin_bottom = 20
-	steal_popup.add_theme_stylebox_override("panel", style)
-	var vbox = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 14)
-	steal_popup.add_child(vbox)
-	var title = Label.new()
-	title.text = "Steal a card from:"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
-	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
-	vbox.add_child(title)
-	steal_popup.set_meta("_btn_vbox", vbox)
-	add_child(steal_popup)
+
 
 func _build_ec_choice_popup():
 	ec_choice_popup = PanelContainer.new()
@@ -725,8 +615,7 @@ func _refresh_role_panel_ui():
 		tex_rect.texture = null
 
 		
-# Goals/trackers UI is throttled — the game is turn-based so re-running every
-# frame wastes ~10 board walks + 9 label updates per tick. ~5 Hz is plenty.
+# to make sure the goal doesn't update every single time
 const _GOALS_UPDATE_INTERVAL: float = 0.2
 var _goals_update_accum: float = 0.0
 
@@ -737,9 +626,7 @@ func _process(delta):
 	_goals_update_accum = 0.0
 	_update_goals()
 
-# Loop over the per-player tracker panels and refresh each from RoleEffect.
-# All role-specific computation lives in RoleEffect.compute_goal — this just
-# pushes the resulting strings into the labels and triggers wins.
+# track goal for player tracker panels and refresh each from RoleEffect
 func _update_goals():
 	for i in range(_player_tracker_panels.size()):
 		var entry: Dictionary = _player_tracker_panels[i]
@@ -770,8 +657,12 @@ func reposition_cards():
 
 func _on_timer_timeout():
 	time_left -= 1
-	if time_left < 0: end_turn_requested.emit()
-	else: timer_label.text = str(time_left)
+	if time_left < 0:
+		# emit only once — repeated calls cause double advance_turn / bot collisions
+		turn_timer.stop()
+		end_turn_requested.emit()
+	else:
+		timer_label.text = str(time_left)
 
 func spawn_cards():
 	for child in cards_container.get_children(): child.queue_free()
@@ -795,7 +686,7 @@ func _on_card_selected(selected_card):
 	
 	var p_idx = GameState.current_player_index
 	var r_name = GameState.player_roles[p_idx]
-	var max_c = RoleEffect.max_cards_per_turn(r_name)
+	var max_c = RoleEffect.max_cards_per_turn(r_name, self)
 	if cards_played_this_turn >= max_c: return
 
 	# Village Head constraints
@@ -838,9 +729,12 @@ func _on_play_btn_pressed():
 		return
 
 	if is_bot_turn or bot_turn_active: return
+	
 	if not pending_card: return
+	
 	var p_idx = GameState.current_player_index
 	var r_name = GameState.player_roles[p_idx]
+	
 	if (r_name == "Village Head" or (r_name == "Environmental Consultant" and GameState.ec_borrowed_ability == "Village Head")):
 		for fx in CardData.ALL_CARDS.get(pending_card.card_id, {}).get("sub_effects", []):
 			if fx.get("op", "") in ["add_v", "add_v_in"]: vh_villagers_increased_this_turn = true; break
@@ -849,7 +743,7 @@ func _on_play_btn_pressed():
 		GameState.government_mark_replayed(pending_card.card_id)
 
 	# Determine how many cards this role can play per turn
-	var max_cards = RoleEffect.max_cards_per_turn(r_name)
+	var max_cards = RoleEffect.max_cards_per_turn(r_name, self)
 
 	var cid = pending_card.card_id
 	var card_color = CardData.ALL_CARDS.get(cid, {}).get("color", Color.WHITE)
@@ -887,12 +781,15 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 		timer_label.text = str(time_left)
 	if is_skipped:
 		timer_label.text = "Skipped"
+	# restart the timer for the new turn (it may have been stopped on timeout)
+	turn_timer.start()
 
 	var skip_label = $Skipped
 	if skip_label:
 		skip_label.visible = is_skipped
 
 	vh_villagers_increased_this_turn = false
+	vh_used_ability_this_turn = false
 	po_used_ability_this_turn = false
 	gov_used_ability_this_turn = false
 	cons_used_ability_this_turn = false
@@ -964,24 +861,59 @@ func show_wildlife_discard_popup():
 		vbox.add_child(btn)
 	wildlife_discard_popup.visible = true
 
-func show_player_select_popup(title_text, disabled_func, callback):
-	var vbox = steal_popup.get_meta("_btn_vbox")
-	vbox.get_child(0).text = title_text
-	while vbox.get_child_count() > 1: vbox.get_child(vbox.get_child_count()-1).queue_free()
+# reuse the scene $Steal node to show a player-select popup with player + last card name
+func show_player_select_popup(title_text, disabled_func, callback, card_effects_node = null):
+	var steal_node = get_node_or_null("Steal")
+	if not steal_node:
+		print("Steal popup node not found")
+		return
+
+	var player_buttons = [
+		steal_node.get_node("Player1"),
+		steal_node.get_node("Player2"),
+		steal_node.get_node("Player3")
+	]
+
+	# disconnect old signals and hide all buttons first
+	for btn in player_buttons:
+		for sig in btn.get_signal_connection_list("pressed"):
+			btn.disconnect("pressed", sig["callable"])
+		btn.visible = false
+		btn.disabled = false
+		btn.modulate = Color(1, 1, 1, 1)
+
+	var btn_index := 0
 	for i in range(GameState.player_count):
-		if i == GameState.current_player_index: continue
-		var btn = Button.new()
-		btn.text = "Player %d - %s" % [i+1, GameState.player_roles[i]]
+		if i == GameState.current_player_index:
+			continue
+		if btn_index >= player_buttons.size():
+			break
+
+		var btn = player_buttons[btn_index]
+		btn.visible = true
+		btn_index += 1
+
+		var label = btn.get_node("Label")
+		# show player name, role, and last card played
+		var role_name: String = GameState.player_roles[i] if i < GameState.player_roles.size() else "Unknown"
+		var last_card_name := "None"
+		if card_effects_node and "lastCard" in card_effects_node and i < card_effects_node.lastCard.size():
+			var last_card_id = card_effects_node.lastCard[i]
+			if last_card_id:
+				last_card_name = CardData.ALL_CARDS.get(last_card_id, {}).get("name", last_card_id)
+		label.text = "Player %d (%s)\nLast Card: %s" % [i + 1, role_name, last_card_name]
+
 		var is_disabled = disabled_func.call(i)
-		btn.disabled = false  # Keep clickable so callback can handle validation
 		if is_disabled:
-			btn.modulate = Color(0.5, 0.5, 0.5, 1.0)  # Visual feedback for disabled state
+			btn.modulate = Color(0.5, 0.5, 0.5, 0.6)
+
+		var target_index := i
 		btn.pressed.connect(func():
-			steal_popup.visible = false
-			callback.call(i)
+			steal_node.visible = false
+			callback.call(target_index)
 		)
-		vbox.add_child(btn)
-	steal_popup.visible = true
+
+	steal_node.visible = true
 
 
 func spawn_stolen_gov_card():
@@ -1327,7 +1259,7 @@ func _on_bot_turn_ended() -> void:
 	bot_turn_active = false
 	is_bot_turn = false
 
-# --- Instruction label (shown during tile selection) ---
+# --- Instruction label ---
 
 func show_instruction(text: String) -> void:
 	if instruction_label:
@@ -1335,7 +1267,9 @@ func show_instruction(text: String) -> void:
 		instruction_label.get_parent().visible = true
 
 func show_steal_popup(card_effects_node: Node, mode: String = "steal") -> void:
-	var steal_node = get_node_or_null("Steal")
+	if is_bot_turn: return
+
+	var steal_node = get_node_or_null("Steal") #gSteal popup node
 
 	if not steal_node:
 		print("Steal popup not working")
@@ -1393,10 +1327,12 @@ func show_steal_popup(card_effects_node: Node, mode: String = "steal") -> void:
 		steal_node.visible = true
 
 func hide_steal_popup(steal_node) -> void:
+	if is_bot_turn: return
 	if steal_node:
 		steal_node.visible = false
 
 func show_convert_type_popup(card_effects_node: Node, current_type: int) -> void:
+	if is_bot_turn: return
 	var popup = get_node_or_null("_convert_type_popup")
 	if popup == null:
 		popup = PanelContainer.new()
@@ -1473,9 +1409,93 @@ func show_convert_type_popup(card_effects_node: Node, current_type: int) -> void
 	popup.visible = true
 
 func hide_convert_type_popup() -> void:
+	if is_bot_turn: return
 	var popup = get_node_or_null("_convert_type_popup")
 	if popup:
 		popup.visible = false
+
+# when player wins
+func _build_win_screen():
+	win_screen_panel = PanelContainer.new()
+	win_screen_panel.visible = false
+	win_screen_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	win_screen_panel.z_index = 100
+	var win_style = StyleBoxFlat.new()
+	win_style.bg_color = Color(0.02, 0.02, 0.08, 0.92)
+	win_style.border_width_top = 4
+	win_style.border_width_bottom = 4
+	win_style.border_color = Color(1.0, 0.75, 0.15, 0.5)
+	win_screen_panel.add_theme_stylebox_override("panel", win_style)
+
+	var win_vbox = VBoxContainer.new()
+	win_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	win_vbox.add_theme_constant_override("separation", 12)
+	win_screen_panel.add_child(win_vbox)
+
+	# Trophy icon
+	var trophy_label = Label.new()
+	trophy_label.text = "🏆"
+	trophy_label.add_theme_font_size_override("font_size", 80)
+	trophy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	win_vbox.add_child(trophy_label)
+
+	# Main winner text
+	win_screen_label = Label.new()
+	win_screen_label.text = "PLAYER X WON!"
+	win_screen_label.add_theme_font_size_override("font_size", 56)
+	win_screen_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+	win_screen_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	win_vbox.add_child(win_screen_label)
+
+	# Role subtitle (stored as meta for later update)
+	var role_subtitle = Label.new()
+	role_subtitle.name = "RoleSubtitle"
+	role_subtitle.text = ""
+	role_subtitle.add_theme_font_size_override("font_size", 28)
+	role_subtitle.add_theme_color_override("font_color", Color(0.75, 0.88, 1.0, 0.9))
+	role_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	win_vbox.add_child(role_subtitle)
+
+	# Spacer
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 20)
+	win_vbox.add_child(spacer)
+
+	# Return to menu button
+	var menu_btn = Button.new()
+	menu_btn.text = "  Return to Menu  "
+	menu_btn.add_theme_font_size_override("font_size", 22)
+	menu_btn.custom_minimum_size = Vector2(260, 52)
+	menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var btn_style = StyleBoxFlat.new()
+	btn_style.bg_color = Color(0.15, 0.35, 0.55, 0.95)
+	btn_style.corner_radius_top_left = 10
+	btn_style.corner_radius_top_right = 10
+	btn_style.corner_radius_bottom_left = 10
+	btn_style.corner_radius_bottom_right = 10
+	btn_style.content_margin_left = 20
+	btn_style.content_margin_right = 20
+	btn_style.content_margin_top = 10
+	btn_style.content_margin_bottom = 10
+	var btn_hover = StyleBoxFlat.new()
+	btn_hover.bg_color = Color(0.2, 0.45, 0.7, 0.95)
+	btn_hover.corner_radius_top_left = 10
+	btn_hover.corner_radius_top_right = 10
+	btn_hover.corner_radius_bottom_left = 10
+	btn_hover.corner_radius_bottom_right = 10
+	btn_hover.content_margin_left = 20
+	btn_hover.content_margin_right = 20
+	btn_hover.content_margin_top = 10
+	btn_hover.content_margin_bottom = 10
+	menu_btn.add_theme_stylebox_override("normal", btn_style)
+	menu_btn.add_theme_stylebox_override("hover", btn_hover)
+	menu_btn.pressed.connect(func():
+		GameState.reset()
+		get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+	)
+	win_vbox.add_child(menu_btn)
+
+	add_child(win_screen_panel)
 
 func _trigger_win(player_index: int, role_name: String) -> void:
 	if is_game_over:

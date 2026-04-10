@@ -4,6 +4,9 @@ extends Node3D
 @onready var Play: Node3D = $Play
 @onready var camera: Camera3D = $Camera3D
 
+const ELEPHANT_SCENE = preload("res://assets/Pieces/Elephant.tscn")
+const MEEPLE_SCENE = preload("res://assets/Pieces/Meeple.tscn")
+
 var totalElephants: int = 0
 var totalMeeple: int = 0
 var player_role: String = ""
@@ -17,6 +20,10 @@ var bot_difficulty_by_player: Dictionary = {}
 var bot_ai: Node = null
 
 func _ready() -> void:
+	# --- Connect Play node signals (declared in play_node.gd) ---
+	Play.increase_total_Elephant.connect(_on_play_increase_total_elephant)
+	Play.increase_total_Meeple.connect(_on_play_increase_total_meeple)
+
 	# --- GameState setup ---
 	GameState.player_roles = player_roles
 	GameState.player_count = 4
@@ -33,12 +40,12 @@ func _ready() -> void:
 	GameState.setup_stats()
 
 	# --- CardEffects setup (must come early so card_effects is never null) ---
-	card_effects = load("res://scripts/CardEffects.gd").new()
+	card_effects = load("res://scripts/Card/CardEffects.gd").new()
 	if card_effects == null:
 		push_error("card_table.gd: Failed to instantiate CardEffects.gd!")
 		return
 	card_effects.board = $Board
-	card_effects.play = Play
+	card_effects.play = self
 	card_effects.action_log = $CanvasLayer/Control/ActionLog
 	add_child(card_effects)
 
@@ -347,20 +354,21 @@ func _on_end_turn_button_pressed() -> void:
 	GameState.advance_turn()
 	UI.currently_viewing_card = false
 
+# setup bots to play 
 func _setup_singleplayer_bots() -> void:
 	var max_bots: int = maxi(0, GameState.player_count - 1)
 	var bot_count: int = clampi(singleplayer_bot_count, 0, max_bots)
 	if bot_count <= 0:
 		return
 
-	var bot_script = load("res://scripts/bot.gd")
+	var bot_script = load("res://scripts/Card Table/bot.gd")
 	if bot_script == null:
 		push_warning("Bot script could not be loaded")
 		return
 
 	bot_ai = bot_script.new()
 	bot_ai.card_effects = card_effects
-	bot_ai.play = Play
+	bot_ai.play = self
 	bot_ai.board = $Board
 	bot_ai.ui = UI
 	if bot_ai.has_method("set_speed_preset"):
@@ -409,6 +417,45 @@ func _on_turn_changed_for_ui(player_index: int, _role_name: String, is_skipped: 
 	var is_bot_turn = _is_bot_turn_for_player(player_index) and not is_skipped
 	UI.set_bot_turn(is_bot_turn)
 		
+# --- Piece spawning (moved from card_functions.gd) ---
+
+func spawn_piece_on_tile(type: String, pos: Vector3, tile_key: Vector2i) -> bool:
+	if not GameState.can_place_piece(tile_key, type):
+		return false
+
+	var piece_instance
+
+	if type == "elephant" or type == "Elephant":
+		piece_instance = ELEPHANT_SCENE.instantiate()
+		Play.increase_total_Elephant.emit()
+		Play.add_child(piece_instance)
+		piece_instance.Del_Elephant.connect(func():
+			GameState.piece_removed(piece_instance, piece_instance.tile_key, "elephant")
+		)
+
+	elif type == "villager" or type == "Meeple":
+		piece_instance = MEEPLE_SCENE.instantiate()
+		Play.increase_total_Meeple.emit()
+		Play.add_child(piece_instance)
+		piece_instance.Del_Meeple.connect(func():
+			GameState.piece_removed(piece_instance, piece_instance.tile_key, "villager")
+		)
+
+	if piece_instance:
+		piece_instance.position = pos + Vector3(0, 0, 0.1)
+		piece_instance.tile_key = tile_key
+		var placed := GameState.piece_placed(
+			piece_instance,
+			tile_key,
+			"elephant" if type in ["Elephant", "elephant"] else "villager"
+		)
+		if not placed:
+			piece_instance.queue_free()
+			return false
+		return true
+
+	return false
+
 # --- Initial board setup ---
 
 func _spawn_initial_pieces() -> void:
@@ -425,7 +472,7 @@ func _spawn_initial_pieces() -> void:
 			var key := Vector2i(epos.y, epos.x)
 			if GameState.tile_registry.has(key):
 				var pos: Vector3 = GameState.tile_registry[key]["world_pos"]
-				Play.spawn_piece_on_tile("Elephant", pos, key)
+				spawn_piece_on_tile("Elephant", pos, key)
 
 		# Place villagers on random Human (village) tiles
 		var villager_count: int = scenario["villagers_count"]
@@ -439,7 +486,7 @@ func _spawn_initial_pieces() -> void:
 			var entry = GameState.tile_registry[key]
 			while entry["villager_nodes"].size() < 2 and placed < villager_count:
 				var pos: Vector3 = entry["world_pos"]
-				Play.spawn_piece_on_tile("Meeple", pos, key)
+				spawn_piece_on_tile("Meeple", pos, key)
 				placed += 1
 	else:
 		# --- Random scenario: original logic ---
@@ -449,7 +496,7 @@ func _spawn_initial_pieces() -> void:
 		for i in range(min(3, forest_tiles.size())):
 			var key: Vector2i = forest_tiles[i]
 			var pos: Vector3 = GameState.tile_registry[key]["world_pos"]
-			Play.spawn_piece_on_tile("Elephant", pos, key)
+			spawn_piece_on_tile("Elephant", pos, key)
 
 		# 6 villagers on random human or plantation tiles
 		var human_plantation_tiles = GameState.get_tiles_matching(["HUMAN", "PLANTATION"])
@@ -457,27 +504,24 @@ func _spawn_initial_pieces() -> void:
 		for i in range(min(6, human_plantation_tiles.size())):
 			var key: Vector2i = human_plantation_tiles[i]
 			var pos: Vector3 = GameState.tile_registry[key]["world_pos"]
-			Play.spawn_piece_on_tile("Meeple", pos, key)
+			spawn_piece_on_tile("Meeple", pos, key)
 
 
 # --- Play node signal handlers (keep for total tracking) ---
 
 func _on_play_increase_total_elephant() -> void:
 	totalElephants += 1
-	print("elephant total: %d" % totalElephants)
 
 func _on_play_increase_total_meeple() -> void:
 	totalMeeple += 1
-	print("meeple total: %d" % totalMeeple)
 
 func _on_play_reduce_total_elephant() -> void:
 	totalElephants -= 1
-	print("elephant total: %d" % totalElephants)
 
 func _on_play_reduce_total_meeple() -> void:
 	totalMeeple -= 1
-	print("meeple total: %d" % totalMeeple)
+
 func _on_steal_complete() -> void:
 	if UI.has_method("reposition_cards"): UI.reposition_cards()
-	UI.spawn_cards()   # re-renders the current player's hand so the stolen card appears
+	UI.spawn_cards()   
 	$Board.clear_all_highlights()

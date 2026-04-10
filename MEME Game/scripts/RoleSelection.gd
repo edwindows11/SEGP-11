@@ -235,7 +235,7 @@ func setup_player_slots():
 		var select_btn = slot.get_node("SelectButton")
 		select_btn.pressed.connect(_on_player_slot_pressed.bind(i))
 
-
+# count how many bot is selected
 func _on_bot_count_selected(index: int):
 	if bot_count_option == null:
 		return
