@@ -678,18 +678,45 @@ func spawn_cards():
 	call_deferred("reposition_cards")
 
 func _collapse_pending_card_preview() -> void:
-	if not currently_viewing_card:
+	if not currently_viewing_card and pending_card == null:
 		return
 	if pending_card == null or not is_instance_valid(pending_card):
 		currently_viewing_card = false
 		pending_card = null
 		return
 	var old: Control = pending_card
+	pending_card = null
+	currently_viewing_card = false
 	old.set("is_selected", false)
 	old.z_index = 0
 	var tween := create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	tween.tween_property(old, "position", old.original_position, 0.2)
 	tween.tween_property(old, "scale", Vector2(1, 1), 0.2)
+	if not _play_btn_is_end_turn:
+		_set_play_btn_disabled(true)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mb := event as InputEventMouseButton
+	if mb.button_index != MOUSE_BUTTON_LEFT or not mb.pressed:
+		return
+	if not currently_viewing_card or pending_card == null or not is_instance_valid(pending_card):
+		return
+
+	var hovered: Control = get_viewport().gui_get_hovered_control()
+	if hovered and _is_control_inside(hovered, pending_card):
+		return
+
+	_collapse_pending_card_preview()
+
+func _is_control_inside(control: Control, container: Control) -> bool:
+	var current: Node = control
+	while current:
+		if current == container:
+			return true
+		current = current.get_parent()
+	return false
 
 func _focus_card_for_play(selected_card: Control, enable_play_button: bool = true) -> Tween:
 	_collapse_pending_card_preview()
