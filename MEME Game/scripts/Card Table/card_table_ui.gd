@@ -983,7 +983,7 @@ func _setup_recent_cards_overlay_ui() -> void:
 
 	recent_cards_toggle_button = Button.new()
 	recent_cards_toggle_button.name = "_recent_cards_toggle_button"
-	recent_cards_toggle_button.text = "Recent Cards"
+	recent_cards_toggle_button.text = "Played Cards"
 	recent_cards_toggle_button.custom_minimum_size = Vector2(160, 42)
 	recent_cards_toggle_button.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	recent_cards_toggle_button.offset_left = 16
@@ -1021,12 +1021,27 @@ func _setup_recent_cards_overlay_ui() -> void:
 	root_vbox.add_theme_constant_override("separation", 3)
 	recent_cards_overlay_panel.add_child(root_vbox)
 
+	var header_hbox := HBoxContainer.new()
+	header_hbox.add_theme_constant_override("separation", 10)
+	root_vbox.add_child(header_hbox)
+
+	var left_spacer := Control.new()
+	left_spacer.custom_minimum_size = Vector2(44, 0)
+	header_hbox.add_child(left_spacer)
+
 	var title := Label.new()
-	title.text = "Recent Cards Played"
+	title.text = "Played Cards"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.25))
-	root_vbox.add_child(title)
+	header_hbox.add_child(title)
+
+	var close_button := Button.new()
+	close_button.text = "X"
+	close_button.custom_minimum_size = Vector2(44, 36)
+	close_button.pressed.connect(_close_recent_cards_overlay)
+	header_hbox.add_child(close_button)
 
 	var subtitle := Label.new()
 	subtitle.text = "Click a card to expand it. Click the same card again to minimize."
@@ -1086,6 +1101,12 @@ func _toggle_recent_cards_overlay() -> void:
 		_rebuild_recent_cards_overlay()
 	else:
 		_clear_recent_cards_preview()
+
+func _close_recent_cards_overlay() -> void:
+	if recent_cards_overlay_panel == null:
+		return
+	recent_cards_overlay_panel.visible = false
+	_clear_recent_cards_preview()
 
 func add_recent_card_for_player(player_index: int, card_id: String) -> void:
 	if card_id == "":
