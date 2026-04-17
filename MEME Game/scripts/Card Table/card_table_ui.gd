@@ -7,7 +7,6 @@ const CARD_SCENE = preload("res://scenes/Card.tscn")
 const TOTAL_CARDS = 5
 const CARD_SPACING = 200.0
 const BOTTOM_MARGIN = 50.0
-const RECENT_HISTORY_LIMIT = 5
 
 const PLAYER_DISPLAY_SCENE = preload("res://scenes/PlayerDisplay.tscn")
 
@@ -882,14 +881,6 @@ func add_recent_card_for_player(player_index: int, card_id: String) -> void:
 	var entry := {"uid": entry_uid, "card_id": card_id}
 	var bucket: Array = recent_cards_by_player[player_index]
 	bucket.append(entry)
-
-	while bucket.size() > RECENT_HISTORY_LIMIT:
-		var removed_entry: Variant = bucket.pop_front()
-		if removed_entry is Dictionary:
-			var removed_uid: String = str(removed_entry.get("uid", ""))
-			if removed_uid == selected_recent_uid:
-				selected_recent_uid = ""
-				_clear_recent_cards_preview()
 
 	recent_cards_by_player[player_index] = bucket
 
