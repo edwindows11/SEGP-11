@@ -1121,14 +1121,6 @@ func add_recent_card_for_player(player_index: int, card_id: String) -> void:
 	var bucket: Array = recent_cards_by_player[player_index]
 	bucket.append(entry)
 
-	while bucket.size() > RECENT_HISTORY_LIMIT:
-		var removed_entry: Variant = bucket.pop_front()
-		if removed_entry is Dictionary:
-			var removed_uid: String = str(removed_entry.get("uid", ""))
-			if removed_uid == selected_recent_uid:
-				selected_recent_uid = ""
-				_clear_recent_cards_preview()
-
 	recent_cards_by_player[player_index] = bucket
 
 	if recent_cards_overlay_panel and recent_cards_overlay_panel.visible:
