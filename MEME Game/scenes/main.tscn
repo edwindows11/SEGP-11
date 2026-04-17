@@ -1,7 +1,9 @@
 [gd_scene load_steps=5 format=3 uid="uid://bm5nty3p4g1xl"]
 
-[ext_resource type="Script" uid="uid://c53lmlm3k7fop" path="res://scripts/grid_manager.gd" id="1_script"]
-[ext_resource type="PackedScene" uid="uid://c8q4j5k6l7m8" path="res://scenes/elephant.tscn" id="2_elephant"]
+[ext_resource type="Script" uid="uid://c53lmlm3k7fop" path="res://scripts/Card Table/grid_manager.gd" id="1_script"]
+
+[sub_resource type="Resource" id="Resource_o5qli"]
+metadata/__load_path__ = "res://scenes/elephant.tscn"
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1"]
 size = Vector2(20, 20)
@@ -19,7 +21,7 @@ shadow_enabled = true
 
 [node name="GridManager" type="Node3D" parent="."]
 script = ExtResource("1_script")
-elephant_scene = ExtResource("2_elephant")
+elephant_scene = SubResource("Resource_o5qli")
 
 [node name="Ground" type="StaticBody3D" parent="."]
 

@@ -172,6 +172,7 @@ offset_bottom = -160.27563
 scale = Vector2(1.1796377, 1.0634071)
 focus_neighbor_top = NodePath("../ExitButton")
 theme_override_styles/normal = SubResource("StyleBoxTexture_mipys")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_mipys")
 theme_override_styles/hover = SubResource("StyleBoxTexture_8a8k8")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_l4mxc")
 script = ExtResource("11_bky6r")

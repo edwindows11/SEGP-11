@@ -1,0 +1,6 @@
+extends Node3D
+
+signal delete_Elephant
+signal increase_total_Elephant
+signal delete_Meeple
+signal increase_total_Meeple

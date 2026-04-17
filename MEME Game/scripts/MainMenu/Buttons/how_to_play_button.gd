@@ -4,4 +4,4 @@ func _ready():
 	pressed.connect(_on_pressed)
 
 func _on_pressed():
-	print("How to Play clicked")
+	get_tree().change_scene_to_file("res://scenes/How to Play.tscn")

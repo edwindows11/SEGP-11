@@ -1,0 +1,506 @@
+[gd_scene load_steps=25 format=3 uid="uid://cethjk1aqe8rx"]
+
+[ext_resource type="Script" uid="uid://ckie1dykhjfiv" path="res://scripts/HowToPlay.gd" id="0_script"]
+[ext_resource type="FontFile" uid="uid://bwh8g3ahyoj61" path="res://assets/Font/LeagueSpartan-Bold.ttf" id="1_vsc3h"]
+[ext_resource type="FontFile" uid="uid://32w7jq2grok5" path="res://assets/Font/LeagueSpartan-Regular.ttf" id="2_2vj31"]
+[ext_resource type="Texture2D" uid="uid://565dk5asxdr2" path="res://assets/Tiles/ForestTile_1.png" id="3_vvxdp"]
+[ext_resource type="Texture2D" uid="uid://wm2eilf5yedk" path="res://assets/Tiles/PlantationTile_2.png" id="4_bx0t0"]
+[ext_resource type="Texture2D" uid="uid://cqpeeitnqiext" path="res://assets/Tiles/HumanDominatedTile_1.png" id="5_5ufub"]
+[ext_resource type="Texture2D" uid="uid://b4bqbycfmx71t" path="res://assets/How To Play/Elephant.png" id="6_rb8a3"]
+[ext_resource type="Texture2D" uid="uid://yy7sfl5udh3o" path="res://assets/How To Play/Meeple.png" id="7_nn60v"]
+[ext_resource type="Texture2D" uid="uid://773g6l4khhes" path="res://assets/How To Play/Card.png" id="8_rb8a3"]
+[ext_resource type="Texture2D" uid="uid://dmmvkr2rgrmqo" path="res://assets/How To Play/Card 2.png" id="9_nn60v"]
+[ext_resource type="Texture2D" uid="uid://o4v2vlqp48tp" path="res://assets/CardTable/Scenario Selection.png" id="9_txu54"]
+[ext_resource type="Texture2D" uid="uid://cipxwwiyv46fa" path="res://assets/How To Play/Card 3.png" id="10_7bjge"]
+[ext_resource type="Texture2D" uid="uid://bac3oerinjpjq" path="res://assets/CardTable/Role Selection.png" id="10_frlbb"]
+[ext_resource type="Texture2D" uid="uid://61w1dmn1gi0x" path="res://assets/How To Play/Tile.png" id="11_txu54"]
+[ext_resource type="Texture2D" uid="uid://dpevw4ipu5m1s" path="res://assets/How To Play/MEME.png" id="12_frlbb"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7bjge"]
+bg_color = Color(0.7518812, 0.7518814, 0.7518812, 1)
+border_width_left = 20
+border_width_top = 20
+border_width_right = 20
+border_width_bottom = 20
+border_color = Color(1, 1, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_txu54"]
+bg_color = Color(0.105882354, 0.17254902, 0.4117647, 1)
+border_width_left = 22
+border_width_top = 22
+border_width_right = 20
+border_width_bottom = 22
+border_color = Color(1, 1, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_frlbb"]
+bg_color = Color(0.105882354, 0.17254902, 0.4117647, 1)
+border_width_left = 20
+border_width_right = 20
+border_width_bottom = 20
+border_color = Color(1, 1, 1, 1)
+expand_margin_left = 49.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rb8a3"]
+bg_color = Color(0.105882354, 0.17254902, 0.4117647, 1)
+border_width_left = 20
+border_width_right = 20
+border_width_bottom = 20
+border_color = Color(1, 1, 1, 1)
+expand_margin_left = 49.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nn60v"]
+bg_color = Color(0.2254869, 0.3356976, 0.7142, 1)
+border_width_left = 20
+border_width_right = 20
+border_width_bottom = 20
+border_color = Color(1, 1, 1, 1)
+expand_margin_left = 49.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_quixm"]
+bg_color = Color(0.105882354, 0.17254902, 0.4117647, 1)
+border_width_left = 20
+border_width_right = 20
+border_width_bottom = 20
+border_color = Color(1, 1, 1, 1)
+expand_margin_left = 49.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r7ist"]
+bg_color = Color(0.50620764, 0, 0.08204045, 1)
+border_width_left = 18
+border_width_top = 20
+border_width_right = 20
+border_color = Color(1, 1, 1, 1)
+expand_margin_left = 49.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_42577"]
+bg_color = Color(0.50620764, 0, 0.08204045, 1)
+border_width_left = 18
+border_width_top = 20
+border_width_right = 20
+border_color = Color(1, 1, 1, 1)
+expand_margin_left = 49.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_biur1"]
+bg_color = Color(0.76245713, 5.9561804e-05, 0.14519739, 1)
+border_width_left = 18
+border_width_top = 20
+border_width_right = 20
+border_color = Color(1, 1, 1, 1)
+expand_margin_left = 49.0
+
+[node name="HowToPlay" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("0_script")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 0
+offset_right = 1906.0
+offset_bottom = 1069.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_7bjge")
+
+[node name="Side Panel" type="Panel" parent="Background"]
+custom_minimum_size = Vector2(20, 0)
+layout_mode = 0
+offset_right = 415.0
+offset_bottom = 1069.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_txu54")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Background/Side Panel"]
+layout_mode = 0
+offset_left = 51.0
+offset_top = 21.0
+offset_right = 416.0
+offset_bottom = 1093.0
+
+[node name="How to Play" type="Button" parent="Background/Side Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_frlbb")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_rb8a3")
+theme_override_styles/hover = SubResource("StyleBoxFlat_nn60v")
+text = "How To Play"
+alignment = 0
+
+[node name="Glossary" type="Button" parent="Background/Side Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_frlbb")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_quixm")
+theme_override_styles/hover = SubResource("StyleBoxFlat_nn60v")
+text = "Glossary"
+alignment = 0
+
+[node name="Cards" type="Button" parent="Background/Side Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_frlbb")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_frlbb")
+theme_override_styles/hover = SubResource("StyleBoxFlat_nn60v")
+text = "About MEME"
+alignment = 0
+
+[node name="Exit" type="Button" parent="Background/Side Panel"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 928.0
+offset_right = 413.0
+offset_bottom = 1048.0
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_r7ist")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_42577")
+theme_override_styles/hover = SubResource("StyleBoxFlat_biur1")
+text = "EXIT"
+alignment = 0
+
+[node name="How To Play" type="Control" parent="Background"]
+anchors_preset = 0
+offset_left = 436.0
+offset_top = 43.0
+offset_right = 476.0
+offset_bottom = 83.0
+
+[node name="How to Play First Page" type="VBoxContainer" parent="Background/How To Play"]
+visible = false
+layout_mode = 0
+offset_right = 1431.0
+offset_bottom = 2140.0
+
+[node name="Label" type="Label" parent="Background/How To Play/How to Play First Page"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 50
+text = "How to Play"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to Play First Page"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Overview[/b]
+This is a 4-player strategy board game set in a wildlife conservation scenario.
+Each player takes on a unique role and competes to be the first to fulfil their role's win condition by playing cards and shaping the board.
+
+[b]The Board [/b]
+The board is a grid of tiles, each one of three types:
+
+	[b]Forest[/b] 											[b]Plantation[/b] 									[b]Human Dominated Area[/b]
+	natural habitat	 							agricultural land							populated areas
+
+
+
+
+
+
+
+
+
+[b]Game Pieces[/b]
+
+	[b]Elephants [/b]										[b]Villager[/b]
+
+
+
+
+
+
+
+There can only be 1 elephant per tile or 2 villagers per tile Villagers
+"
+fit_content = true
+
+[node name="Forest" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 332.0
+offset_right = 264.0
+offset_bottom = 524.0
+texture = ExtResource("3_vvxdp")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Plantation" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
+layout_mode = 0
+offset_left = 421.0
+offset_top = 327.0
+offset_right = 659.0
+offset_bottom = 519.0
+texture = ExtResource("4_bx0t0")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Human Dominated Area" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
+layout_mode = 0
+offset_left = 815.0
+offset_top = 333.0
+offset_right = 1053.0
+offset_bottom = 525.0
+texture = ExtResource("5_5ufub")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Elephant" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
+layout_mode = 0
+offset_left = -53.0
+offset_top = 603.0
+offset_right = 353.0
+offset_bottom = 909.0
+texture = ExtResource("6_rb8a3")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Meeple" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
+layout_mode = 0
+offset_left = 455.0
+offset_top = 660.0
+offset_right = 700.0
+offset_bottom = 857.0
+texture = ExtResource("7_nn60v")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="How to Play second Page" type="VBoxContainer" parent="Background/How To Play"]
+visible = false
+layout_mode = 0
+offset_left = -1.0
+offset_top = -1.0
+offset_right = 1430.0
+offset_bottom = 942.0
+
+[node name="Label" type="Label" parent="Background/How To Play/How to Play second Page"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 50
+text = "How to Play"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to Play second Page"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "[b]Setup[/b]
+The Player will first choose a scenario from the senario selection screen.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Then each player has to chose a unique role from role scenario.
+In the Role scenario, the player will be allowed to configure how many bots they want to play with, the bot's speed and difficulty.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Each player will have 5 cards on hand at the start.
+"
+fit_content = true
+
+[node name="Scenario" type="TextureRect" parent="Background/How To Play/How to Play second Page/RichTextLabel"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 68.0
+offset_right = 1509.0
+offset_bottom = 444.0
+texture = ExtResource("9_txu54")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Role" type="TextureRect" parent="Background/How To Play/How to Play second Page/RichTextLabel"]
+layout_mode = 0
+offset_left = 53.0
+offset_top = 548.0
+offset_right = 1445.0
+offset_bottom = 908.0
+texture = ExtResource("10_frlbb")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="How to Play third Page2" type="VBoxContainer" parent="Background/How To Play"]
+layout_mode = 0
+offset_left = -3.0
+offset_right = 1428.0
+offset_bottom = 1646.0
+
+[node name="Label" type="Label" parent="Background/How To Play/How to Play third Page2"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 50
+text = "How to Play"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to Play third Page2"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Action Card[/b]
+1. On your turn play a card from your hand.
+2. Follow any on-screen prompts. 
+3. Press end turn to pass to the next player.
+4. If you didn't choose a card before the time runs out, your turn automatically ends.
+
+	[b]Colour	Theme[/b]
+
+			[b]Green[/b] 
+			Protects the environment or provide a way for both humans and elephants to coexist.
+
+			[b]Yellow[/b]
+			Neutral actions that reduce the human-elephant conflict, but creates risks for both elephants or humans.
+
+			[b]Red	[/b] 
+			 Harmful action that directly harm elephants, humans or the environment.
+
+			[b]Black[/b]
+			Special action cards that must be played if it is on your hand.
+
+
+[b]Winning [/b]
+The first player to meet all of their role's win conditions simultaneously wins.
+
+"
+fit_content = true
+
+[node name="Button" type="Button" parent="Background/How To Play"]
+layout_mode = 0
+offset_left = 1246.0
+offset_top = 915.0
+offset_right = 1425.0
+offset_bottom = 989.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 30
+text = "Continue"
+
+[node name="Glossary" type="Control" parent="Background"]
+visible = false
+anchors_preset = 0
+offset_left = 433.0
+offset_top = 43.0
+offset_right = 473.0
+offset_bottom = 83.0
+
+[node name="TextureRect" type="TextureRect" parent="Background/Glossary"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 10.0
+offset_right = 423.0
+offset_bottom = 731.0
+texture = ExtResource("8_rb8a3")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="TextureRect2" type="TextureRect" parent="Background/Glossary"]
+layout_mode = 0
+offset_left = 457.0
+offset_top = 1.0
+offset_right = 979.0
+offset_bottom = 828.0
+texture = ExtResource("9_nn60v")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="TextureRect3" type="TextureRect" parent="Background/Glossary"]
+layout_mode = 0
+offset_left = 479.0
+offset_top = 609.0
+offset_right = 966.0
+offset_bottom = 972.0
+texture = ExtResource("10_7bjge")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="TextureRect4" type="TextureRect" parent="Background/Glossary"]
+layout_mode = 0
+offset_left = 974.0
+offset_top = 25.0
+offset_right = 1774.0
+offset_bottom = 878.0
+texture = ExtResource("11_txu54")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="About MEME" type="VBoxContainer" parent="Background"]
+visible = false
+layout_mode = 0
+offset_left = 433.0
+offset_top = 43.0
+offset_right = 1864.0
+offset_bottom = 2183.0
+
+[node name="Label" type="Label" parent="Background/About MEME"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 50
+text = "About MEME"
+
+[node name="Forest" type="TextureRect" parent="Background/About MEME/Label"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 522.0
+offset_right = 731.0
+offset_bottom = 694.0
+texture = ExtResource("12_frlbb")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/About MEME"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+Trunk Tales was created in collaboration with the Management and Ecology of Malaysian Elephants (MEME), a research initiative by the University of Nottingham Malaysia and Department of Wildlife and National Parks of Peninsular Malaysia (PERHILITAN). MEME focuses on studying the behaviour and ecology of Asian elephants in Peninsular Malaysia, with the goal of developing evidence-based solutions for their conservation.
+
+Learn more about MEME: https://www.meme-elephants.org
+
+The original Trunk Tales board game was designed by MEME to raise awareness about human-elephant conflict and the importance of balancing the needs of communities, plantation owners, and conservationists. Through gameplay, players can explore how different decisions impact coexistence between humans and elephants.
+
+Building on the success of the physical board game, this digital version makes Trunk Tales more accessible to a wider audience. It also introduces AI-powered players, allowing users to play solo while still learning about real-world conservation challenges. The goal is to educate and inspire players to understand how informed decisions and community involvement can lead to positive environmental outcomes."
+fit_content = true

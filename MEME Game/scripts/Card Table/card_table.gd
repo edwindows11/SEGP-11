@@ -4,20 +4,26 @@ extends Node3D
 @onready var Play: Node3D = $Play
 @onready var camera: Camera3D = $Camera3D
 
+const ELEPHANT_SCENE = preload("res://assets/Pieces/Elephant.tscn")
+const MEEPLE_SCENE = preload("res://assets/Pieces/Meeple.tscn")
+
 var totalElephants: int = 0
 var totalMeeple: int = 0
 var player_role: String = ""
 var player_roles: Array = []
 var _current_valid_selection_keys: Array = []
+var card_effects: Node = null  # CardEffects instance
 var singleplayer_bot_count: int = 3
 var human_player_index: int = 0
 var bot_speed_preset: String = "Normal"
 var bot_difficulty_by_player: Dictionary = {}
-
-var card_effects: Node = null  # CardEffects instance
 var bot_ai: Node = null
 
 func _ready() -> void:
+	# --- Connect Play node signals (declared in play_node.gd) ---
+	Play.increase_total_Elephant.connect(_on_play_increase_total_elephant)
+	Play.increase_total_Meeple.connect(_on_play_increase_total_meeple)
+
 	# --- GameState setup ---
 	GameState.player_roles = player_roles
 	GameState.player_count = 4
@@ -33,6 +39,34 @@ func _ready() -> void:
 	# --- Initialise Stats Tracking ---
 	GameState.setup_stats()
 
+	# --- CardEffects setup (must come early so card_effects is never null) ---
+	card_effects = load("res://scripts/Card/CardEffects.gd").new()
+	if card_effects == null:
+		push_error("card_table.gd: Failed to instantiate CardEffects.gd!")
+		return
+	card_effects.board = $Board
+	card_effects.play = self
+	card_effects.action_log = $CanvasLayer/Control/ActionLog
+	add_child(card_effects)
+
+	card_effects.effects_complete.connect(_on_card_effects_complete)
+	card_effects.request_tile_selection.connect(_on_request_tile_selection)
+	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
+
+	# Role abilities
+	card_effects.connect("steal_complete", func():
+		if UI.has_method("reposition_cards"):
+			UI.reposition_cards()
+	)
+	card_effects.connect("request_em_choice", _on_request_em_choice)
+
+	# Conversion popups from origin/main
+	card_effects.connect("request_steal_popup", _on_request_steal_popup)
+	card_effects.connect("request_gov_steal_popup", _on_request_gov_steal_popup)
+	card_effects.connect("request_convert_type_popup", _on_request_convert_type_popup)
+	if not card_effects.is_connected("steal_complete", _on_steal_complete):
+		card_effects.connect("steal_complete", _on_steal_complete)
+
 	# --- Pass role to UI ---
 	player_role = player_roles[0] if player_roles.size() > 0 else "Unknown"
 	UI.player_role = player_role
@@ -40,51 +74,73 @@ func _ready() -> void:
 		UI.user_role_label.text = "Player 1 (" + player_role + ")"
 
 	# --- Spawn UI player tiles and hand ---
-	UI.spawn_players()
 	UI.spawn_cards()
+	# Build one goal-tracker panel per player (Player 1 → Player N) populated
+	# from RoleEffect — replaces the old fixed nine-role layout.
+	UI.build_player_trackers()
 
-	# --- CardEffects setup ---
-	card_effects = load("res://scripts/CardEffects.gd").new()
-	card_effects.board = $Board
-	card_effects.play = Play
-	card_effects.action_log = $CanvasLayer/Control/ActionLog
-	add_child(card_effects)
-
-	card_effects.effects_complete.connect(_on_card_effects_complete)
-	card_effects.request_tile_selection.connect(_on_request_tile_selection)
-	card_effects.clear_tile_selection.connect(_on_clear_tile_selection)
-	card_effects.connect("request_steal_popup", _on_request_steal_popup)
-	card_effects.connect("request_convert_type_popup", _on_request_convert_type_popup)
-	card_effects.connect("steal_complete", _on_steal_complete)
-	
-	# --- Wire UI signals ---
-	UI.card_activated.connect(_on_card_activated)
-	UI.end_turn_requested.connect(_on_end_turn_button_pressed)
-
-	# --- Wire GameState turn signal to UI ---
-	GameState.turn_changed.connect(UI._on_turn_changed)
-	GameState.turn_changed.connect(_on_turn_changed_for_input_locks)
+	# Show the correct ability button for the first player's role on turn 1
+	var initial_role = player_roles[0] if player_roles.size() > 0 else ""
+	if UI.special_ability_btn:
+		UI.special_ability_btn.visible = RoleEffect.has_button_ability(initial_role)
+	# If Player 1 is EC, show the borrow-choice popup immediately
+	if initial_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "":
+		UI.show_ec_choice_popup.call_deferred()
 
 	# --- Optional singleplayer bots ---
 	_setup_singleplayer_bots()
 
+	# --- Wire UI signals ---
+	UI.card_activated.connect(_on_card_activated)
+	UI.end_turn_requested.connect(_on_end_turn_button_pressed)
+	UI.request_po_ability.connect(_on_po_ability_requested)
+	UI.request_gov_ability.connect(_on_gov_ability_requested)
+	UI.request_cons_ability.connect(_on_cons_ability_requested)
+	UI.request_ld_ability.connect(_on_ld_ability_requested)
+	UI.request_ec_ability.connect(_on_ec_ability_requested)
+	UI.request_em_ability.connect(_on_em_ability_requested)
+
+	# --- Wire GameState turn signal to UI ---
+	GameState.turn_changed.connect(_on_turn_changed_for_ui)
+	GameState.turn_changed.connect(UI._on_turn_changed)
+
 	if player_roles.size() > 0:
 		print("Game Started with roles: ", player_roles)
+
+	UI.pause_btn.pressed.connect(_pause)
+
 
 
 func _process(_delta: float) -> void:
 	pass
 
+func _pause():
+	var pause_menu = $CanvasLayer/PauseMenu
+	if pause_menu:
+		pause_menu.toggle_pause()
+		return
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
-		var pause_menu = $CanvasLayer/PauseMenu
-		if pause_menu:
-			pause_menu.toggle_pause()
-			return
+		_pause()
 
 	if _is_bot_turn():
 		return
+
+	# Land-Use Planning type-choice input (after selecting a tile):
+	# 1 = Forest, 2 = Human, 3 = Plantation
+	if event is InputEventKey and event.pressed and not event.echo:
+		if card_effects and card_effects.state == 3 and card_effects.current_effect.get("op", "") == "convert_any_any":
+			match event.keycode:
+				KEY_1, KEY_KP_1:
+					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.FOREST)
+					return
+				KEY_2, KEY_KP_2:
+					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.HUMAN)
+					return
+				KEY_3, KEY_KP_3:
+					card_effects.confirm_convert_any_any_type_selected(GameState.TileType.PLANTATION)
+					return
 
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 
@@ -96,70 +152,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				_route_tile_click_to_effects(tile_key)
 			return
 
-		# --- Manual placement / removal mode (dropdown) ---
-		var mode_id = 0
-		if mode_id == 0:
-			pass  # Select mode
-		else:
-			var from = camera.project_ray_origin(event.position)
-			var to = from + camera.project_ray_normal(event.position) * 1000
-
-			var space_state = get_world_3d().direct_space_state
-			var query = PhysicsRayQueryParameters3D.create(from, to)
-			query.collide_with_areas = true
-			var result = space_state.intersect_ray(query)
-
-			if result:
-				if mode_id == 1 or mode_id == 2:
-					var collider = result.collider
-					var tile_root = collider.get_parent()
-
-					if tile_root and tile_root.get_parent() == $Board:
-						var snap_pos = tile_root.position
-
-						# Use GameState for occupancy check
-						var tile_key = _raycast_to_tile_key(event.position)
-						var can_place = false
-						if tile_key != Vector2i(-1, -1) and GameState.tile_registry.has(tile_key):
-							if mode_id == 1 and GameState.can_place_piece(tile_key, "elephant"):
-								can_place = true
-							elif mode_id == 2 and GameState.can_place_piece(tile_key, "villager"):
-								can_place = true
-
-						if can_place:
-							if mode_id == 1:
-								Play.spawn_piece("Elephant", snap_pos)
-							elif mode_id == 2:
-								Play.spawn_piece("Meeple", snap_pos)
-						else:
-							print("Cannot place: Tile Occupied or invalid")
-
-				elif mode_id == 3:
-					var collider = result.collider
-					var candidate = collider
-					var piece_found = false
-
-					for _i in range(5):
-						if candidate == null:
-							break
-						if candidate.is_in_group("elephants") or candidate.is_in_group("meeples"):
-							var ptype = "elephant" if candidate.is_in_group("elephants") else "villager"
-							GameState.piece_removed(candidate, candidate.tile_key, ptype)
-							candidate.queue_free()
-							piece_found = true
-							break
-						candidate = candidate.get_parent()
-
-					if not piece_found:
-						print("Clicked object is not a removable piece")
-
 
 # --- Tile selection helpers ---
 
 func _raycast_to_tile_key(screen_pos: Vector2) -> Vector2i:
-	var camera = get_viewport().get_camera_3d()
-	var from = camera.project_ray_origin(screen_pos)
-	var to = from + camera.project_ray_normal(screen_pos) * 1000
+	var cam = get_viewport().get_camera_3d()
+	var from = cam.project_ray_origin(screen_pos)
+	var to = from + cam.project_ray_normal(screen_pos) * 1000
 	
 	var space_state = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
@@ -171,7 +170,7 @@ func _raycast_to_tile_key(screen_pos: Vector2) -> Vector2i:
 
 	# Walk up from the hit collider looking for a tile OR a piece
 	var node = result.collider
-	for _i in range(4): #it is only 2-3 levels deep
+	for _i in range(6):
 		if node == null:
 			break
 		
@@ -211,13 +210,14 @@ func _route_tile_click_to_effects(tile_key: Vector2i) -> void:
 func _on_card_activated(card_id: String) -> void:
 	if _is_bot_turn():
 		return
+	_track_card_stats_and_discard(card_id)
 	card_effects.execute_card(card_id)
 
 func _on_card_effects_complete() -> void:
 	if _is_bot_turn():
-		UI.end_turn_button.disabled = true
+		if UI.play_btn: UI.play_btn.disabled = true
 	else:
-		UI.end_turn_button.disabled = false
+		UI.set_end_turn_ready()  # enables play btn when it's in End Turn mode
 
 func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void:
 	_current_valid_selection_keys = _valid_keys.duplicate()
@@ -226,14 +226,96 @@ func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void
 func _on_clear_tile_selection() -> void:
 	_current_valid_selection_keys.clear()
 	UI.hide_instruction()
-	UI.hide_convert_type_popup()
 	$Board.clear_all_highlights()
 
+func _on_request_em_choice() -> void:
+	UI.show_em_choice_popup(card_effects.confirm_em_choice)
+	
+func _on_po_ability_requested() -> void:
+	var disable_func = func(i):
+		return card_effects.lastCard[i] == null
+	var callback_func = func(t_idx):
+		card_effects.execute_reversed_card(t_idx, UI)
+	UI.show_player_select_popup("Reverse player's last card:", disable_func, callback_func, card_effects)
+
+func _on_gov_ability_requested() -> void:
+	# Route through the card-effect pipeline (mirrors op:steal flow).
+	# _do_gov_steal will emit request_gov_steal_popup, which we handle below.
+	card_effects.execute_government_ability(UI)
+
+
+func _on_request_gov_steal_popup() -> void:
+	UI.show_steal_popup(card_effects, "gov")
+
+func _on_cons_ability_requested() -> void:
+	card_effects.execute_conservationist_ability(UI)
+
+func _on_ld_ability_requested() -> void:
+	card_effects.execute_land_developer_ability(UI)
+
+func _on_em_ability_requested() -> void:
+	card_effects.execute_em_ability(UI)
+
+func _on_ec_ability_requested() -> void:
+	# Delegate to the handler for the borrowed role's ability
+	match GameState.ec_borrowed_ability:
+		"Plantation Owner":
+			_on_po_ability_requested()
+		"Government":
+			_on_gov_ability_requested()
+		"Conservationist":
+			card_effects.execute_conservationist_ability(UI)
+		"Land Developer":
+			card_effects.execute_land_developer_ability(UI)
+		"Ecotourism Manager":
+			card_effects.execute_em_ability(UI)
+		"Wildlife Department":
+			UI.show_instruction("Wildlife Department: Bonus draw happens automatically at turn start.")
+		"Village Head":
+			UI.show_instruction("Village Head: Passive ability — play up to 2 cards per turn (max 1 villager-increasing).")
+		"Researcher":
+			UI.show_instruction("Researcher: Passive ability — elephant-adding cards let you move elephants.")
+		_:
+			UI.show_instruction("No ability selected yet. Please wait for setup.")
+
+	
 func _on_request_steal_popup() -> void:
 	UI.show_steal_popup(card_effects)
 
 func _on_request_convert_type_popup(current_type: int) -> void:
 	UI.show_convert_type_popup(card_effects, current_type)
+
+func _track_card_stats_and_discard(card_id: String) -> void:
+	var card_data = CardData.ALL_CARDS.get(card_id, {})
+	var card_color = card_data.get("color", Color.WHITE)
+	if card_color == Color.GREEN:
+		GameState.player_stats[GameState.current_player_index]["green_cards_played"] += 1
+	elif card_color == Color.RED:
+		GameState.player_stats[GameState.current_player_index]["red_cards_played"] += 1
+	elif card_color == Color.YELLOW:
+		GameState.player_stats[GameState.current_player_index]["yellow_cards_played"] += 1
+		
+	# Track researcher stats for cards that increase elephants/humans
+	var increases_e = false
+	var increases_v = false
+	if card_color in [Color.GREEN, Color.RED, Color.YELLOW]:
+		for fx in card_data.get("sub_effects", []):
+			var op = fx.get("op", "")
+			if op == "add_e": increases_e = true
+			if op == "add_v" or op == "add_v_in": increases_v = true
+			
+		if increases_e and increases_v:
+			GameState.player_stats[GameState.current_player_index]["both_inc_cards"] += 1
+		elif increases_e:
+			GameState.player_stats[GameState.current_player_index]["e_inc_cards"] += 1
+		elif increases_v:
+			GameState.player_stats[GameState.current_player_index]["v_inc_cards"] += 1
+	
+	# Track if the card played was Green, Yellow, or Red
+	if card_color == Color.GREEN or card_color == Color.YELLOW or card_color == Color.RED:
+		GameState.player_stats[GameState.current_player_index]["action_cards_played"] += 1
+	
+	GameState.discard_card(GameState.current_player_index, card_id)
 
 
 # --- End turn ---
@@ -242,60 +324,45 @@ func _on_end_turn_button_pressed() -> void:
 	if _is_bot_turn():
 		return
 
-	if UI.pending_card:
-		# Track if the card played was a Green card
-		var card_id = UI.pending_card.card_id
-		var card_data = CardData.ALL_CARDS.get(card_id, {})
-		var card_color = card_data.get("color", Color.WHITE)
-		if card_color == Color.GREEN:
-			GameState.player_stats[GameState.current_player_index]["green_cards_played"] += 1
-		elif card_color == Color.RED:
-			GameState.player_stats[GameState.current_player_index]["red_cards_played"] += 1
-		elif card_color == Color.YELLOW:
-			GameState.player_stats[GameState.current_player_index]["yellow_cards_played"] += 1
-			
-		# Track researcher stats for cards that increase elephants/humans
-		var increases_e = false
-		var increases_v = false
-		if card_color in [Color.GREEN, Color.RED, Color.YELLOW]:
-			for fx in card_data.get("sub_effects", []):
-				var op = fx.get("op", "")
-				if op == "add_e": increases_e = true
-				if op == "add_v" or op == "add_v_in": increases_v = true
-				
-			if increases_e and increases_v:
-				GameState.player_stats[GameState.current_player_index]["both_inc_cards"] += 1
-			elif increases_e:
-				GameState.player_stats[GameState.current_player_index]["e_inc_cards"] += 1
-			elif increases_v:
-				GameState.player_stats[GameState.current_player_index]["v_inc_cards"] += 1
-		
-		# Track if the card played was Green, Yellow, or Red
-		if card_color == Color.GREEN or card_color == Color.YELLOW or card_color == Color.RED:
-			GameState.player_stats[GameState.current_player_index]["action_cards_played"] += 1
+	# --- Wildlife Department: must discard one bonus card before the turn ends ---
+	var cur_role: String = GameState.player_roles[GameState.current_player_index] \
+		if GameState.current_player_index < GameState.player_roles.size() else ""
+	var _ec_with_wd := (cur_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
+	if (cur_role == "Wildlife Department" or _ec_with_wd) and GameState.wildlife_dept_drawn_cards.size() > 0:
+		if UI.play_btn: UI.play_btn.disabled = true
+		UI.show_wildlife_discard_popup()
+		return
 
-		if UI and UI.has_method("add_recent_card_for_player"):
-			UI.add_recent_card_for_player(GameState.current_player_index, UI.pending_card.card_id)
-		
-		GameState.discard_card(GameState.current_player_index, UI.pending_card.card_id)
-	UI.remove_played_card_and_draw_replacement()
+	if UI.pending_card and is_instance_valid(UI.pending_card):
+		_track_card_stats_and_discard(UI.pending_card.card_id)
+	UI.pending_card = null
+
+	# Refill hand up to 5 cards (unless ability skips draw)
+	var p_index = GameState.current_player_index
+	if p_index >= 0 and p_index < GameState.player_hands.size():
+		if not UI.po_used_ability_this_turn and not UI.gov_used_ability_this_turn:
+			while GameState.player_hands[p_index].size() < UI.TOTAL_CARDS:
+				if GameState.draw_card(p_index) == "":
+					break
+
 	GameState.advance_turn()
 	UI.currently_viewing_card = false
 
+# setup bots to play 
 func _setup_singleplayer_bots() -> void:
 	var max_bots: int = maxi(0, GameState.player_count - 1)
 	var bot_count: int = clampi(singleplayer_bot_count, 0, max_bots)
 	if bot_count <= 0:
 		return
 
-	var bot_script = load("res://scripts/bot.gd")
+	var bot_script = load("res://scripts/Card Table/bot.gd")
 	if bot_script == null:
 		push_warning("Bot script could not be loaded")
 		return
 
 	bot_ai = bot_script.new()
 	bot_ai.card_effects = card_effects
-	bot_ai.play = Play
+	bot_ai.play = self
 	bot_ai.board = $Board
 	bot_ai.ui = UI
 	if bot_ai.has_method("set_speed_preset"):
@@ -322,6 +389,11 @@ func _setup_singleplayer_bots() -> void:
 				difficulty = bot_ai.Difficulty.EASY
 		bot_ai.set_player_difficulty(bot_player_index, difficulty)
 
+	if not bot_ai.bot_turn_started.is_connected(UI._on_bot_turn_started):
+		bot_ai.bot_turn_started.connect(UI._on_bot_turn_started)
+	if not bot_ai.bot_turn_ended.is_connected(UI._on_bot_turn_ended):
+		bot_ai.bot_turn_ended.connect(UI._on_bot_turn_ended)
+
 	if not GameState.turn_changed.is_connected(bot_ai._on_turn_changed):
 		GameState.turn_changed.connect(bot_ai._on_turn_changed)
 
@@ -335,18 +407,48 @@ func _is_bot_turn_for_player(player_index: int) -> bool:
 		return false
 	return bot_ai.is_bot(player_index)
 
-func _on_turn_changed_for_input_locks(player_index: int, _role_name: String, is_skipped: bool) -> void:
-	if UI == null:
-		return
+func _on_turn_changed_for_ui(player_index: int, _role_name: String, is_skipped: bool) -> void:
+	var is_bot_turn = _is_bot_turn_for_player(player_index) and not is_skipped
+	UI.set_bot_turn(is_bot_turn)
+		
+# --- Piece spawning (moved from card_functions.gd) ---
 
-	var is_bot_turn := _is_bot_turn_for_player(player_index) and not is_skipped
-	if is_bot_turn:
-		UI.play_btn.disabled = true
-		UI.end_turn_button.disabled = true
-		return
+func spawn_piece_on_tile(type: String, pos: Vector3, tile_key: Vector2i) -> bool:
+	if not GameState.can_place_piece(tile_key, type):
+		return false
 
-	if is_skipped:
-		UI.play_btn.disabled = true
+	var piece_instance
+
+	if type == "elephant" or type == "Elephant":
+		piece_instance = ELEPHANT_SCENE.instantiate()
+		Play.increase_total_Elephant.emit()
+		Play.add_child(piece_instance)
+		piece_instance.Del_Elephant.connect(func():
+			GameState.piece_removed(piece_instance, piece_instance.tile_key, "elephant")
+		)
+
+	elif type == "villager" or type == "Meeple":
+		piece_instance = MEEPLE_SCENE.instantiate()
+		Play.increase_total_Meeple.emit()
+		Play.add_child(piece_instance)
+		piece_instance.Del_Meeple.connect(func():
+			GameState.piece_removed(piece_instance, piece_instance.tile_key, "villager")
+		)
+
+	if piece_instance:
+		piece_instance.position = pos + Vector3(0, 0, 0.1)
+		piece_instance.tile_key = tile_key
+		var placed := GameState.piece_placed(
+			piece_instance,
+			tile_key,
+			"elephant" if type in ["Elephant", "elephant"] else "villager"
+		)
+		if not placed:
+			piece_instance.queue_free()
+			return false
+		return true
+
+	return false
 
 # --- Initial board setup ---
 
@@ -364,7 +466,7 @@ func _spawn_initial_pieces() -> void:
 			var key := Vector2i(epos.y, epos.x)
 			if GameState.tile_registry.has(key):
 				var pos: Vector3 = GameState.tile_registry[key]["world_pos"]
-				Play.spawn_piece_on_tile("Elephant", pos, key)
+				spawn_piece_on_tile("Elephant", pos, key)
 
 		# Place villagers on random Human (village) tiles
 		var villager_count: int = scenario["villagers_count"]
@@ -378,7 +480,7 @@ func _spawn_initial_pieces() -> void:
 			var entry = GameState.tile_registry[key]
 			while entry["villager_nodes"].size() < 2 and placed < villager_count:
 				var pos: Vector3 = entry["world_pos"]
-				Play.spawn_piece_on_tile("Meeple", pos, key)
+				spawn_piece_on_tile("Meeple", pos, key)
 				placed += 1
 	else:
 		# --- Random scenario: original logic ---
@@ -388,7 +490,7 @@ func _spawn_initial_pieces() -> void:
 		for i in range(min(3, forest_tiles.size())):
 			var key: Vector2i = forest_tiles[i]
 			var pos: Vector3 = GameState.tile_registry[key]["world_pos"]
-			Play.spawn_piece_on_tile("Elephant", pos, key)
+			spawn_piece_on_tile("Elephant", pos, key)
 
 		# 6 villagers on random human or plantation tiles
 		var human_plantation_tiles = GameState.get_tiles_matching(["HUMAN", "PLANTATION"])
@@ -396,27 +498,24 @@ func _spawn_initial_pieces() -> void:
 		for i in range(min(6, human_plantation_tiles.size())):
 			var key: Vector2i = human_plantation_tiles[i]
 			var pos: Vector3 = GameState.tile_registry[key]["world_pos"]
-			Play.spawn_piece_on_tile("Meeple", pos, key)
+			spawn_piece_on_tile("Meeple", pos, key)
 
 
 # --- Play node signal handlers (keep for total tracking) ---
 
 func _on_play_increase_total_elephant() -> void:
 	totalElephants += 1
-	print("elephant total: %d" % totalElephants)
 
 func _on_play_increase_total_meeple() -> void:
 	totalMeeple += 1
-	print("meeple total: %d" % totalMeeple)
 
 func _on_play_reduce_total_elephant() -> void:
 	totalElephants -= 1
-	print("elephant total: %d" % totalElephants)
 
 func _on_play_reduce_total_meeple() -> void:
 	totalMeeple -= 1
-	print("meeple total: %d" % totalMeeple)
-	
+
 func _on_steal_complete() -> void:
-	UI.reposition_cards()
-	UI.spawn_cards()   # re-renders the current player's hand so the stolen card appears
+	if UI.has_method("reposition_cards"): UI.reposition_cards()
+	UI.spawn_cards()   
+	$Board.clear_all_highlights()

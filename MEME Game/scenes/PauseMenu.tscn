@@ -1,8 +1,18 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://02nmxj2l05xh"]
 
-[ext_resource type="Script" path="res://scripts/PauseMenu.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://j23ajotl4qw5" path="res://scripts/Card Table/PauseMenu.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jvnd5"]
+bg_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g4jo0"]
+bg_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5w6ei"]
+bg_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 
 [node name="PauseMenu" type="Control"]
+z_index = 15
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -41,14 +51,17 @@ horizontal_alignment = 1
 [node name="ResumeButton" type="Button" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_jvnd5")
 text = "Resume Game"
 
 [node name="MainMenuButton" type="Button" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_g4jo0")
 text = "Return to Main Menu"
 
 [node name="ExitButton" type="Button" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_5w6ei")
 text = "Exit Game"

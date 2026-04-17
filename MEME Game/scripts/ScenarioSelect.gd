@@ -3,7 +3,7 @@ extends Control
 # Emitted when user confirms a scenario and proceeds to role selection
 const CELL_SIZE := 40  # pixels per grid cell in the preview
 
-var selected_index: int = -1  # 0..4 = preset scenario, 5 = random
+var selected_index: int = -1  # 0.4 = preset scenario, 5 = random
 
 # Node references (created in _ready)
 var card_container: HBoxContainer
@@ -33,7 +33,9 @@ const SCENARIO_NAMES := [
 ]
 
 func _ready() -> void:
-	# --- Root layout ---
+	
+	#Display
+	#  Root 
 	var root_vbox := VBoxContainer.new()
 	root_vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root_vbox.add_theme_constant_override("separation", 16)
@@ -47,7 +49,7 @@ func _ready() -> void:
 	add_child(margin)
 	margin.add_child(root_vbox)
 
-	# --- Title ---
+	#  Title 
 	var page_title := Label.new()
 	page_title.text = "Choose a Scenario"
 	page_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -55,7 +57,7 @@ func _ready() -> void:
 	page_title.add_theme_color_override("font_color", Color(0.96, 0.92, 0.78))
 	root_vbox.add_child(page_title)
 
-	# --- Cards row ---
+	#  Cards row 
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size.y = 210
 	scroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -71,7 +73,7 @@ func _ready() -> void:
 
 	_build_scenario_cards()
 
-	# --- Detail area (two-column: preview + info) ---
+	#  Detail (preview + info) 
 	detail_panel = PanelContainer.new()
 	detail_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var dp_style := StyleBoxFlat.new()
@@ -148,12 +150,12 @@ func _ready() -> void:
 	difficulty_label.add_theme_color_override("default_color", Color(0.82, 0.78, 0.68))
 	info_vbox.add_child(difficulty_label)
 
-	# Spacer
+	# Space
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	info_vbox.add_child(spacer)
 
-	# --- Confirm button ---
+	#  Confirm button 
 	confirm_button = Button.new()
 	confirm_button.text = "Continue to Role Selection  →"
 	confirm_button.custom_minimum_size = Vector2(320, 55)
@@ -180,7 +182,7 @@ func _ready() -> void:
 	confirm_button.pressed.connect(_on_confirm_pressed)
 	info_vbox.add_child(confirm_button)
 
-	# --- Legend at bottom of preview ---
+	#  Info at bottom of preview 
 	var legend_hbox := HBoxContainer.new()
 	legend_hbox.add_theme_constant_override("separation", 16)
 	preview_wrapper.add_child(legend_hbox)

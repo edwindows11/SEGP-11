@@ -1,13 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://bt1rs8cr5imh4"]
+[gd_scene load_steps=3 format=3 uid="uid://bt1rs8cr5imh4"]
 
-[ext_resource type="Script" uid="uid://bkonqrcid8iyp" path="res://scripts/Card.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bkonqrcid8iyp" path="res://scripts/Card/Card.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://ehkua2cdycq" path="res://assets/Card/Abandonment of Oil Palm Areas.png" id="2_tgmmg"]
 
 [node name="Card" type="Control"]
-custom_minimum_size = Vector2(180, 108)
+custom_minimum_size = Vector2(155, 108)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 180.0
-offset_bottom = 108.0
+offset_right = 155.0
+offset_bottom = 111.0
 pivot_offset = Vector2(90, 54)
 script = ExtResource("1_script")
 
@@ -16,6 +17,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 2.0
+offset_right = -2.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -26,6 +29,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -38,6 +42,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = -2.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "Card"
@@ -47,6 +52,8 @@ autowrap_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 0
-offset_right = 179.2
-offset_bottom = 128.0
+offset_right = 151.2
+offset_bottom = 110.0
+texture = ExtResource("2_tgmmg")
 expand_mode = 3
+stretch_mode = 4
