@@ -109,6 +109,10 @@ func _ready() -> void:
 
 	UI.pause_btn.pressed.connect(_pause)
 
+	# Fire turn_changed for Player 1 so turn-start handlers run (e.g. Wildlife
+	# Dept bonus draw) — advance_turn() only fires it from turn 2 onwards.
+	GameState.turn_changed.emit.call_deferred(GameState.current_player_index, player_role, false)
+
 
 
 func _process(_delta: float) -> void:

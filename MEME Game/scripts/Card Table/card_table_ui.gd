@@ -598,6 +598,11 @@ func _update_special_ability_button_state() -> void:
 		special_ability_btn.disabled = false
 	else:
 		special_ability_btn.disabled = not RoleEffect.can_use_button(player_role, self)
+
+	# Black cards must resolve before any ability can trigger
+	if not special_ability_btn.disabled and currently_viewing_card and pending_card \
+			and CardData.ALL_CARDS.get(pending_card.card_id, {}).get("color", Color.WHITE) == Color.BLACK:
+		special_ability_btn.disabled = true
 	
 func _refresh_role_panel_ui():
 	var cur = GameState.player_roles[GameState.current_player_index] \
@@ -694,6 +699,7 @@ func _collapse_pending_card_preview() -> void:
 	tween.tween_property(old, "scale", Vector2(1, 1), 0.2)
 	if not _play_btn_is_end_turn:
 		_set_play_btn_disabled(true)
+	_update_special_ability_button_state()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton):
@@ -706,6 +712,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	var hovered: Control = get_viewport().gui_get_hovered_control()
 	if hovered and _is_control_inside(hovered, pending_card):
+		return
+
+	# Black cards must be played (or end-turn), not dismissed by side-clicking
+	if CardData.ALL_CARDS.get(pending_card.card_id, {}).get("color", Color.WHITE) == Color.BLACK:
 		return
 
 	_collapse_pending_card_preview()
@@ -735,6 +745,7 @@ func _focus_card_for_play(selected_card: Control, enable_play_button: bool = tru
 		play_btn.disabled = false
 	else:
 		_set_play_btn_disabled(true)
+	_update_special_ability_button_state()
 	return tween
 
 func animate_bot_card_popup(card_id: String) -> bool:
@@ -807,6 +818,8 @@ func _on_play_btn_pressed():
 
 	var cid = pending_card.card_id
 	var card_color = CardData.ALL_CARDS.get(cid, {}).get("color", Color.WHITE)
+	# Wildlife Dept : playing a bonus-drawn card counts as the mandatory discard, so remove it from the drawn list.
+	GameState.wildlife_dept_drawn_cards.erase(cid)
 	pending_card.queue_free()
 	pending_card = null
 	currently_viewing_card = false
