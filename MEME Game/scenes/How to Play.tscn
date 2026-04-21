@@ -355,6 +355,7 @@ expand_mode = 1
 stretch_mode = 4
 
 [node name="How to Play third Page2" type="VBoxContainer" parent="Background/How To Play"]
+visible = false
 layout_mode = 0
 offset_left = -3.0
 offset_right = 1428.0
@@ -463,7 +464,6 @@ expand_mode = 1
 stretch_mode = 4
 
 [node name="About MEME" type="VBoxContainer" parent="Background"]
-visible = false
 layout_mode = 0
 offset_left = 433.0
 offset_top = 43.0
@@ -479,10 +479,10 @@ text = "About MEME"
 
 [node name="Forest" type="TextureRect" parent="Background/About MEME/Label"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 522.0
-offset_right = 731.0
-offset_bottom = 694.0
+offset_left = 127.0
+offset_top = 581.0
+offset_right = 1447.0
+offset_bottom = 869.0
 texture = ExtResource("12_frlbb")
 expand_mode = 1
 stretch_mode = 4

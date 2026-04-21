@@ -2,6 +2,7 @@ extends Control
 
 signal card_activated(card_id: String)
 signal end_turn_requested()
+signal end_turn_timer_expired()
 signal request_po_ability()
 signal request_gov_ability()
 signal request_cons_ability()
@@ -667,7 +668,7 @@ func _on_timer_timeout():
 	if time_left < 0:
 		# emit only once — repeated calls cause double advance_turn / bot collisions
 		turn_timer.stop()
-		end_turn_requested.emit()
+		end_turn_timer_expired.emit()
 	else:
 		timer_label.text = str(time_left)
 
@@ -1160,6 +1161,8 @@ func add_recent_card_for_player(player_index: int, card_id: String) -> void:
 	var entry := {"uid": entry_uid, "card_id": card_id}
 	var bucket: Array = recent_cards_by_player[player_index]
 	bucket.append(entry)
+	if bucket.size() > RECENT_HISTORY_LIMIT:
+		bucket = bucket.slice(bucket.size() - RECENT_HISTORY_LIMIT)
 
 	recent_cards_by_player[player_index] = bucket
 

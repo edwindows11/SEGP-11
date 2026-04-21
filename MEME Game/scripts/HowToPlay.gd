@@ -7,6 +7,10 @@ var continue_button: Button
 var pages: Array = []
 var current_page: int = 0
 
+var _image_overlay: ColorRect = null
+var _image_overlay_rect: TextureRect = null
+var _image_overlay_tween: Tween = null
+
 func _ready() -> void:
 	how_to_play_section = get_node("Background/How To Play")
 	glossary_section     = get_node("Background/Glossary")
@@ -27,6 +31,8 @@ func _ready() -> void:
 	continue_button.pressed.connect(_on_continue_pressed)
 
 	_remove_focus_borders(self)
+	_build_image_overlay()
+	_wire_image_clicks(self)
 	_show_how_to_play()
 
 func _remove_focus_borders(node: Node) -> void:
@@ -66,3 +72,62 @@ func _on_continue_pressed() -> void:
 	if current_page < pages.size() - 1:
 		current_page += 1
 		_update_page()
+
+func _build_image_overlay() -> void:
+	_image_overlay = ColorRect.new()
+	_image_overlay.color = Color(0, 0, 0, 0.75)
+	_image_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_image_overlay.visible = false
+	_image_overlay.z_index = 200
+	_image_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_image_overlay.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			_hide_image_overlay()
+	)
+	add_child(_image_overlay)
+
+	_image_overlay_rect = TextureRect.new()
+	_image_overlay_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_image_overlay_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_image_overlay_rect.set_anchors_preset(Control.PRESET_CENTER)
+	_image_overlay_rect.offset_left = -600
+	_image_overlay_rect.offset_top = -400
+	_image_overlay_rect.offset_right = 600
+	_image_overlay_rect.offset_bottom = 400
+	_image_overlay_rect.pivot_offset = Vector2(600, 400)
+	_image_overlay_rect.scale = Vector2.ZERO
+	_image_overlay_rect.mouse_filter = Control.MOUSE_FILTER_PASS
+	_image_overlay.add_child(_image_overlay_rect)
+
+func _wire_image_clicks(node: Node) -> void:
+	if node is TextureRect and node != _image_overlay_rect:
+		var tex_rect: TextureRect = node
+		tex_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+		tex_rect.gui_input.connect(func(event: InputEvent):
+			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+				_show_image_overlay(tex_rect.texture)
+		)
+	for child in node.get_children():
+		_wire_image_clicks(child)
+
+func _show_image_overlay(tex: Texture2D) -> void:
+	if tex == null:
+		return
+	_image_overlay_rect.texture = tex
+	_image_overlay.modulate = Color(1, 1, 1, 0)
+	_image_overlay_rect.scale = Vector2(0.1, 0.1)
+	_image_overlay.visible = true
+	if _image_overlay_tween:
+		_image_overlay_tween.kill()
+	_image_overlay_tween = create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	_image_overlay_tween.tween_property(_image_overlay, "modulate", Color(1, 1, 1, 1), 0.3)
+	_image_overlay_tween.tween_property(_image_overlay_rect, "scale", Vector2(1, 1), 0.4)
+
+func _hide_image_overlay() -> void:
+	if _image_overlay_tween:
+		_image_overlay_tween.kill()
+	_image_overlay_tween = create_tween().set_parallel(true).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+	_image_overlay_tween.tween_property(_image_overlay, "modulate", Color(1, 1, 1, 0), 0.25)
+	_image_overlay_tween.tween_property(_image_overlay_rect, "scale", Vector2(0.1, 0.1), 0.25)
+	await _image_overlay_tween.finished
+	_image_overlay.visible = false

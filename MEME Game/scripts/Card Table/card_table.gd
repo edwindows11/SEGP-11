@@ -93,6 +93,7 @@ func _ready() -> void:
 	# --- Wire UI signals ---
 	UI.card_activated.connect(_on_card_activated)
 	UI.end_turn_requested.connect(_on_end_turn_button_pressed)
+	UI.end_turn_timer_expired.connect(_on_end_turn_timer_expired)
 	UI.request_po_ability.connect(_on_po_ability_requested)
 	UI.request_gov_ability.connect(_on_gov_ability_requested)
 	UI.request_cons_ability.connect(_on_cons_ability_requested)
@@ -109,8 +110,7 @@ func _ready() -> void:
 
 	UI.pause_btn.pressed.connect(_pause)
 
-	# Fire turn_changed for Player 1 so turn-start handlers run (e.g. Wildlife
-	# Dept bonus draw) — advance_turn() only fires it from turn 2 onwards.
+	# So wildfire special ability happens on turn 1
 	GameState.turn_changed.emit.call_deferred(GameState.current_player_index, player_role, false)
 
 
@@ -328,6 +328,11 @@ func _on_end_turn_button_pressed() -> void:
 	if _is_bot_turn():
 		return
 
+	# Timer can expire mid-card-action; fill remaining selections randomly so
+	# the effect resolves before the turn actually ends.
+	if card_effects and card_effects.state != 0:
+		await _auto_complete_card_action()
+
 	# --- Wildlife Department: must discard one bonus card before the turn ends ---
 	var cur_role: String = GameState.player_roles[GameState.current_player_index] \
 		if GameState.current_player_index < GameState.player_roles.size() else ""
@@ -352,7 +357,44 @@ func _on_end_turn_button_pressed() -> void:
 	GameState.advance_turn()
 	UI.currently_viewing_card = false
 
-# setup bots to play 
+# randomly complete card action if the user's timer ended
+func _on_end_turn_timer_expired() -> void:
+	if _is_bot_turn():
+		return
+	# Wildlife Department: if timer expires with pending bonus cards, auto-discard a random one.
+	var cur_role: String = GameState.player_roles[GameState.current_player_index] \
+		if GameState.current_player_index < GameState.player_roles.size() else ""
+	var ec_with_wd := (cur_role == "Environmental Consultant" and GameState.ec_borrowed_ability == "Wildlife Department")
+	if (cur_role == "Wildlife Department" or ec_with_wd) and GameState.wildlife_dept_drawn_cards.size() > 0:
+		var random_card: String = GameState.wildlife_dept_drawn_cards.pick_random()
+		GameState.wildlife_dept_discard_bonus(GameState.current_player_index, random_card)
+		GameState.wildlife_dept_drawn_cards.clear()
+		if UI.wildlife_discard_popup:
+			UI.wildlife_discard_popup.visible = false
+		UI.spawn_cards()
+	_on_end_turn_button_pressed()
+
+func _auto_complete_card_action() -> void:
+	if card_effects == null:
+		return
+	var safety := 20
+	while card_effects.state != 0 and safety > 0:
+		safety -= 1
+		var op: String = card_effects.current_effect.get("op", "")
+		if card_effects.state == 3:  # WAITING_CHOICE
+			if op == "convert_any_any":
+				var types := [GameState.TileType.FOREST, GameState.TileType.HUMAN, GameState.TileType.PLANTATION]
+				card_effects.confirm_convert_any_any_type_selected(types.pick_random())
+			else:
+				break
+		else:
+			if _current_valid_selection_keys.is_empty():
+				break
+			var random_key: Vector2i = _current_valid_selection_keys.pick_random()
+			_route_tile_click_to_effects(random_key)
+		await get_tree().process_frame
+
+# setup bots to play
 func _setup_singleplayer_bots() -> void:
 	var max_bots: int = maxi(0, GameState.player_count - 1)
 	var bot_count: int = clampi(singleplayer_bot_count, 0, max_bots)

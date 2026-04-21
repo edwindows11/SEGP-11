@@ -346,6 +346,8 @@ func draw_card(player_index: int) -> String:
 # Wildlife Dept: draw 2 bonus cards (any color including black) at turn start
 func wildlife_dept_draw_bonus(player_index: int) -> void:
 	wildlife_dept_drawn_cards = []
+	if player_hands[player_index].size() >= 6:
+		return
 	for _i in range(2):
 		var card = _pop_from_draw_pile()
 		if card != "":
