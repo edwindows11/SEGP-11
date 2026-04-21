@@ -165,26 +165,32 @@ text = "EXIT"
 alignment = 0
 
 [node name="How To Play" type="Control" parent="Background"]
-anchors_preset = 0
-offset_left = 436.0
-offset_top = 43.0
-offset_right = 476.0
-offset_bottom = 83.0
-
-[node name="How to Play First Page" type="VBoxContainer" parent="Background/How To Play"]
 visible = false
-layout_mode = 0
-offset_right = 1431.0
-offset_bottom = 2140.0
+anchors_preset = 0
+offset_left = 424.0
+offset_top = 43.0
+offset_right = 1888.0
+offset_bottom = 1056.0
 
-[node name="Label" type="Label" parent="Background/How To Play/How to Play First Page"]
+[node name="How to play pages" type="VBoxContainer" parent="Background/How To Play"]
+layout_mode = 0
+offset_top = -3.0
+offset_right = 1456.0
+offset_bottom = 988.0
+
+[node name="Label" type="Label" parent="Background/How To Play/How to play pages"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("1_vsc3h")
 theme_override_font_sizes/font_size = 50
 text = "How to Play"
+horizontal_alignment = 1
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to Play First Page"]
+[node name="How to Play First Page" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="Overview" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play First Page"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_2vj31")
@@ -196,13 +202,81 @@ text = "
 [b]Overview[/b]
 This is a 4-player strategy board game set in a wildlife conservation scenario.
 Each player takes on a unique role and competes to be the first to fulfil their role's win condition by playing cards and shaping the board.
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="The Board" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play First Page"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
 
 [b]The Board [/b]
-The board is a grid of tiles, each one of three types:
+The board is a grid of tiles, each one of three types:"
+fit_content = true
+horizontal_alignment = 1
 
+[node name="Tiles" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play First Page"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
 	[b]Forest[/b] 											[b]Plantation[/b] 									[b]Human Dominated Area[/b]
-	natural habitat	 							agricultural land							populated areas
+	natural habitat	 							  agricultural land							                   populated areas                 
+"
+fit_content = true
+horizontal_alignment = 1
 
+[node name="Tiles Img" type="Control" parent="Background/How To Play/How to play pages/How to Play First Page"]
+layout_mode = 2
+
+[node name="Forest" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Tiles Img"]
+layout_mode = 0
+offset_left = 112.0
+offset_top = 5.0
+offset_right = 350.0
+offset_bottom = 197.0
+texture = ExtResource("3_vvxdp")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Plantation" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Tiles Img"]
+layout_mode = 0
+offset_left = 528.0
+offset_right = 766.0
+offset_bottom = 192.0
+texture = ExtResource("4_bx0t0")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Human Dominated Area" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Tiles Img"]
+layout_mode = 0
+offset_left = 1048.0
+offset_top = 8.0
+offset_right = 1286.0
+offset_bottom = 200.0
+texture = ExtResource("5_5ufub")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Pieces" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play First Page"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
 
 
 
@@ -224,73 +298,36 @@ The board is a grid of tiles, each one of three types:
 There can only be 1 elephant per tile or 2 villagers per tile Villagers
 "
 fit_content = true
+horizontal_alignment = 1
 
-[node name="Forest" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
-layout_mode = 0
-offset_left = 26.0
-offset_top = 332.0
-offset_right = 264.0
-offset_bottom = 524.0
-texture = ExtResource("3_vvxdp")
-expand_mode = 1
-stretch_mode = 4
+[node name="Game Pieces Img" type="Control" parent="Background/How To Play/How to play pages/How to Play First Page"]
+layout_mode = 2
 
-[node name="Plantation" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
+[node name="Elephant" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Game Pieces Img"]
 layout_mode = 0
-offset_left = 421.0
-offset_top = 327.0
-offset_right = 659.0
-offset_bottom = 519.0
-texture = ExtResource("4_bx0t0")
-expand_mode = 1
-stretch_mode = 4
-
-[node name="Human Dominated Area" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
-layout_mode = 0
-offset_left = 815.0
-offset_top = 333.0
-offset_right = 1053.0
-offset_bottom = 525.0
-texture = ExtResource("5_5ufub")
-expand_mode = 1
-stretch_mode = 4
-
-[node name="Elephant" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
-layout_mode = 0
-offset_left = -53.0
-offset_top = 603.0
-offset_right = 353.0
-offset_bottom = 909.0
+offset_left = 360.0
+offset_top = -302.0
+offset_right = 766.0
+offset_bottom = 4.0
 texture = ExtResource("6_rb8a3")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="Meeple" type="TextureRect" parent="Background/How To Play/How to Play First Page/RichTextLabel"]
+[node name="Meeple" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Game Pieces Img"]
 layout_mode = 0
-offset_left = 455.0
-offset_top = 660.0
-offset_right = 700.0
-offset_bottom = 857.0
+offset_left = 848.0
+offset_top = -238.0
+offset_right = 1093.0
+offset_bottom = -41.0
 texture = ExtResource("7_nn60v")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="How to Play second Page" type="VBoxContainer" parent="Background/How To Play"]
+[node name="How to Play second Page" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
 visible = false
-layout_mode = 0
-offset_left = -1.0
-offset_top = -1.0
-offset_right = 1430.0
-offset_bottom = 942.0
-
-[node name="Label" type="Label" parent="Background/How To Play/How to Play second Page"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = ExtResource("1_vsc3h")
-theme_override_font_sizes/font_size = 50
-text = "How to Play"
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to Play second Page"]
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play second Page"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_2vj31")
@@ -298,7 +335,8 @@ theme_override_fonts/bold_font = ExtResource("1_vsc3h")
 theme_override_font_sizes/normal_font_size = 30
 theme_override_font_sizes/bold_font_size = 35
 bbcode_enabled = true
-text = "[b]Setup[/b]
+text = "
+[b]Setup[/b]
 The Player will first choose a scenario from the senario selection screen.
 
 
@@ -314,8 +352,8 @@ The Player will first choose a scenario from the senario selection screen.
 
 
 
-Then each player has to chose a unique role from role scenario.
-In the Role scenario, the player will be allowed to configure how many bots they want to play with, the bot's speed and difficulty.
+
+Then each player has to chose a unique role from role scenario. In the Role scenario, the player will be allowed to configure how many bots they want to play with, the bot's speed and difficulty.
 
 
 
@@ -330,45 +368,75 @@ In the Role scenario, the player will be allowed to configure how many bots they
 
 
 
-Each player will have 5 cards on hand at the start.
+
 "
 fit_content = true
+horizontal_alignment = 1
 
-[node name="Scenario" type="TextureRect" parent="Background/How To Play/How to Play second Page/RichTextLabel"]
+[node name="Scenario" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play second Page/RichTextLabel"]
 layout_mode = 0
-offset_left = 5.0
-offset_top = 68.0
-offset_right = 1509.0
-offset_bottom = 444.0
+offset_left = 400.0
+offset_top = 102.0
+offset_right = 1080.0
+offset_bottom = 478.0
 texture = ExtResource("9_txu54")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="Role" type="TextureRect" parent="Background/How To Play/How to Play second Page/RichTextLabel"]
+[node name="Role" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play second Page/RichTextLabel"]
 layout_mode = 0
-offset_left = 53.0
-offset_top = 548.0
-offset_right = 1445.0
-offset_bottom = 908.0
+offset_left = 408.0
+offset_top = 574.0
+offset_right = 1072.0
+offset_bottom = 942.0
 texture = ExtResource("10_frlbb")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="How to Play third Page2" type="VBoxContainer" parent="Background/How To Play"]
-visible = false
-layout_mode = 0
-offset_left = -3.0
-offset_right = 1428.0
-offset_bottom = 1646.0
-
-[node name="Label" type="Label" parent="Background/How To Play/How to Play third Page2"]
+[node name="How to Play third Page2" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = ExtResource("1_vsc3h")
-theme_override_font_sizes/font_size = 50
-text = "How to Play"
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to Play third Page2"]
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play third Page2"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Action Card[/b]
+1. On your turn play a card from your hand.
+2. Follow any on-screen prompts. 
+3. Press end turn to pass to the next player.
+4. If you didn't choose a card before the time runs out, your turn automatically ends.
+
+	[b]Colour	Theme[/b]
+
+			[b]Green[/b] 
+			Protects the environment or provide a way for both humans and elephants to coexist.
+
+			[b]Yellow[/b]
+			Neutral actions that reduce the human-elephant conflict, but creates risks for both elephants or humans.
+
+			[b]Red	[/b] 
+			 Harmful action that directly harm elephants, humans or the environment.
+
+			[b]Black[/b]
+			Special action cards that must be played if it is on your hand.
+
+
+[b]Winning [/b]
+The first player to meet all of their role's win conditions simultaneously wins.
+
+"
+fit_content = true
+
+[node name="How to Play fourth Page3" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play fourth Page3"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_2vj31")
@@ -406,14 +474,74 @@ fit_content = true
 
 [node name="Button" type="Button" parent="Background/How To Play"]
 layout_mode = 0
-offset_left = 1246.0
-offset_top = 915.0
-offset_right = 1425.0
-offset_bottom = 989.0
+offset_left = 1320.0
+offset_top = 949.0
+offset_right = 1451.0
+offset_bottom = 999.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("1_vsc3h")
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 26
 text = "Continue"
+
+[node name="Button2" type="Button" parent="Background/How To Play"]
+layout_mode = 0
+offset_top = 949.0
+offset_right = 131.0
+offset_bottom = 999.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 26
+text = "Back"
+
+[node name="How to Play third Page3" type="VBoxContainer" parent="Background/How To Play"]
+visible = false
+layout_mode = 0
+offset_left = -3.0
+offset_right = 1428.0
+offset_bottom = 1646.0
+
+[node name="Label" type="Label" parent="Background/How To Play/How to Play third Page3"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 50
+text = "How to Play"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to Play third Page3"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Action Card[/b]
+1. On your turn play a card from your hand.
+2. Follow any on-screen prompts. 
+3. Press end turn to pass to the next player.
+4. If you didn't choose a card before the time runs out, your turn automatically ends.
+
+	[b]Colour	Theme[/b]
+
+			[b]Green[/b] 
+			Protects the environment or provide a way for both humans and elephants to coexist.
+
+			[b]Yellow[/b]
+			Neutral actions that reduce the human-elephant conflict, but creates risks for both elephants or humans.
+
+			[b]Red	[/b] 
+			 Harmful action that directly harm elephants, humans or the environment.
+
+			[b]Black[/b]
+			Special action cards that must be played if it is on your hand.
+
+
+[b]Winning [/b]
+The first player to meet all of their role's win conditions simultaneously wins.
+
+"
+fit_content = true
 
 [node name="Glossary" type="Control" parent="Background"]
 visible = false
@@ -464,6 +592,7 @@ expand_mode = 1
 stretch_mode = 4
 
 [node name="About MEME" type="VBoxContainer" parent="Background"]
+visible = false
 layout_mode = 0
 offset_left = 433.0
 offset_top = 43.0
@@ -476,6 +605,7 @@ theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("1_vsc3h")
 theme_override_font_sizes/font_size = 50
 text = "About MEME"
+horizontal_alignment = 1
 
 [node name="Forest" type="TextureRect" parent="Background/About MEME/Label"]
 layout_mode = 0
@@ -504,3 +634,4 @@ The original Trunk Tales board game was designed by MEME to raise awareness abou
 
 Building on the success of the physical board game, this digital version makes Trunk Tales more accessible to a wider audience. It also introduces AI-powered players, allowing users to play solo while still learning about real-world conservation challenges. The goal is to educate and inspire players to understand how informed decisions and community involvement can lead to positive environmental outcomes."
 fit_content = true
+horizontal_alignment = 1

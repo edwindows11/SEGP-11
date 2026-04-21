@@ -56,6 +56,8 @@ func update_camera_transform() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _is_board_input_blocked():
+		return
 	if event is InputEventMouseButton:
 		#zoom
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -89,6 +91,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_E:
 			_snap_rotate(90.0)
 
+
+func _is_board_input_blocked() -> bool:
+	for node in get_tree().get_nodes_in_group("blocks_board_input"):
+		if node is Control and node.visible:
+			return true
+	return false
 
 # Snap to the nearest multiple of 90°
 func _snap_rotate(degrees: float) -> void:

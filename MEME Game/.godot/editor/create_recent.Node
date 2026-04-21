@@ -1,10 +1,10 @@
+VBoxContainer
+Control
 Button
 RichTextLabel
 Panel
 TextureButton
 TextureRect
-Control
-VBoxContainer
 Label
 Camera3D
 Node3D

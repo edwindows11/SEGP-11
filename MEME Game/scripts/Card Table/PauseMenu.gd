@@ -16,12 +16,16 @@ func toggle_pause() -> void:
 	var tree = get_tree()
 	tree.paused = not tree.paused
 	visible = tree.paused
-	
+
 	if visible:
+		# Close any UI overlay that would render on top of the pause menu		
+		var ui = get_parent()
+		if ui and ui.has_method("_close_recent_cards_overlay"):
+			ui._close_recent_cards_overlay()
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	else:
 		# Restore mouse mode if needed
-		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE) 
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func _on_resume_pressed() -> void:
 	toggle_pause()

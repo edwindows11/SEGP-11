@@ -786,20 +786,37 @@ func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 
 # Called from _process when state == WAITING_CHOICE and op == convert_any_any
 func _bot_confirm_convert_any_any_type() -> void:
-	# Hard always picks FOREST; medium and easy vary
+	# CardEffects rejects picks that match the source tile's current type and leaves
+	# state in WAITING_CHOICE, so _process would call this again every frame with the
+	# same deterministic pick — infinite loop. Always choose a type that differs from
+	# the source.
+	var source_key: Vector2i = card_effects._pending_convert_any_key
+	var source_entry = GameState.tile_registry.get(source_key, {})
+	var source_type: int = source_entry.get("type", -1)
+
+	var options: Array = [GameState.TileType.FOREST, GameState.TileType.HUMAN, GameState.TileType.PLANTATION]
+	if source_type in options:
+		options.erase(source_type)
+
 	var difficulty: Difficulty = bot_players.get(_current_bot_player, Difficulty.EASY)
 	var forest_count := GameState.count_tiles_of_type(GameState.TileType.FOREST)
+	var chosen: int = options[0]
 	match difficulty:
 		Difficulty.EASY:
-			var choice = randi() % 3
-			card_effects.confirm_convert_any_any_type_selected(choice)
+			chosen = options[randi() % options.size()]
 		Difficulty.MEDIUM:
-			if forest_count < 12:
-				card_effects.confirm_convert_any_any_type_selected(GameState.TileType.FOREST)
+			if forest_count < 12 and GameState.TileType.FOREST in options:
+				chosen = GameState.TileType.FOREST
+			elif GameState.TileType.PLANTATION in options:
+				chosen = GameState.TileType.PLANTATION
 			else:
-				card_effects.confirm_convert_any_any_type_selected(GameState.TileType.PLANTATION)
+				chosen = options[0]
 		Difficulty.HARD:
-			card_effects.confirm_convert_any_any_type_selected(GameState.TileType.FOREST)
+			if GameState.TileType.FOREST in options:
+				chosen = GameState.TileType.FOREST
+			else:
+				chosen = options[0]
+	card_effects.confirm_convert_any_any_type_selected(chosen)
 
 func _bot_confirm_steal_target() -> void:
 	var thief := _current_bot_player
@@ -900,6 +917,8 @@ func _on_bot_effects_complete() -> void:
 	# Village Head: play a 2nd coloured card after the 1st card resolves
 	if ability_role == "Village Head" and _vh_activated and ui.cards_played_this_turn == 1 and card_effects.state == 0:
 		_vh_first_card_id = _bot_played_card_id
+		#erase picked cards first
+		GameState.player_hands[_current_bot_player].erase(_vh_first_card_id)
 		var hand: Array = GameState.player_hands[_current_bot_player]
 		# VH must keep at least 1 card in hand
 		if hand.size() >= 2:

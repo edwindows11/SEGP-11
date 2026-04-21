@@ -1,10 +1,10 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1776667246
+::res://::1776773977
 export_presets.cfg::TextFile::-1::1775722203::0::1::::<><><>0<>0<><>::
 README.md::TextFile::-1::1775614463::0::1::::<><><>0<>0<><>::
 Updates.md::TextFile::-1::1775614463::0::1::::<><><>0<>0<><>::
 ::res://assets/::1775614482
-::res://assets/Card/::1775614480
+::res://assets/Card/::1776667250
 Abandonment of Land.png::CompressedTexture2D::7490660483449098523::1775614479::1776667250::1::::<><><>0<>0<>d4ba0d07b35cb034c5252e8d47df9f10<>res://.godot/imported/Abandonment of Land.png-32e97931d1380dfde0bcbe85b09266d7.ctex::
 Abandonment of Oil Palm Areas.png::CompressedTexture2D::8701439601231052::1775614479::1776667250::1::::<><><>0<>0<>b58ab44bec1f17728c839e1176f306d4<>res://.godot/imported/Abandonment of Oil Palm Areas.png-11272468c52e074372e0e5ae6fc75924.ctex::
 Alternative Livelihood.png::CompressedTexture2D::7573761236742611142::1775614479::1776667250::1::::<><><>0<>0<>e1a6a19671fd210467ab154685b2c8c7<>res://.godot/imported/Alternative Livelihood.png-f7eb72d9a2bf6e7a2239d4bc727b4863.ctex::
@@ -78,7 +78,7 @@ IntroRustG-Base2Line.otf::FontFile::8756107306885364450::1775614481::1775614481:
 IntroScriptR-H2Base.otf::FontFile::1052930605542573473::1775614481::1775614481::1::::<><><>0<>0<>24a999407ded279a653abeb2a149821f<>res://.godot/imported/IntroScriptR-H2Base.otf-e48ccef969d8ac421d9d5037d72f5c3e.fontdata::
 LeagueSpartan-Bold.ttf::FontFile::3947041734537440428::1775614481::1775614481::1::::<><><>0<>0<>ad2ceefa0abbe3ff3d63550a5ec73dab<>res://.godot/imported/LeagueSpartan-Bold.ttf-de6484f3ec52eb02694383d86d970526.fontdata::
 LeagueSpartan-Regular.ttf::FontFile::2022419239132820722::1775614481::1775614481::1::::<><><>0<>0<>ab3a64e1d882b50a4d3b9a4f987f1cbc<>res://.godot/imported/LeagueSpartan-Regular.ttf-9580987c403da22f9a4fc43fe625edb3.fontdata::
-::res://assets/How To Play/::1775614481
+::res://assets/How To Play/::1776667250
 Card 2.png::CompressedTexture2D::8027594557959328294::1775614481::1776667249::1::::<><><>0<>0<>56e220addfa419fa5097605f4e9c417d<>res://.godot/imported/Card 2.png-b6a29785e01b8ae24f8632e21ab296b6.ctex::
 Card 3.png::CompressedTexture2D::5366754730092721758::1775614481::1776667249::1::::<><><>0<>0<>d4d806572a2936581935ba3b7fc44078<>res://.godot/imported/Card 3.png-97720bb723d9397cb812453530901e91.ctex::
 Card.png::CompressedTexture2D::2313815521655816558::1775614481::1776667249::1::::<><><>0<>0<>134de441e74bd7e59d21bd1a373e0e1c<>res://.godot/imported/Card.png-1297584b7ba842b678c43d4e4125d061.ctex::
@@ -88,7 +88,7 @@ MEME.png::CompressedTexture2D::8221668097225072966::1775614481::1776667249::1:::
 Role Selection.png::CompressedTexture2D::7418481030179524749::1775614481::1776667250::1::::<><><>0<>0<>e3c777454334d266005fa3d754d6855a<>res://.godot/imported/Role Selection.png-3dd910c25d852d9dfac17f3f19c96560.ctex::
 Scenario Selection.png::CompressedTexture2D::3617822799213895827::1775614481::1776667250::1::::<><><>0<>0<>6132a34cdf57185edc7d55dc835e78f7<>res://.godot/imported/Scenario Selection.png-1777bc7f0fe2347a7c6aabb67f01ea1f.ctex::
 Tile.png::CompressedTexture2D::2230910355600302201::1775614481::1776667250::1::::<><><>0<>0<>b3c5ea2b88e7b74ebcd1c274c5e1522c<>res://.godot/imported/Tile.png-a1b53a4ac9be58df18a6a775111b75a2.ctex::
-::res://assets/MainMenu/::1775614481
+::res://assets/MainMenu/::1776667250
 background.png::CompressedTexture2D::8189886593277679584::1775614481::1776667250::1::::<><><>0<>0<>45ee992525bec4357aba625e628a7e28<>res://.godot/imported/background.png-02aa4f8d08fe9d58d5222d72e208b249.ctex::
 MEME logo.png::CompressedTexture2D::5759008416744517858::1775614481::1775614481::1::::<><><>0<>0<>76f7ceebcb78f0400df8a7e70a3157d6<>res://.godot/imported/MEME logo.png-689333c34e353a71f963c93a43642c6f.ctex::
 Title.png::CompressedTexture2D::1930486388461301564::1775614481::1775614481::1::::<><><>0<>0<>a0b619c8f502e93a94c0f2addb286798<>res://.godot/imported/Title.png-5197aeb7550a16cbe7b20dca54c08ade.ctex::
@@ -108,7 +108,7 @@ Meeple2D.png::CompressedTexture2D::8060161915930704971::1775614482::1775614482::
 Meeple.tscn::PackedScene::7580436012762488179::1775614482::0::1::::<><><>0<>0<><>::uid://chv44r2w6i86d::::res://assets/Pieces/blend/Meeple2.blend<>uid://bnfbinc8sdors::::res://scripts/Pieces/meeple.gd<>uid://p1adtaq8li1b::::res://assets/Pieces/Outline.tres
 Outline.tres::StandardMaterial3D::1106512832272915709::1775614482::0::1::::<><><>0<>0<><>::
 ::res://assets/Pieces/blend/::1775614482
-::res://assets/Role Card/::1775614482
+::res://assets/Role Card/::1776667249
 Conservationist.png::CompressedTexture2D::36849127972206636::1775614482::1776667249::1::::<><><>0<>0<>898305f8b282b1c03cc4fdeb36f4b23f<>res://.godot/imported/Conservationist.png-61b8f2778144d5a19fb5ed0901e8f31c.ctex::
 Ecotourism Manager.png::CompressedTexture2D::6006588552941788082::1775614482::1776667249::1::::<><><>0<>0<>460d4fdc89d18aefa8a6903b78e6a8e5<>res://.godot/imported/Ecotourism Manager.png-fd9baffafaa80eadc8e5b38a835b47f3.ctex::
 Environmental Consultant.png::CompressedTexture2D::5984037919100032088::1775614482::1776667249::1::::<><><>0<>0<>921cef59511cbfe540c500bbc790361b<>res://.godot/imported/Environmental Consultant.png-1f0cd33c5bdb97d71211b87ce49f3e63.ctex::
@@ -119,7 +119,7 @@ Researcher.png::CompressedTexture2D::8567571089326729449::1775614482::1776667249
 RoleCard.png::CompressedTexture2D::5491501723094360034::1775614482::1776667249::1::::<><><>0<>0<>15e972664ca9a6290b9603c0d4af33b3<>res://.godot/imported/RoleCard.png-5a259d2b6ea02c4cdbee9bce98f0cb10.ctex::
 Village Head.png::CompressedTexture2D::2667681117965538753::1775614482::1776667249::1::::<><><>0<>0<>3d33a96def593abd3e1a3783660eadd1<>res://.godot/imported/Village Head.png-896f7bd9cb84138e77eb67d1a9702d78.ctex::
 Wildlife Department.png::CompressedTexture2D::3240006499625120513::1775614482::1776667249::1::::<><><>0<>0<>82585098d671b81fc83d502a91edf071<>res://.godot/imported/Wildlife Department.png-1691e1a53002fae21786ce3ece8252f4.ctex::
-::res://assets/Tiles/::1775614482
+::res://assets/Tiles/::1776667250
 ForestTile.glb::PackedScene::7963592313741091600::1775614482::1775614482::1::::<><><>0<>0<>4d4e904b01da2c003509408a08b23074<>res://.godot/imported/ForestTile.glb-a1bd726e3b4e129e16863911103ec2c9.scn::uid://dqup5nvo0xvwl::::res://assets/Tiles/ForestTile_3.png
 ForestTile_1.png::CompressedTexture2D::2171488458284129217::1775614482::1776667250::1::::<><><>0<>0<>a2a25c0c6f5dcbf5ab18f37400f44a45<>res://.godot/imported/ForestTile_1.png-33b37625549bb8bc620cae8505c89b8c.s3tc.ctex::
 ForestTile_3.png::CompressedTexture2D::8324536148992538643::1775614482::1776667250::1::::<><><>0<>0<>5c62ba50732589250d352c2f82391d42<>res://.godot/imported/ForestTile_3.png-eb9e2a6b274f8e9fe308cc098495889e.s3tc.ctex::
@@ -127,18 +127,18 @@ HumanDominatedTile.glb::PackedScene::1675755418352003013::1775614482::1775614482
 HumanDominatedTile_1.png::CompressedTexture2D::5927078993202749137::1775614482::1776667250::1::::<><><>0<>0<>205502cc586c3fe6fc9d317a7ab547a1<>res://.godot/imported/HumanDominatedTile_1.png-f22e5c3a31fa4cc3f6dfb8ea70ac8a83.s3tc.ctex::
 PlantationTile.glb::PackedScene::8619284372743211699::1775614482::1775614482::1::::<><><>0<>0<>d59e1d6636171e2a9b05da42518c3d2f<>res://.godot/imported/PlantationTile.glb-b2bbc1a335dc2afa2dd050aec7f3e382.scn::uid://wm2eilf5yedk::::res://assets/Tiles/PlantationTile_2.png
 PlantationTile_2.png::CompressedTexture2D::1570574032513608832::1775614482::1776667250::1::::<><><>0<>0<>0f21a61be5c9aaae61167d0ebb547874<>res://.godot/imported/PlantationTile_2.png-5e9624a3443d0d05a5af0e3f50f04d47.s3tc.ctex::
-::res://scenes/::1775825639
+::res://scenes/::1776699476
 ActionLog.tscn::PackedScene::-1::1775794125::0::1::::<><><>0<>0<><>::res://scripts/Card Table/ActionLog.gd
 Card.tscn::PackedScene::3774748604761572987::1775791547::0::1::::<><><>0<>0<><>::uid://bkonqrcid8iyp::::res://scripts/Card/Card.gd<>uid://ehkua2cdycq::::res://assets/Card/Abandonment of Oil Palm Areas.png
 CardTable.tscn::PackedScene::6986705891419701701::1775794423::0::1::::<><><>0<>0<><>::uid://b5fykedev53t2::::res://scripts/Card Table/card_table.gd<>uid://oti8gk6h0m1r::::res://scripts/Card Table/card_table_ui.gd<>res://scenes/ActionLog.tscn<>uid://dktt2i1ceg3ah::::res://scripts/Card Table/Board.gd<>uid://btarkqtbmpr2x::::res://assets/CardTable/Steal/Steal container.png<>uid://cgqxld4isd01::::res://assets/CardTable/Skipped.png<>uid://dh6r7eebvovxe::::res://scripts/Card Table/CameraControls.gd<>uid://c1aemo1creo1i::::res://assets/CardTable/PLAY (1).png<>uid://02nmxj2l05xh::::res://scenes/PauseMenu.tscn<>uid://camxy31gjo2vv::::res://assets/Font/IntroHeadR-Base.otf<>uid://s6nbqxu400wx::::res://assets/CardTable/PLAY (1) Hover.png<>uid://ckhos8y525rsj::::res://assets/CardTable/PLAY Disable.png<>uid://b7arqou58uulu::::res://assets/CardTable/PAUSE.png<>uid://b8hkaa3sejpnn::::res://assets/CardTable/Special Abilit_Disable.png<>uid://bf1yk1nhgw672::::res://assets/CardTable/Special Ability.png<>uid://df1dw6qutaro5::::res://assets/CardTable/Special Abilit_Hover.png<>res://scripts/Card Table/play_node.gd
-How to Play.tscn::PackedScene::5093261575779970301::1775825639::0::1::::<><><>0<>0<><>::uid://ckie1dykhjfiv::::res://scripts/HowToPlay.gd<>uid://bwh8g3ahyoj61::::res://assets/Font/LeagueSpartan-Bold.ttf<>uid://32w7jq2grok5::::res://assets/Font/LeagueSpartan-Regular.ttf<>uid://565dk5asxdr2::::res://assets/Tiles/ForestTile_1.png<>uid://wm2eilf5yedk::::res://assets/Tiles/PlantationTile_2.png<>uid://cqpeeitnqiext::::res://assets/Tiles/HumanDominatedTile_1.png<>uid://b4bqbycfmx71t::::res://assets/How To Play/Elephant.png<>uid://yy7sfl5udh3o::::res://assets/How To Play/Meeple.png<>uid://773g6l4khhes::::res://assets/How To Play/Card.png<>uid://dmmvkr2rgrmqo::::res://assets/How To Play/Card 2.png<>uid://o4v2vlqp48tp::::res://assets/CardTable/Scenario Selection.png<>uid://cipxwwiyv46fa::::res://assets/How To Play/Card 3.png<>uid://bac3oerinjpjq::::res://assets/CardTable/Role Selection.png<>uid://61w1dmn1gi0x::::res://assets/How To Play/Tile.png<>uid://dpevw4ipu5m1s::::res://assets/How To Play/MEME.png
+How to Play.tscn::PackedScene::5093261575779970301::1776699476::0::1::::<><><>0<>0<><>::uid://ckie1dykhjfiv::::res://scripts/HowToPlay.gd<>uid://bwh8g3ahyoj61::::res://assets/Font/LeagueSpartan-Bold.ttf<>uid://32w7jq2grok5::::res://assets/Font/LeagueSpartan-Regular.ttf<>uid://565dk5asxdr2::::res://assets/Tiles/ForestTile_1.png<>uid://wm2eilf5yedk::::res://assets/Tiles/PlantationTile_2.png<>uid://cqpeeitnqiext::::res://assets/Tiles/HumanDominatedTile_1.png<>uid://b4bqbycfmx71t::::res://assets/How To Play/Elephant.png<>uid://yy7sfl5udh3o::::res://assets/How To Play/Meeple.png<>uid://773g6l4khhes::::res://assets/How To Play/Card.png<>uid://dmmvkr2rgrmqo::::res://assets/How To Play/Card 2.png<>uid://o4v2vlqp48tp::::res://assets/CardTable/Scenario Selection.png<>uid://cipxwwiyv46fa::::res://assets/How To Play/Card 3.png<>uid://bac3oerinjpjq::::res://assets/CardTable/Role Selection.png<>uid://61w1dmn1gi0x::::res://assets/How To Play/Tile.png<>uid://dpevw4ipu5m1s::::res://assets/How To Play/MEME.png
 main.tscn::PackedScene::3291442695496918881::1775794126::0::1::::<><><>0<>0<><>::uid://c53lmlm3k7fop::::res://scripts/Card Table/grid_manager.gd
 MainMenu.tscn::PackedScene::1448884684200451426::1775614483::0::1::::<><><>0<>0<><>::uid://doxiianmbebdg::::res://assets/MainMenu/background.png<>uid://2re3gb8w87k7::::res://assets/MainMenu/Title.png<>uid://bumw8dy524x60::::res://assets/MainMenu/buttons/Play.png<>uid://86wvpud0j1rp::::res://assets/Pieces/Elephant2D.png<>uid://dm3nxownjha4j::::res://assets/Pieces/Meeple2D.png<>uid://dw47u1s6mrtc5::::res://assets/MainMenu/buttons/Play_Hover.png<>uid://crer7at5wljon::::res://scripts/MainMenu/Buttons/start_button.gd<>uid://tvx8qyhhbhon::::res://assets/MainMenu/buttons/HowToPlay.png<>uid://d2ipi4thqvaer::::res://assets/MainMenu/buttons/HowToPlay_Hover.png<>uid://crufckq7qphc6::::res://scripts/MainMenu/Buttons/exit_button.gd<>uid://drhrmogiewoxo::::res://assets/MainMenu/buttons/Exit.png<>uid://cnhwglppb2ux5::::res://scripts/MainMenu/Buttons/how_to_play_button.gd<>uid://bws14o5c0plo1::::res://assets/MainMenu/buttons/Exit_Hover.png<>uid://cobya6p65w4jm::::res://assets/MainMenu/MEME logo.png
 PauseMenu.tscn::PackedScene::1811271263926013605::1775794223::0::1::::<><><>0<>0<><>::uid://j23ajotl4qw5::::res://scripts/Card Table/PauseMenu.gd
 RoleSelection.tscn::PackedScene::3085309343925659114::1775614483::0::1::::<><><>0<>0<><>::uid://b4kfkrg3hxequ::::res://scripts/RoleSelection.gd<>uid://r35ud6vpntk::::res://assets/Role Card/Conservationist.png<>uid://doxiianmbebdg::::res://assets/MainMenu/background.png
 ScenarioSelect.tscn::PackedScene::185917438114360158::1775614483::0::1::::<><><>0<>0<><>::uid://j6l7ni7ki42p::::res://scripts/ScenarioSelect.gd<>uid://doxiianmbebdg::::res://assets/MainMenu/background.png
-::res://scripts/::1775794247
-HowToPlay.gd::GDScript::5491534319521022129::1775614483::0::1::::<>Control<><>0<>0<><>::
+::res://scripts/::1776697119
+HowToPlay.gd::GDScript::5491534319521022129::1776697119::0::1::::<>Control<><>0<>0<><>::
 RoleSelection.gd::GDScript::4442863273087753580::1775784998::0::1::::<>Control<><>0<>0<><>::
 ScenarioData.gd::GDScript::4788294458591493734::1775614483::0::1::::ScenarioData<>RefCounted<><>0<>0<><>::
 ScenarioSelect.gd::GDScript::696421032073165305::1775784997::0::1::::<>Control<><>0<>0<><>::
@@ -147,14 +147,14 @@ Card.gd::GDScript::3118029198594064919::1775614483::0::1::::<>Control<><>0<>0<><
 CardData.gd::GDScript::8308118792669831157::1775614483::0::1::::CardData<>RefCounted<><>0<>0<><>::
 CardEffects.gd::GDScript::5574388463560760133::1775835283::0::1::::<>Node<><>0<>0<><>::
 RoleEffect.gd::GDScript::404841107000927582::1775786659::0::1::::<>Node<><>0<>0<><>::
-::res://scripts/Card Table/::1776616724
+::res://scripts/Card Table/::1776687722
 ActionLog.gd::GDScript::5666482020251196246::1775699452::0::1::::<>VBoxContainer<><>0<>0<><>::
 Board.gd::GDScript::7901575964532958119::1775614483::0::1::::<>Node3D<><>0<>0<><>::
 bot.gd::GDScript::307146462602611153::1775794688::0::1::::<>Node<><>0<>0<><>::
 CameraControls.gd::GDScript::7715669217550061510::1775706128::0::1::::<>Camera3D<><>0<>0<><>::
-card_table.gd::GDScript::4503883162308646289::1776522298::0::1::::<>Node3D<><>0<>0<><>::
-card_table_ui.gd::GDScript::1022411987407577293::1776616724::0::1::::<>Control<><>0<>0<><>::
-GameState.gd::GDScript::8753606182841504797::1775785125::0::1::::<>Node<><>0<>0<><>::
+card_table.gd::GDScript::4503883162308646289::1776687722::0::1::::<>Node3D<><>0<>0<><>::
+card_table_ui.gd::GDScript::1022411987407577293::1776687705::0::1::::<>Control<><>0<>0<><>::
+GameState.gd::GDScript::8753606182841504797::1776686519::0::1::::<>Node<><>0<>0<><>::
 grid_manager.gd::GDScript::6936999167669461023::1775715946::0::1::::<>Node3D<><>0<>0<><>::
 PauseMenu.gd::GDScript::689138363115911362::1775785135::0::1::::<>Control<><>0<>0<><>::
 play_node.gd::GDScript::326415412486713567::1775794388::0::1::::<>Node3D<><>0<>0<><>::

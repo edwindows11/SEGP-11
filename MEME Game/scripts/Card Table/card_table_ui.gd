@@ -1037,6 +1037,7 @@ func _setup_recent_cards_overlay_ui() -> void:
 
 	recent_cards_overlay_panel = PanelContainer.new()
 	recent_cards_overlay_panel.name = "_recent_cards_overlay"
+	recent_cards_overlay_panel.add_to_group("blocks_board_input")
 	recent_cards_overlay_panel.visible = false
 	recent_cards_overlay_panel.set_anchors_preset(Control.PRESET_CENTER)
 	recent_cards_overlay_panel.offset_left = -560

@@ -233,6 +233,8 @@ func _on_clear_tile_selection() -> void:
 	$Board.clear_all_highlights()
 
 func _on_request_em_choice() -> void:
+	if _is_bot_turn():
+		return
 	UI.show_em_choice_popup(card_effects.confirm_em_choice)
 	
 func _on_po_ability_requested() -> void:
@@ -249,6 +251,8 @@ func _on_gov_ability_requested() -> void:
 
 
 func _on_request_gov_steal_popup() -> void:
+	if _is_bot_turn():
+		return
 	UI.show_steal_popup(card_effects, "gov")
 
 func _on_cons_ability_requested() -> void:
@@ -284,9 +288,13 @@ func _on_ec_ability_requested() -> void:
 
 	
 func _on_request_steal_popup() -> void:
+	if _is_bot_turn():
+		return
 	UI.show_steal_popup(card_effects)
 
 func _on_request_convert_type_popup(current_type: int) -> void:
+	if _is_bot_turn():
+		return
 	UI.show_convert_type_popup(card_effects, current_type)
 
 func _track_card_stats_and_discard(card_id: String) -> void:
