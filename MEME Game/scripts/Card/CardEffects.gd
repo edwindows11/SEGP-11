@@ -121,7 +121,7 @@ func _advance_effect() -> void:
 		"move_e":            _begin_move("elephant", current_effect)
 		"move_v":            _begin_move("villager", current_effect)
 		"em_extra_move":     _do_em_extra_move()
-		"move_all_e_auto":   _do_move_all_e_auto(current_effect)
+		"move_all_e_to":     _do_move_all_e_auto(current_effect)
 		"steal":             _do_steal()
 		"gov_steal":         _do_gov_steal()
 		"return_to_hand":    _do_return_card()
