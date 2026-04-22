@@ -36,6 +36,7 @@ var player_stats: Array = [
 ]
 var cards_played_this_turn: int = 0
 var skip_next_turn = false
+var is_game_over: bool = false
 
 # Wildlife Department special ability state
 var wildlife_dept_drawn_cards: Array = []  # the 2 bonus card IDs drawn each turn
@@ -78,6 +79,7 @@ func reset() -> void:
 	]
 	cards_played_this_turn = 0
 	skip_next_turn = false
+	is_game_over = false
 	wildlife_dept_drawn_cards.clear()
 	ec_borrowed_ability = ""
 	initial_forest_count = 0
@@ -430,6 +432,8 @@ func _pop_from_draw_pile() -> String:
 # --- Turn Management ---
 
 func advance_turn() -> void:
+	if is_game_over:
+		return
 	current_player_index = (current_player_index + 1) % player_count
 	_expire_elephant_immunity_for_player(current_player_index)
 	cards_played_this_turn = 0

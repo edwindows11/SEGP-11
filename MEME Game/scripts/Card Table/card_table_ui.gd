@@ -1596,6 +1596,12 @@ func _trigger_win(player_index: int, role_name: String) -> void:
 	if is_game_over:
 		return
 	is_game_over = true
+	# Freeze the game so turns/timer/bots don't continue past the win.
+	GameState.is_game_over = true
+	if turn_timer:
+		turn_timer.stop()
+	_set_play_btn_disabled(true)
+	hide_instruction()
 	if win_screen_panel:
 		win_screen_panel.visible = true
 		# Fade in animation

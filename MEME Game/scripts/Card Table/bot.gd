@@ -101,6 +101,9 @@ func _on_turn_changed(player_index: int, _role_name: String, is_skipped: bool) -
 func _bot_take_turn(player_index: int) -> void:
 	if not _bot_is_acting:
 		return
+	if GameState.is_game_over:
+		_bot_is_acting = false
+		return
 
 	var difficulty: Difficulty = bot_players.get(player_index, Difficulty.EASY)
 	var hand: Array = GameState.player_hands[player_index]
