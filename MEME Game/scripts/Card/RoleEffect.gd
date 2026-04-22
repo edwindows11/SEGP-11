@@ -49,17 +49,17 @@ const DESCRIPTIONS := {
 	WILDLIFE_DEPARTMENT:   "At turn start, draw 2 bonus cards then discard 1.",
 }
 
-static func is_valid_role(role: String) -> bool:
+func is_valid_role(role: String) -> bool:
 	return role in ALL_ROLES
 
-static func has_button_ability(role: String) -> bool:
+func has_button_ability(role: String) -> bool:
 	return role in BUTTON_ROLES
 
-static func description_for(role: String) -> String:
+func description_for(role: String) -> String:
 	return DESCRIPTIONS.get(role, "")
 
 # Returns the role ability of player_index
-static func effective_role(player_index: int) -> String:
+func effective_role(player_index: int) -> String:
 	if player_index < 0 or player_index >= GameState.player_roles.size():
 		return ""
 	var role: String = GameState.player_roles[player_index]
@@ -69,7 +69,7 @@ static func effective_role(player_index: int) -> String:
 
 # Per-turn ability-used flag accessors 
 
-static func ability_used_this_turn(role: String, ui_node: Node) -> bool:
+func ability_used_this_turn(role: String, ui_node: Node) -> bool:
 	match role:
 		PLANTATION_OWNER:   return ui_node.get("cards_played_this_turn") != 0
 		GOVERNMENT:         return bool(ui_node.get("gov_used_ability_this_turn"))
@@ -80,14 +80,14 @@ static func ability_used_this_turn(role: String, ui_node: Node) -> bool:
 		_:                  return false
 
 # Whether the special-ability button should be enabled for the current player.
-static func can_use_button(role: String, ui_node: Node) -> bool:
+func can_use_button(role: String, ui_node: Node) -> bool:
 	if not has_button_ability(role):
 		return false
 	return not ability_used_this_turn(role, ui_node)
 
 # When special ability button is pressed
 
-static func trigger_special_ability(role: String, ui_node: Node, card_effects: Node, target_index: int = -1) -> void:
+func trigger_special_ability(role: String, ui_node: Node, card_effects: Node, target_index: int = -1) -> void:
 	var resolved := role
 	if role == ENVIRONMENTAL_CONSULT:
 		resolved = GameState.ec_borrowed_ability
@@ -111,19 +111,19 @@ static func trigger_special_ability(role: String, ui_node: Node, card_effects: N
 
 # Wildlife Department helpers
 
-static func on_turn_start(player_index: int) -> void:
+func on_turn_start(player_index: int) -> void:
 	var role := effective_role(player_index)
 	if role == WILDLIFE_DEPARTMENT:
 		GameState.wildlife_dept_draw_bonus(player_index)
 
-static func wildlife_discard(player_index: int, card_id: String) -> void:
+func wildlife_discard(player_index: int, card_id: String) -> void:
 	GameState.wildlife_dept_discard_bonus(player_index, card_id)
 
 # Village Head play-limit helper
 
 # VH gets 2 only after pressing the Special Ability button (vh_activated=true).
 # Pass the ui_node if available so we can check the flag; without it, assume 1.
-static func max_cards_per_turn(role: String, ui_node: Node = null) -> int:
+func max_cards_per_turn(role: String, ui_node: Node = null) -> int:
 	var is_vh := (role == VILLAGE_HEAD) or (role == ENVIRONMENTAL_CONSULT and GameState.ec_borrowed_ability == VILLAGE_HEAD)
 	if is_vh and ui_node != null and bool(ui_node.get("vh_used_ability_this_turn")):
 		return 2
@@ -143,10 +143,10 @@ const GOAL_DISPLAY := {
 	GOVERNMENT:            { "title": "Government Goal",        "color": Color(0.6, 0.85, 1.0) },
 }
 
-static func goal_title(role: String) -> String:
+func goal_title(role: String) -> String:
 	return GOAL_DISPLAY.get(role, {}).get("title", role + " Goal")
 
-static func goal_color(role: String) -> Color:
+func goal_color(role: String) -> Color:
 	return GOAL_DISPLAY.get(role, {}).get("color", Color(1.0, 0.8, 0.2))
 
 # Compute the live goal-tracker payload for `player_index`. Returns a Dictionary
@@ -154,7 +154,7 @@ static func goal_color(role: String) -> Color:
 # render any role with one generic panel layout instead of nine bespoke blocks.
 #
 # Returns: { title: String, color: Color, line1: String, line2: String, won: bool }
-static func compute_goal(player_index: int) -> Dictionary:
+func compute_goal(player_index: int) -> Dictionary:
 	if player_index < 0 or player_index >= GameState.player_roles.size():
 		return {}
 	var role: String = GameState.player_roles[player_index]

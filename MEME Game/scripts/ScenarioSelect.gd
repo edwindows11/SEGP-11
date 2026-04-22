@@ -407,7 +407,7 @@ func _add_legend_item(parent: HBoxContainer, color: Color, label_text: String) -
 	parent.add_child(lbl)
 
 
-# --- Confirm → go to Role Selection ---
+# --- Confirm > go to Role Selection ---
 
 func _on_confirm_pressed() -> void:
 	# Store choice in GameState

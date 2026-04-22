@@ -119,7 +119,7 @@ func _process(_delta: float) -> void:
 	pass
 
 func _pause():
-	var pause_menu = $CanvasLayer/PauseMenu
+	var pause_menu = get_node_or_null("CanvasLayer/Control/PauseMenu")
 	if pause_menu:
 		pause_menu.toggle_pause()
 		return
@@ -298,36 +298,7 @@ func _on_request_convert_type_popup(current_type: int) -> void:
 	UI.show_convert_type_popup(card_effects, current_type)
 
 func _track_card_stats_and_discard(card_id: String) -> void:
-	var card_data = CardData.ALL_CARDS.get(card_id, {})
-	var card_color = card_data.get("color", Color.WHITE)
-	if card_color == Color.GREEN:
-		GameState.player_stats[GameState.current_player_index]["green_cards_played"] += 1
-	elif card_color == Color.RED:
-		GameState.player_stats[GameState.current_player_index]["red_cards_played"] += 1
-	elif card_color == Color.YELLOW:
-		GameState.player_stats[GameState.current_player_index]["yellow_cards_played"] += 1
-		
-	# Track researcher stats for cards that increase elephants/humans
-	var increases_e = false
-	var increases_v = false
-	if card_color in [Color.GREEN, Color.RED, Color.YELLOW]:
-		for fx in card_data.get("sub_effects", []):
-			var op = fx.get("op", "")
-			if op == "add_e": increases_e = true
-			if op == "add_v" or op == "add_v_in": increases_v = true
-			
-		if increases_e and increases_v:
-			GameState.player_stats[GameState.current_player_index]["both_inc_cards"] += 1
-		elif increases_e:
-			GameState.player_stats[GameState.current_player_index]["e_inc_cards"] += 1
-		elif increases_v:
-			GameState.player_stats[GameState.current_player_index]["v_inc_cards"] += 1
-	
-	# Track if the card played was Green, Yellow, or Red
-	if card_color == Color.GREEN or card_color == Color.YELLOW or card_color == Color.RED:
-		GameState.player_stats[GameState.current_player_index]["action_cards_played"] += 1
-	
-	GameState.discard_card(GameState.current_player_index, card_id)
+	GameState.record_played_card(GameState.current_player_index, card_id)
 
 
 # --- End turn ---

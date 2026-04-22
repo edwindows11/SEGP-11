@@ -7,9 +7,7 @@ signal card_selected(card)
 @onready var display = $TextureRect
 
 var original_position: Vector2
-var is_hovered = false
 var is_selected = false
-var index = 0
 var card_id: String = ""
 
 const HOVER_SCALE = Vector2(1.1, 1.1)

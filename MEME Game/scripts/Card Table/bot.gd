@@ -25,6 +25,7 @@ var _pending_selections: Array = []   # Queue of tile keys to feed to CardEffect
 var _action_timer: float = 0.0
 var _waiting_for_action: bool = false
 var _bot_is_acting: bool = false      # True while a bot is mid-turn
+var _bot_pre_card_ability: bool = false # True between a pre-card ability (Cons/LD) start and its await returning
 
 
 var _current_bot_player: int = -1 # number of bots
@@ -115,8 +116,10 @@ func _bot_take_turn(player_index: int) -> void:
 			_announce_bot_message(player_index, "uses Conservationist Special Ability!", true)
 			if not card_effects.request_tile_selection.is_connected(_on_bot_tile_selection_requested):
 				card_effects.request_tile_selection.connect(_on_bot_tile_selection_requested)
+			_bot_pre_card_ability = true
 			card_effects.execute_conservationist_ability(ui)
 			await card_effects.effects_complete
+			_bot_pre_card_ability = false
 			if not _bot_is_acting: return
 
 	elif ability_role == "Land Developer":
@@ -125,8 +128,10 @@ func _bot_take_turn(player_index: int) -> void:
 			_announce_bot_message(player_index, "uses Land Developer Special Ability!", true)
 			if not card_effects.request_tile_selection.is_connected(_on_bot_tile_selection_requested):
 				card_effects.request_tile_selection.connect(_on_bot_tile_selection_requested)
+			_bot_pre_card_ability = true
 			card_effects.execute_land_developer_ability(ui)
 			await card_effects.effects_complete
+			_bot_pre_card_ability = false
 			if not _bot_is_acting: return
 
 	# Village Head: activate ability to allow playing 2 cards this turn
@@ -479,7 +484,6 @@ func _score_card_hard(card_id: String, role: String, player_index: int, snap: Di
 
 	var forest_count: int     = snap.forest_count
 	var plantation_count: int = snap.plantation_count
-	var human_count: int      = snap.human_count
 	var total_elephants: int  = snap.total_elephants
 	var near_humans: bool     = snap.near_humans
 	var e_in_forest: int      = snap.e_in_forest
@@ -551,7 +555,7 @@ func _score_card_hard(card_id: String, role: String, player_index: int, snap: Di
 
 	# ── Role-specific win condition scoring ──────────────────────────────────
 	score += _role_win_score_hard(role, effects,
-		forest_count, plantation_count, human_count,
+		forest_count,
 		total_elephants, total_villagers, shortest_dist,
 		e_in_forest, player_index)
 
@@ -568,7 +572,7 @@ func _score_card_hard(card_id: String, role: String, player_index: int, snap: Di
 
 func _role_win_score_hard(
 		role: String, effects: Array,
-		forest_count: int, plantation_count: int, human_count: int,
+		forest_count: int,
 		total_elephants: int, total_villagers: int, shortest_dist: int,
 		e_in_forest: int, _player_index: int) -> float:
 
@@ -716,10 +720,6 @@ func _select_tile_medium(valid_keys: Array, op: String) -> Vector2i:
 
 # HARD
 func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
-	var role: String = ""
-	if _current_bot_player < GameState.player_roles.size():
-		role = GameState.player_roles[_current_bot_player]
-
 	match op:
 		"add_e":
 			# prefer forest tiles farthest from humans
@@ -908,7 +908,13 @@ func _tile_effect_bot(tile_key: Vector2i) -> void:
 func _on_bot_effects_complete() -> void:
 	if not _bot_is_acting:
 		return
-		
+	# Guard: this handler stays connected across turns. If a pre-card ability
+	# (Conservationist / Land Developer) is currently resolving, _bot_take_turn
+	# is still mid-await and will continue to the card-play section — don't end
+	# the turn prematurely.
+	if _bot_pre_card_ability:
+		return
+
 	# Environmental Consultant borrow another role's ability for the round,
 	# use the borrowed role if applicable
 	var role: String = GameState.player_roles[_current_bot_player] if _current_bot_player < GameState.player_roles.size() else ""
@@ -1038,90 +1044,30 @@ func _end_bot_turn() -> void:
 				if score < worst_score:
 					worst_score = score
 					worst_card = c
-			var worst_card_name = CardData.ALL_CARDS.get(worst_card, {}).get("name", worst_card)
 			GameState.wildlife_dept_discard_bonus(_current_bot_player, worst_card)
 			GameState.wildlife_dept_drawn_cards.clear()
 
-	# Mirror what card_table.gd _on_end_turn_button_pressed does:
-	# If Village Head played 2 cards, process the 1st card stats first
-	if _vh_first_card_id != "":
-		var card_id := _vh_first_card_id
-		_vh_first_card_id = ""
-		var card_data  = CardData.ALL_CARDS.get(card_id, {})
-		var card_color = card_data.get("color", Color.WHITE)
-		var p          := _current_bot_player
-
-		if card_color == Color.GREEN:
-			GameState.player_stats[p]["green_cards_played"] += 1
-		elif card_color == Color.RED:
-			GameState.player_stats[p]["red_cards_played"] += 1
-		elif card_color == Color.YELLOW:
-			GameState.player_stats[p]["yellow_cards_played"] += 1
-
-		var increases_e := false
-		var increases_v := false
-		if card_color in [Color.GREEN, Color.RED, Color.YELLOW]:
-			for fx in card_data.get("sub_effects",[]):
-				var op = fx.get("op","")
-				if op == "add_e": increases_e = true
-				if op in ["add_v","add_v_in"]: increases_v = true
-			if increases_e and increases_v:
-				GameState.player_stats[p]["both_inc_cards"] += 1
-			elif increases_e:
-				GameState.player_stats[p]["e_inc_cards"] += 1
-			elif increases_v:
-				GameState.player_stats[p]["v_inc_cards"] += 1
-
-		if card_color in [Color.GREEN, Color.YELLOW, Color.RED]:
-			GameState.player_stats[p]["action_cards_played"] += 1
-
-		if ui and ui.has_method("add_recent_card_for_player"):
-			ui.add_recent_card_for_player(p, card_id)
-		GameState.discard_card(p, card_id)
-		if GameState.player_hands[p].size() < 5:
-			GameState.draw_card(p)
-
-	if _bot_played_card_id != "":
-		var card_id := _bot_played_card_id
-		_bot_played_card_id = ""
-		var card_data  = CardData.ALL_CARDS.get(card_id, {})
-		var card_color = card_data.get("color", Color.WHITE)
-		var p          := _current_bot_player
-
-		# Update stats
-		if card_color == Color.GREEN:
-			GameState.player_stats[p]["green_cards_played"] += 1
-		elif card_color == Color.RED:
-			GameState.player_stats[p]["red_cards_played"] += 1
-		elif card_color == Color.YELLOW:
-			GameState.player_stats[p]["yellow_cards_played"] += 1
-
-		var increases_e := false
-		var increases_v := false
-		if card_color in [Color.GREEN, Color.RED, Color.YELLOW]:
-			for fx in card_data.get("sub_effects",[]):
-				var op = fx.get("op","")
-				if op == "add_e": increases_e = true
-				if op in ["add_v","add_v_in"]: increases_v = true
-			if increases_e and increases_v:
-				GameState.player_stats[p]["both_inc_cards"] += 1
-			elif increases_e:
-				GameState.player_stats[p]["e_inc_cards"] += 1
-			elif increases_v:
-				GameState.player_stats[p]["v_inc_cards"] += 1
-
-		if card_color in [Color.GREEN, Color.YELLOW, Color.RED]:
-			GameState.player_stats[p]["action_cards_played"] += 1
-
-		# Discard and draw a replacement
-		if ui and ui.has_method("add_recent_card_for_player"):
-			ui.add_recent_card_for_player(p, card_id)
-		GameState.discard_card(p, card_id)
-		if GameState.player_hands[p].size() < 5:
-			GameState.draw_card(p)
+	# Mirror what card_table.gd _on_end_turn_button_pressed does.
+	# Village Head's 1st card is credited separately from the main card.
+	_credit_bot_card(_vh_first_card_id)
+	_vh_first_card_id = ""
+	_credit_bot_card(_bot_played_card_id)
+	_bot_played_card_id = ""
 
 	# Advance to next player
 	GameState.advance_turn()
+
+# Credit a played card: update stats/discard via GameState, log to recent cards,
+# refill the hand. No-op for empty ids.
+func _credit_bot_card(card_id: String) -> void:
+	if card_id == "":
+		return
+	var p := _current_bot_player
+	if ui and ui.has_method("add_recent_card_for_player"):
+		ui.add_recent_card_for_player(p, card_id)
+	GameState.record_played_card(p, card_id)
+	if GameState.player_hands[p].size() < 5:
+		GameState.draw_card(p)
 
 # Tile-scoring
 

@@ -4,6 +4,7 @@ var how_to_play_section: Control
 var glossary_section: Control
 var about_meme_section: Control
 var continue_button: Button
+var back_button: Button
 var pages: Array = []
 var current_page: int = 0
 
@@ -16,23 +17,27 @@ func _ready() -> void:
 	glossary_section     = get_node("Background/Glossary")
 	about_meme_section   = get_node("Background/About MEME")
 
-	pages = [
-		get_node("Background/How To Play/How to Play First Page"),
-		get_node("Background/How To Play/How to Play second Page"),
-		get_node("Background/How To Play/How to Play third Page2"),
-	]
+	# Collect each VBoxContainer page under "How to play pages" — skips the Label
+	# header so new pages can be added in the editor without touching the script.
+	pages = []
+	var pages_container := get_node("Background/How To Play/How to play pages")
+	for child in pages_container.get_children():
+		if child is VBoxContainer:
+			pages.append(child)
 
-	continue_button = get_node("Background/How To Play/Button")
+	continue_button = get_node("Background/How To Play/Continue")
+	back_button = get_node("Background/How To Play/Back")
 
 	get_node("Background/Side Panel/VBoxContainer/How to Play").pressed.connect(_show_how_to_play)
 	get_node("Background/Side Panel/VBoxContainer/Glossary").pressed.connect(_show_glossary)
 	get_node("Background/Side Panel/VBoxContainer/Cards").pressed.connect(_show_about_meme)
 	get_node("Background/Side Panel/Exit").pressed.connect(_go_to_main_menu)
 	continue_button.pressed.connect(_on_continue_pressed)
+	back_button.pressed.connect(_on_back_pressed)
 
 	_remove_focus_borders(self)
 	_build_image_overlay()
-	_wire_image_clicks(self)
+	_wire_image_clicks(how_to_play_section)
 	_show_how_to_play()
 
 func _remove_focus_borders(node: Node) -> void:
@@ -65,12 +70,18 @@ func _go_to_main_menu() -> void:
 func _update_page() -> void:
 	for i in range(pages.size()):
 		pages[i].visible = (i == current_page)
-	# Hide Continue on the last page
+	# Hide Continue on the last page, hide Back on the first page
 	continue_button.visible = current_page < pages.size() - 1
+	back_button.visible = current_page > 0
 
 func _on_continue_pressed() -> void:
 	if current_page < pages.size() - 1:
 		current_page += 1
+		_update_page()
+
+func _on_back_pressed() -> void:
+	if current_page > 0:
+		current_page -= 1
 		_update_page()
 
 func _build_image_overlay() -> void:
@@ -89,12 +100,15 @@ func _build_image_overlay() -> void:
 	_image_overlay_rect = TextureRect.new()
 	_image_overlay_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_image_overlay_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_image_overlay_rect.set_anchors_preset(Control.PRESET_CENTER)
-	_image_overlay_rect.offset_left = -600
-	_image_overlay_rect.offset_top = -400
-	_image_overlay_rect.offset_right = 600
-	_image_overlay_rect.offset_bottom = 400
-	_image_overlay_rect.pivot_offset = Vector2(600, 400)
+	# Fill the middle 80% of the viewport — anchors scale with the window.
+	_image_overlay_rect.anchor_left = 0.1
+	_image_overlay_rect.anchor_top = 0.1
+	_image_overlay_rect.anchor_right = 0.9
+	_image_overlay_rect.anchor_bottom = 0.9
+	_image_overlay_rect.offset_left = 0
+	_image_overlay_rect.offset_top = 0
+	_image_overlay_rect.offset_right = 0
+	_image_overlay_rect.offset_bottom = 0
 	_image_overlay_rect.scale = Vector2.ZERO
 	_image_overlay_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 	_image_overlay.add_child(_image_overlay_rect)

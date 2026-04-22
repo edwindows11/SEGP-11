@@ -941,7 +941,7 @@ func show_wildlife_discard_popup():
 	wildlife_discard_popup.visible = true
 
 # reuse the scene $Steal node to show a player-select popup with player + last card name
-func show_player_select_popup(title_text, disabled_func, callback, card_effects_node = null):
+func show_player_select_popup(_title_text, disabled_func, callback, card_effects_node = null):
 	var steal_node = get_node_or_null("Steal")
 	if not steal_node:
 		print("Steal popup node not found")

@@ -133,6 +133,7 @@ func _pick_spread_seeds(count: int) -> Array:
 	candidates.shuffle()
 
 	var chosen: Array = []
+	@warning_ignore("integer_division")
 	var min_dist: int = BOARD_SIZE / 2
 
 	for c in candidates:

@@ -19,15 +19,15 @@ func new(mesh_instance, material_instance) -> void:
 	if parent != null:
 		parent.delete.connect(deleteFunc)	
 
-func colour(colour: String):
-	if colour == "red":
+func colour(new_colour: String):
+	if new_colour == "red":
 		material.albedo_color = Color("d30000ff")
 		material.grow_amount = 0.1 # Visible highlight
-	elif colour == "white":
+	elif new_colour == "white":
 		# Optional friendly highlight
 		material.albedo_color = Color(1, 1, 1, 1)
 		material.grow_amount = 0.1
-	elif colour == "black":
+	elif new_colour == "black":
 		material.albedo_color = Color("000000ff")
 		material.grow_amount = 0.0 # Invisible
 	

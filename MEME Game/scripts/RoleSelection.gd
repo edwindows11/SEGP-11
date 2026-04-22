@@ -168,7 +168,7 @@ func setup_role_buttons():
 		role_grid.add_child(button)
 
 
-# ---- HOVER: SHOW PREVIEW ----
+# SHOW PREVIEW WHEN HOVER
 # Called when mouse enters a role button
 # Temporarily swaps the active player slot's card image to this role's image
 func _on_role_button_hovered(role_name: String):
@@ -180,7 +180,8 @@ func _on_role_button_hovered(role_name: String):
 		return
 
 	# Only preview in the active slot if it hasn't picked yet
-	# If they already picked, their card stays - don't overwrite it
+	# If they already picked, their card stays
+	# DO NOT OVERWRITE
 	if player_selections[current_player_index] == null:
 		var texture_rect = _get_slot_texture_rect(current_player_index)
 		if texture_rect:
@@ -188,7 +189,7 @@ func _on_role_button_hovered(role_name: String):
 			texture_rect.visible = true  # Reveal the card on hover
 
 
-# ---- HOVER: RESTORE ORIGINAL ----
+# RESTORE ORIGINAL WHEN UNHOVERED
 # Called when mouse leaves a role button
 # Puts the slot's image back to whatever role is actually selected (or blank/default)
 func _on_role_button_unhovered():

@@ -2,6 +2,14 @@
 .godot/
 /android/
 
+# Godot export builds
+*.exe
+*.pck
+*.console.exe
+
+# Blender autosaves
+*.blend1
+
 # Imported translations (automatically generated from CSV files)
 *.translation
 

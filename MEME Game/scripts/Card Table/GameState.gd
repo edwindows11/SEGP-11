@@ -365,6 +365,41 @@ func discard_card(player_index: int, card_id: String) -> void:
 	player_hands[player_index].erase(card_id)
 	discard_pile.append(card_id)
 
+# Update per-player stats (color counts, action counts, researcher e/v/both
+# counts) and discard the card. Shared between human (card_table.gd) and bot
+# (bot.gd) end-of-play paths.
+func record_played_card(player_index: int, card_id: String) -> void:
+	var card_data: Dictionary = CardData.ALL_CARDS.get(card_id, {})
+	var card_color: Color = card_data.get("color", Color.WHITE)
+	var stats: Dictionary = player_stats[player_index]
+
+	if card_color == Color.GREEN:
+		stats["green_cards_played"] += 1
+	elif card_color == Color.RED:
+		stats["red_cards_played"] += 1
+	elif card_color == Color.YELLOW:
+		stats["yellow_cards_played"] += 1
+
+	if card_color in [Color.GREEN, Color.RED, Color.YELLOW]:
+		stats["action_cards_played"] += 1
+
+		var increases_e := false
+		var increases_v := false
+		for fx in card_data.get("sub_effects", []):
+			var op: String = fx.get("op", "")
+			if op == "add_e":
+				increases_e = true
+			if op == "add_v" or op == "add_v_in":
+				increases_v = true
+		if increases_e and increases_v:
+			stats["both_inc_cards"] += 1
+		elif increases_e:
+			stats["e_inc_cards"] += 1
+		elif increases_v:
+			stats["v_inc_cards"] += 1
+
+	discard_card(player_index, card_id)
+
 # Government: add a stolen card to the Government player's stash and hand
 func government_steal_card(gov_player_index: int, card_id: String) -> void:
 	if gov_player_index < player_hands.size():

@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://cethjk1aqe8rx"]
+[gd_scene load_steps=40 format=3 uid="uid://cethjk1aqe8rx"]
 
 [ext_resource type="Script" uid="uid://ckie1dykhjfiv" path="res://scripts/HowToPlay.gd" id="0_script"]
 [ext_resource type="FontFile" uid="uid://bwh8g3ahyoj61" path="res://assets/Font/LeagueSpartan-Bold.ttf" id="1_vsc3h"]
@@ -6,15 +6,30 @@
 [ext_resource type="Texture2D" uid="uid://565dk5asxdr2" path="res://assets/Tiles/ForestTile_1.png" id="3_vvxdp"]
 [ext_resource type="Texture2D" uid="uid://wm2eilf5yedk" path="res://assets/Tiles/PlantationTile_2.png" id="4_bx0t0"]
 [ext_resource type="Texture2D" uid="uid://cqpeeitnqiext" path="res://assets/Tiles/HumanDominatedTile_1.png" id="5_5ufub"]
-[ext_resource type="Texture2D" uid="uid://b4bqbycfmx71t" path="res://assets/How To Play/Elephant.png" id="6_rb8a3"]
-[ext_resource type="Texture2D" uid="uid://yy7sfl5udh3o" path="res://assets/How To Play/Meeple.png" id="7_nn60v"]
-[ext_resource type="Texture2D" uid="uid://773g6l4khhes" path="res://assets/How To Play/Card.png" id="8_rb8a3"]
-[ext_resource type="Texture2D" uid="uid://dmmvkr2rgrmqo" path="res://assets/How To Play/Card 2.png" id="9_nn60v"]
+[ext_resource type="Texture2D" uid="uid://b4bqbycfmx71t" path="res://assets/How To Play/Pieces/Elephant.png" id="6_rb8a3"]
+[ext_resource type="Texture2D" uid="uid://yy7sfl5udh3o" path="res://assets/How To Play/Pieces/Meeple.png" id="7_nn60v"]
+[ext_resource type="Texture2D" uid="uid://773g6l4khhes" path="res://assets/How To Play/Cards/Card.png" id="8_rb8a3"]
+[ext_resource type="Texture2D" uid="uid://dmmvkr2rgrmqo" path="res://assets/How To Play/Cards/Card 2.png" id="9_nn60v"]
 [ext_resource type="Texture2D" uid="uid://o4v2vlqp48tp" path="res://assets/CardTable/Scenario Selection.png" id="9_txu54"]
-[ext_resource type="Texture2D" uid="uid://cipxwwiyv46fa" path="res://assets/How To Play/Card 3.png" id="10_7bjge"]
+[ext_resource type="Texture2D" uid="uid://cipxwwiyv46fa" path="res://assets/How To Play/Cards/Card 3.png" id="10_7bjge"]
 [ext_resource type="Texture2D" uid="uid://bac3oerinjpjq" path="res://assets/CardTable/Role Selection.png" id="10_frlbb"]
 [ext_resource type="Texture2D" uid="uid://61w1dmn1gi0x" path="res://assets/How To Play/Tile.png" id="11_txu54"]
+[ext_resource type="Texture2D" uid="uid://deysc33h2eju6" path="res://assets/Card/Abandonment of Land.png" id="11_v0gfu"]
+[ext_resource type="Texture2D" uid="uid://ccafnm17nho3c" path="res://assets/Card/Electric Fences.png" id="12_82c3d"]
 [ext_resource type="Texture2D" uid="uid://dpevw4ipu5m1s" path="res://assets/How To Play/MEME.png" id="12_frlbb"]
+[ext_resource type="Texture2D" uid="uid://cihmm0on7ibr5" path="res://assets/Card/Plantation Conversion.png" id="13_aowxo"]
+[ext_resource type="Texture2D" uid="uid://bteumol6k7d8" path="res://assets/Card/Oil Palm Burning.png" id="14_wkea1"]
+[ext_resource type="Texture2D" uid="uid://bc3qgdkdkwsmy" path="res://assets/How To Play/Gameplay/Role Card.png" id="15_l34am"]
+[ext_resource type="Texture2D" uid="uid://d3uqsek7sq84" path="res://assets/How To Play/Overview/Game Overview.png" id="16_4r6ud"]
+[ext_resource type="Texture2D" uid="uid://cnop3etwa83vf" path="res://assets/How To Play/Overview/Rotate Screen.png" id="16_jpidl"]
+[ext_resource type="Texture2D" uid="uid://c6hke3oaxides" path="res://assets/How To Play/Overview/Role Overview.png" id="17_jpidl"]
+[ext_resource type="Texture2D" uid="uid://diurjuteo72ru" path="res://assets/How To Play/Gameplay/Recent Played 1.png" id="18_tq2qq"]
+[ext_resource type="Texture2D" uid="uid://ciej8t4cx6oas" path="res://assets/How To Play/Gameplay/Recent Played 2.png" id="19_3rlu7"]
+[ext_resource type="Texture2D" uid="uid://bvjxcboanrcjo" path="res://assets/How To Play/Overview/Role Overview 2.png" id="19_tq2qq"]
+[ext_resource type="Texture2D" uid="uid://ddjbp3jlk7dtc" path="res://assets/How To Play/Gameplay/Play Card 1.png" id="22_3rlu7"]
+[ext_resource type="Texture2D" uid="uid://c7qv7gla1ofha" path="res://assets/How To Play/Gameplay/Play Card 2.png" id="23_kttaw"]
+[ext_resource type="Texture2D" uid="uid://u6imdycswa22" path="res://assets/How To Play/Gameplay/Special Action.png" id="24_gwoir"]
+[ext_resource type="Texture2D" uid="uid://s0e2mpn5tie5" path="res://assets/How To Play/Gameplay/Have Fun.png" id="25_ioe7e"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7bjge"]
 bg_color = Color(0.7518812, 0.7518814, 0.7518812, 1)
@@ -165,7 +180,6 @@ text = "EXIT"
 alignment = 0
 
 [node name="How To Play" type="Control" parent="Background"]
-visible = false
 anchors_preset = 0
 offset_left = 424.0
 offset_top = 43.0
@@ -186,11 +200,11 @@ theme_override_font_sizes/font_size = 50
 text = "How to Play"
 horizontal_alignment = 1
 
-[node name="How to Play First Page" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
-visible = false
+[node name="The Board" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
 layout_mode = 2
 
-[node name="Overview" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play First Page"]
+[node name="Overview" type="RichTextLabel" parent="Background/How To Play/How to play pages/The Board"]
+visible = false
 layout_mode = 2
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_2vj31")
@@ -206,7 +220,7 @@ Each player takes on a unique role and competes to be the first to fulfil their 
 fit_content = true
 horizontal_alignment = 1
 
-[node name="The Board" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play First Page"]
+[node name="The Board" type="RichTextLabel" parent="Background/How To Play/How to play pages/The Board"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_2vj31")
@@ -221,7 +235,7 @@ The board is a grid of tiles, each one of three types:"
 fit_content = true
 horizontal_alignment = 1
 
-[node name="Tiles" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play First Page"]
+[node name="Tiles" type="RichTextLabel" parent="Background/How To Play/How to play pages/The Board"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_2vj31")
@@ -236,10 +250,10 @@ text = "
 fit_content = true
 horizontal_alignment = 1
 
-[node name="Tiles Img" type="Control" parent="Background/How To Play/How to play pages/How to Play First Page"]
+[node name="Tiles Img" type="Control" parent="Background/How To Play/How to play pages/The Board"]
 layout_mode = 2
 
-[node name="Forest" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Tiles Img"]
+[node name="Forest" type="TextureRect" parent="Background/How To Play/How to play pages/The Board/Tiles Img"]
 layout_mode = 0
 offset_left = 112.0
 offset_top = 5.0
@@ -249,7 +263,7 @@ texture = ExtResource("3_vvxdp")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="Plantation" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Tiles Img"]
+[node name="Plantation" type="TextureRect" parent="Background/How To Play/How to play pages/The Board/Tiles Img"]
 layout_mode = 0
 offset_left = 528.0
 offset_right = 766.0
@@ -258,7 +272,7 @@ texture = ExtResource("4_bx0t0")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="Human Dominated Area" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Tiles Img"]
+[node name="Human Dominated Area" type="TextureRect" parent="Background/How To Play/How to play pages/The Board/Tiles Img"]
 layout_mode = 0
 offset_left = 1048.0
 offset_top = 8.0
@@ -268,7 +282,7 @@ texture = ExtResource("5_5ufub")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="Game Pieces" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play First Page"]
+[node name="Game Pieces" type="RichTextLabel" parent="Background/How To Play/How to play pages/The Board"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_2vj31")
@@ -295,15 +309,15 @@ text = "
 
 
 
-There can only be 1 elephant per tile or 2 villagers per tile Villagers
+There can only be 1 elephant per tile or 2 villagers per tile 
 "
 fit_content = true
 horizontal_alignment = 1
 
-[node name="Game Pieces Img" type="Control" parent="Background/How To Play/How to play pages/How to Play First Page"]
+[node name="Game Pieces Img" type="Control" parent="Background/How To Play/How to play pages/The Board"]
 layout_mode = 2
 
-[node name="Elephant" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Game Pieces Img"]
+[node name="Elephant" type="TextureRect" parent="Background/How To Play/How to play pages/The Board/Game Pieces Img"]
 layout_mode = 0
 offset_left = 360.0
 offset_top = -302.0
@@ -313,7 +327,7 @@ texture = ExtResource("6_rb8a3")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="Meeple" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play First Page/Game Pieces Img"]
+[node name="Meeple" type="TextureRect" parent="Background/How To Play/How to play pages/The Board/Game Pieces Img"]
 layout_mode = 0
 offset_left = 848.0
 offset_top = -238.0
@@ -323,11 +337,11 @@ texture = ExtResource("7_nn60v")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="How to Play second Page" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+[node name="Setup" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
 visible = false
 layout_mode = 2
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play second Page"]
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Setup"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_2vj31")
@@ -373,7 +387,7 @@ Then each player has to chose a unique role from role scenario. In the Role scen
 fit_content = true
 horizontal_alignment = 1
 
-[node name="Scenario" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play second Page/RichTextLabel"]
+[node name="Scenario" type="TextureRect" parent="Background/How To Play/How to play pages/Setup/RichTextLabel"]
 layout_mode = 0
 offset_left = 400.0
 offset_top = 102.0
@@ -383,7 +397,7 @@ texture = ExtResource("9_txu54")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="Role" type="TextureRect" parent="Background/How To Play/How to play pages/How to Play second Page/RichTextLabel"]
+[node name="Role" type="TextureRect" parent="Background/How To Play/How to play pages/Setup/RichTextLabel"]
 layout_mode = 0
 offset_left = 408.0
 offset_top = 574.0
@@ -393,50 +407,148 @@ texture = ExtResource("10_frlbb")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="How to Play third Page2" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
-layout_mode = 2
-
-[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play third Page2"]
-layout_mode = 2
-theme_override_colors/default_color = Color(0, 0, 0, 1)
-theme_override_fonts/normal_font = ExtResource("2_2vj31")
-theme_override_fonts/bold_font = ExtResource("1_vsc3h")
-theme_override_font_sizes/normal_font_size = 30
-theme_override_font_sizes/bold_font_size = 35
-bbcode_enabled = true
-text = "
-[b]Action Card[/b]
-1. On your turn play a card from your hand.
-2. Follow any on-screen prompts. 
-3. Press end turn to pass to the next player.
-4. If you didn't choose a card before the time runs out, your turn automatically ends.
-
-	[b]Colour	Theme[/b]
-
-			[b]Green[/b] 
-			Protects the environment or provide a way for both humans and elephants to coexist.
-
-			[b]Yellow[/b]
-			Neutral actions that reduce the human-elephant conflict, but creates risks for both elephants or humans.
-
-			[b]Red	[/b] 
-			 Harmful action that directly harm elephants, humans or the environment.
-
-			[b]Black[/b]
-			Special action cards that must be played if it is on your hand.
-
-
-[b]Winning [/b]
-The first player to meet all of their role's win conditions simultaneously wins.
-
-"
-fit_content = true
-
-[node name="How to Play fourth Page3" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+[node name="Action Cards" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
 visible = false
 layout_mode = 2
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/How to Play fourth Page3"]
+[node name="Label" type="Label" parent="Background/How To Play/How to play pages/Action Cards"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("1_vsc3h")
+theme_override_font_sizes/font_size = 40
+text = "
+Action Cards"
+horizontal_alignment = 1
+
+[node name="GridContainer" type="GridContainer" parent="Background/How To Play/How to play pages/Action Cards"]
+layout_mode = 2
+columns = 2
+
+[node name="Green" type="RichTextLabel" parent="Background/How To Play/How to play pages/Action Cards/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Green[/b] 
+Protects the environment or provide a way for both humans and elephants to coexist.
+
+
+
+
+
+
+
+
+
+
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Yellow" type="RichTextLabel" parent="Background/How To Play/How to play pages/Action Cards/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Yellow[/b]
+Neutral actions that reduce the human-elephant conflict, but creates risks for both elephants or humans.
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Red" type="RichTextLabel" parent="Background/How To Play/How to play pages/Action Cards/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Red	[/b] 
+Harmful action that directly harm elephants, humans or the environment."
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Black" type="RichTextLabel" parent="Background/How To Play/How to play pages/Action Cards/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Black[/b]
+Special action cards that must be played if it is on your hand.
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Cards" type="Control" parent="Background/How To Play/How to play pages/Action Cards"]
+layout_mode = 2
+
+[node name="Green" type="TextureRect" parent="Background/How To Play/How to play pages/Action Cards/Cards"]
+layout_mode = 0
+offset_left = 168.0
+offset_top = -389.0
+offset_right = 568.0
+offset_bottom = -117.0
+texture = ExtResource("11_v0gfu")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Yellow" type="TextureRect" parent="Background/How To Play/How to play pages/Action Cards/Cards"]
+layout_mode = 0
+offset_left = 912.0
+offset_top = -397.0
+offset_right = 1312.0
+offset_bottom = -125.0
+texture = ExtResource("12_82c3d")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Red" type="TextureRect" parent="Background/How To Play/How to play pages/Action Cards/Cards"]
+layout_mode = 0
+offset_left = 160.0
+offset_top = 11.0
+offset_right = 560.0
+offset_bottom = 283.0
+texture = ExtResource("13_aowxo")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Black" type="TextureRect" parent="Background/How To Play/How to play pages/Action Cards/Cards"]
+layout_mode = 0
+offset_left = 920.0
+offset_top = 11.0
+offset_right = 1320.0
+offset_bottom = 283.0
+texture = ExtResource("14_wkea1")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Role Card" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Role Card"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_2vj31")
@@ -445,25 +557,34 @@ theme_override_font_sizes/normal_font_size = 30
 theme_override_font_sizes/bold_font_size = 35
 bbcode_enabled = true
 text = "
-[b]Action Card[/b]
-1. On your turn play a card from your hand.
-2. Follow any on-screen prompts. 
-3. Press end turn to pass to the next player.
-4. If you didn't choose a card before the time runs out, your turn automatically ends.
+[b]Role Card[/b]
 
-	[b]Colour	Theme[/b]
 
-			[b]Green[/b] 
-			Protects the environment or provide a way for both humans and elephants to coexist.
 
-			[b]Yellow[/b]
-			Neutral actions that reduce the human-elephant conflict, but creates risks for both elephants or humans.
 
-			[b]Red	[/b] 
-			 Harmful action that directly harm elephants, humans or the environment.
 
-			[b]Black[/b]
-			Special action cards that must be played if it is on your hand.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 [b]Winning [/b]
@@ -471,8 +592,333 @@ The first player to meet all of their role's win conditions simultaneously wins.
 
 "
 fit_content = true
+horizontal_alignment = 1
 
-[node name="Button" type="Button" parent="Background/How To Play"]
+[node name="Role Card" type="Control" parent="Background/How To Play/How to play pages/Role Card"]
+layout_mode = 2
+
+[node name="Role Card" type="TextureRect" parent="Background/How To Play/How to play pages/Role Card/Role Card"]
+layout_mode = 0
+offset_left = 264.0
+offset_top = -880.0
+offset_right = 1176.0
+offset_bottom = -112.0
+texture = ExtResource("15_l34am")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 0" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 0"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Game Overview[/b]
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Controls" type="Control" parent="Background/How To Play/How to play pages/Game Overview 0"]
+layout_mode = 2
+
+[node name="Rotate" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 0/Controls"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 37.0
+offset_right = 1384.0
+offset_bottom = 773.0
+texture = ExtResource("16_jpidl")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 1" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 1"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Game Overview[/b]
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Part 1" type="Control" parent="Background/How To Play/How to play pages/Game Overview 1"]
+layout_mode = 2
+
+[node name="Role Card" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 1/Part 1"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 37.0
+offset_right = 1384.0
+offset_bottom = 773.0
+texture = ExtResource("16_4r6ud")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 2" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 2"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Game Overview[/b]
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Part 2" type="Control" parent="Background/How To Play/How to play pages/Game Overview 2"]
+layout_mode = 2
+
+[node name="Objective and Roles" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 2/Part 2"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 37.0
+offset_right = 1384.0
+offset_bottom = 773.0
+texture = ExtResource("17_jpidl")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 3" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 3"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Game Overview[/b]
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Part 3" type="Control" parent="Background/How To Play/How to play pages/Game Overview 3"]
+layout_mode = 2
+
+[node name="Enlarged role cards" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 3/Part 3"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 37.0
+offset_right = 1384.0
+offset_bottom = 773.0
+texture = ExtResource("19_tq2qq")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 4" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 4"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Game Overview[/b]
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Part 4" type="Control" parent="Background/How To Play/How to play pages/Game Overview 4"]
+layout_mode = 2
+
+[node name="Recent Card" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 4/Part 4"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 37.0
+offset_right = 1384.0
+offset_bottom = 773.0
+texture = ExtResource("18_tq2qq")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 5" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 5"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]Game Overview[/b]
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Part 5" type="Control" parent="Background/How To Play/How to play pages/Game Overview 5"]
+layout_mode = 2
+
+[node name="Recent Card 2" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 5/Part 5"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 37.0
+offset_right = 1384.0
+offset_bottom = 773.0
+texture = ExtResource("19_3rlu7")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 6" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 6"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]How to Play Action Card[/b]
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Part 6" type="Control" parent="Background/How To Play/How to play pages/Game Overview 6"]
+layout_mode = 2
+
+[node name="Play Cards" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 6/Part 6"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 37.0
+offset_right = 1384.0
+offset_bottom = 773.0
+texture = ExtResource("22_3rlu7")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 7" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 7"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]How to Play Action Card[/b]
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Part 7" type="Control" parent="Background/How To Play/How to play pages/Game Overview 7"]
+layout_mode = 2
+
+[node name="Play Cards 2" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 7/Part 7"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 37.0
+offset_right = 1384.0
+offset_bottom = 773.0
+texture = ExtResource("23_kttaw")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 8" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 8"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+[b]How to Play Action Card[/b]
+"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Part 8" type="Control" parent="Background/How To Play/How to play pages/Game Overview 8"]
+layout_mode = 2
+
+[node name="Special Action" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 8/Part 8"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 37.0
+offset_right = 1384.0
+offset_bottom = 773.0
+texture = ExtResource("24_gwoir")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Game Overview 9" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 9"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_2vj31")
+theme_override_fonts/bold_font = ExtResource("1_vsc3h")
+theme_override_font_sizes/normal_font_size = 40
+theme_override_font_sizes/bold_font_size = 35
+bbcode_enabled = true
+text = "
+
+
+Now that you know the rules, it's time to put your strategy to the test..."
+fit_content = true
+horizontal_alignment = 1
+
+[node name="Part 8" type="Control" parent="Background/How To Play/How to play pages/Game Overview 9"]
+layout_mode = 2
+
+[node name="Elephant" type="TextureRect" parent="Background/How To Play/How to play pages/Game Overview 9/Part 8"]
+layout_mode = 0
+offset_left = 184.0
+offset_top = 54.0
+offset_right = 1296.0
+offset_bottom = 582.0
+texture = ExtResource("25_ioe7e")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Continue" type="Button" parent="Background/How To Play"]
 layout_mode = 0
 offset_left = 1320.0
 offset_top = 949.0
@@ -483,7 +929,7 @@ theme_override_fonts/font = ExtResource("1_vsc3h")
 theme_override_font_sizes/font_size = 26
 text = "Continue"
 
-[node name="Button2" type="Button" parent="Background/How To Play"]
+[node name="Back" type="Button" parent="Background/How To Play"]
 layout_mode = 0
 offset_top = 949.0
 offset_right = 131.0

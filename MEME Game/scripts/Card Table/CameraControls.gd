@@ -47,11 +47,11 @@ func update_camera_transform() -> void:
 	var offset = Vector3(0, 0, current_zoom)
 	
 	# start position
-	var basis = Basis()
-	basis = basis.rotated(Vector3(1, 0, 0), -current_rotation.y) 
-	basis = basis.rotated(Vector3(0, 1, 0), -current_rotation.x) 
-	
-	position = pivot_point + (basis * offset)
+	var cam_basis = Basis()
+	cam_basis = cam_basis.rotated(Vector3(1, 0, 0), -current_rotation.y)
+	cam_basis = cam_basis.rotated(Vector3(0, 1, 0), -current_rotation.x)
+
+	position = pivot_point + (cam_basis * offset)
 	look_at(pivot_point)
 
 
@@ -101,5 +101,5 @@ func _is_board_input_blocked() -> bool:
 # Snap to the nearest multiple of 90°
 func _snap_rotate(degrees: float) -> void:
 	var step: float = deg_to_rad(90.0)
-	var snapped: float = round(target_rotation.x / step) * step
-	target_rotation.x = snapped + deg_to_rad(degrees)
+	var snapped_rot: float = round(target_rotation.x / step) * step
+	target_rotation.x = snapped_rot + deg_to_rad(degrees)
