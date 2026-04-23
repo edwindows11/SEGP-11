@@ -1,61 +1,85 @@
+## Runs card effects one sub-effect at a time.
+
+## When a card is played [execute_card] walks through the card's sub_effects list. 
+## When the whole list finishes, it emits [effects_complete].
 extends Node
 
-# Card effect executor — state machine that resolves one card's sub-effects in order.
-
-# state machine for interactive effects
+## State machine for effects that need player input.
+## IDLE = no effect running. 
+## WAITING_SOURCE / DEST = expecting a tile click.
+## WAITING_CHOICE = expecting a popup choice
 enum State { IDLE, WAITING_SOURCE, WAITING_DEST, WAITING_CHOICE }
 
 var state: State = State.IDLE
 
-# wired by card_table.gd after instantiation
+## The Board node.
 var board: Node3D = null
+## The Play node - parent of all pieces.
 var play: Node3D = null
+## The ActionLog node - used to show what each card did. Refer [ActionLog.gd]
 var action_log: Node = null
 
-# queue of sub-effects for the currently-resolving card
+## List of sub-effects for that the should card.
 var pending_effects: Array = []
+## Index of the current sub-effect in pending_effects.
 var effect_index: int = 0
+## The sub-effect currently being handled.
 var current_effect: Dictionary = {}
 
-# state for interactive move
+## Tile chosen as the source of a move.
 var selected_source_key: Vector2i = Vector2i(-1, -1)
+## How many more moves are left.
 var move_count_remaining: int = 0
+## Which piece type a move effect is acting on ("elephant", "villager").
 var _current_piece_type: String = ""
 
-# state for interactive add/remove
+## Amount of pieces still need to be added / removed by the current effect.
 var _interact_count_remaining: int = 0
+## Which piece type the current effect is acting on ("elephant", "villager").
 var _interact_piece_type: String = ""
+## Optional list of tile types [add_v_in] is restricted to. Empty means any valid tile.
 var _interact_type_filter: Array = []
 
-# state for interactive convert
+## Amount of convert clicks are left in the middle of an effect.
 var convert_count_remaining: int = 0
+## The target tile type of a convert effect.
 var _convert_to_type: int = 0
+## Tile chosen for a convert_any_any effect (waiting for the type pick).
 var _pending_convert_any_key: Vector2i = Vector2i(-1, -1)
 
+## When all sub-effects of the current card have finished.
 signal effects_complete()
+## When the state machine needs the player to click a tile. 
+## Passes the valid keys for highlighting and a short instruction string.
 signal request_tile_selection(valid_keys: Array, instruction: String)
+## When the UI should remove any tile-selection highlights.
 signal clear_tile_selection()
+## When the Steal popup should open for choosing a target player.
 signal request_steal_popup()
+## When the Government Steal popup should open.
 signal request_gov_steal_popup()
+## When the Land-Use Planning type-pick popup should open.
 signal request_convert_type_popup(current_type: int)
+## Once a steal action finishes, the UI can refresh hand displays.
 signal steal_complete()
+## When the Ecotourism Manager choice popup should open.
 signal request_em_choice()
 
-# last card played by each player (used by reverse / steal / EM)
+## The last card id each player played.
 var lastCard = [null, null, null, null]
 
-# UI node stashed for ability callbacks that flip cooldown flags
+## The card_table_ui node, saved by each execute_<role>_ability call.
+## Used after the ability finishes to flag it as used and disable the Special Ability btn.
+
 var _ability_ui_node: Node = null
 
-# grow lastCard if player_count exceeds the default size
+## Grow lastCard if player_count exceeds the default size.
 func _ensure_last_card_size() -> void:
 	while lastCard.size() < GameState.player_count:
 		lastCard.append(null)
 
 
-# ── Entry point ─────────────────────────────────────────────────────────────
-
-# resolve a card by id — queue its sub-effects and start the dispatcher
+## Looks up the card's sub_effects in CardData, queues them, logs the play, and starts the effect state machine.
 func execute_card(card_id: String) -> void:
 	var card_def = CardData.ALL_CARDS.get(card_id, {})
 	if card_def.is_empty():
@@ -63,7 +87,7 @@ func execute_card(card_id: String) -> void:
 		effects_complete.emit()
 		return
 	_ensure_last_card_size()
-	# remember as "last card" for reverse/steal targeting
+	# remember as "last card" for reverse/steal targeting where black cards are included
 	var cpi := GameState.current_player_index
 	if cpi >= 0 and cpi < lastCard.size():
 		lastCard[cpi] = card_id
@@ -93,10 +117,8 @@ func execute_card(card_id: String) -> void:
 
 	_advance_effect()
 
-
-# ── Effect dispatcher ───────────────────────────────────────────────────────
-
-# pop next sub-effect off the queue and route it to the right handler
+## Pops the next sub-effect off [pending_effects] and runs the matching function. 
+## When the queue is empty, emits effects_complete.
 func _advance_effect() -> void:
 	if effect_index >= pending_effects.size():
 		state = State.IDLE
@@ -134,9 +156,8 @@ func _advance_effect() -> void:
 			_advance_effect()
 
 
-# ── Add / remove pieces (interactive) ───────────────────────────────────────
-
-# highlight valid tiles and wait for the player to click where to place
+## Spawns [count] pieces on valid tiles. 
+## Highlight tile types in [type_filter]. 
 func _do_add(piece_type: String, count: int, type_filter: Array) -> void:
 	var valid_tiles: Array
 	if type_filter.is_empty():
@@ -160,7 +181,9 @@ func _do_add(piece_type: String, count: int, type_filter: Array) -> void:
 		board.highlight_tiles(valid_tiles, Color(0.2, 0.8, 1.0, 0.5))  # cyan
 	request_tile_selection.emit(valid_tiles, "Place " + piece_type + " — " + str(count) + " left")
 
-# highlight tiles that hold this piece type and wait for click to remove
+
+## Deletes [count] pieces of the given type from the board.
+## Highlight tile with pieces in [piece_type]. 
 func _do_remove(piece_type: String, count: int) -> void:
 	var valid_tiles: Array = []
 	for key in GameState.tile_registry:
@@ -185,9 +208,7 @@ func _do_remove(piece_type: String, count: int) -> void:
 	request_tile_selection.emit(valid_tiles, "Remove " + piece_type + " — " + str(count) + " left")
 
 
-# ── Convert tiles (interactive) ─────────────────────────────────────────────
-
-# begin a convert effect, honouring optional gating conditions
+## Sets the target type and asks the player for tile clicks until [count] tiles have been converted.
 func _begin_convert(effect: Dictionary) -> void:
 	var condition: String = effect.get("condition", "")
 	if condition == "forest_lt_12":
@@ -201,7 +222,10 @@ func _begin_convert(effect: Dictionary) -> void:
 	_convert_to_type = _parse_type_string(effect.get("to", "FOREST"))
 	_request_convert_click(effect)
 
-# highlight valid source tiles for the current convert step
+## Asks the player to click the next tile to convert. 
+## Highlights every tile that's in [from] list 
+## Waits in WAITING_SOURCE for a click. 
+## Called once by [_begin_convert] then by [confirm_convert_selected] for each remaining conversion until [convert_count_remaining] hits 0.
 func _request_convert_click(effect: Dictionary) -> void:
 	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
 	var valid_keys: Array = GameState.get_tiles_matching(effect.get("from", [])) if from_types != null else GameState.tile_registry.keys()
@@ -218,7 +242,8 @@ func _request_convert_click(effect: Dictionary) -> void:
 		board.highlight_tiles(valid_keys, Color(0.4, 1.0, 0.2, 0.5))
 	request_tile_selection.emit(valid_keys, "Select tile to convert to " + effect.get("to", "?") + " (" + str(convert_count_remaining) + " left)")
 
-# called by card_table.gd when player clicks a convert tile
+## Called when the player clicks a tile during convert effect. 
+## Converts the tile then asks for another click or finishes the effect.
 func confirm_convert_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_SOURCE:
 		return
@@ -233,12 +258,13 @@ func confirm_convert_selected(tile_key: Vector2i) -> void:
 		effect_index += 1
 		_advance_effect()
 
-# Land-Use Planning: convert any tile to any type (two clicks per use)
+## In Land-Use Planning, handles "convert_any_any". 
+## The player picks a tile, then picks what type to change it to. Repeats [count] times.
 func _begin_convert_any_any(effect: Dictionary) -> void:
 	convert_count_remaining = effect.get("count", 2)
 	_request_convert_any_any_click()
 
-# highlight every tile and wait for the player to pick a source
+## Highlight every tile and wait for the player to pick a source
 func _request_convert_any_any_click() -> void:
 	var all_keys: Array = GameState.tile_registry.keys()
 	state = State.WAITING_SOURCE
@@ -247,7 +273,9 @@ func _request_convert_any_any_click() -> void:
 		board.highlight_tiles(all_keys, Color(1.0, 0.5, 0.0, 0.4))
 	request_tile_selection.emit(all_keys, "Select any tile to change its type (" + str(convert_count_remaining) + " left)")
 
-# step 1: tile chosen, now ask the player what to convert it into
+## Step 1 of convert_any_any: 
+## The player picked which tile to change.
+## Opens the type-pick popup next.
 func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_SOURCE:
 		return
@@ -262,7 +290,11 @@ func confirm_convert_any_any_selected(tile_key: Vector2i) -> void:
 	request_tile_selection.emit([], "Choose the new tile type from the popup")
 	request_convert_type_popup.emit(current_type)
 
-# step 2: type picked from popup, perform the conversion
+
+## Step 2 of convert_any_any: 
+## The player picked the new tile type.
+## Rejects picks that match the current type. 
+## When done, either starts the next round  or finishes the effect.
 func confirm_convert_any_any_type_selected(new_type: int) -> void:
 	if state != State.WAITING_CHOICE: return
 	if _pending_convert_any_key == Vector2i(-1, -1): return
@@ -287,29 +319,48 @@ func confirm_convert_any_any_type_selected(new_type: int) -> void:
 		_advance_effect()
 
 
-# ── Move pieces (interactive) ───────────────────────────────────────────────
-
-# start a multi-step interactive move
+## The player picks a source piece and then a destination tile. 
+## Repeats [count] times.
 func _begin_move(piece_type: String, effect: Dictionary) -> void:
 	_current_piece_type = piece_type
 	move_count_remaining = effect.get("count", 1)
 	_request_source_selection_move(effect)
 
-# highlight tiles that can produce a valid move for `effect`
+## Highlights the tiles a player can click as the source for a move effect.
+##
+## Walks every tile on the board and keeps only the ones that:
+##   1. match the effect's "from" type filter (skipped for away-moves so the
+##      piece can start anywhere and end up somewhere farther from humans),
+##   2. actually contain a piece of the right type (elephant or villager),
+##   3. have at least one valid destination the piece could move to —
+##      checked by calling _build_valid_dest_keys_for_source with immunity on.
+##
+## Also counts "immunity-blocked sources": elephants that could move if they
+## weren't immune, used to log a helpful message when nothing is movable
+## only because immunity is active.
+##
+## If no source is movable, advances to the next sub-effect. Otherwise
+## highlights the valid sources yellow and waits in WAITING_SOURCE for a click.
 func _request_source_selection_move(effect: Dictionary) -> void:
 	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
 	var is_away_move := _is_away_move_effect(effect, from_types)
 	if board:
 		board.clear_all_highlights()
 
+	# Scan every tile and test three gates per piece:
+	#   - correct tile type (unless away-move ignores "from")
+	#   - piece of the right type sits on it
+	#   - piece has at least one legal destination
 	var valid_source_keys: Array = []
-	var source_piece_count := 0
-	var immunity_blocked_sources := 0
+	var source_piece_count := 0           # pieces of the right type on valid "from" tiles
+	var immunity_blocked_sources := 0     # elephants that WOULD move if not immune
 	for key in GameState.tile_registry:
 		var entry = GameState.tile_registry[key]
+		# Gate 1: tile must match the "from" filter (unless this is an away-move).
 		if from_types != null:
 			if not is_away_move and not (entry["type"] in from_types):
 				continue
+		# Gate 2: a piece of the right type must be on this tile.
 		var node_list = entry["elephant_nodes"] if _current_piece_type == "elephant" else entry["villager_nodes"]
 		if node_list.is_empty():
 			continue
@@ -317,10 +368,13 @@ func _request_source_selection_move(effect: Dictionary) -> void:
 		var piece_node = node_list[0]
 		if not is_instance_valid(piece_node):
 			continue
+		# Gate 3: piece must have at least one legal destination to move to.
 		var preview_dests := _build_valid_dest_keys_for_source(key, effect, _current_piece_type, piece_node, true)
 		if not preview_dests.is_empty():
 			valid_source_keys.append(key)
 		elif _current_piece_type == "elephant" and GameState.is_elephant_immune(piece_node):
+			# Track elephants that only fail gate 3 because of immunity so we
+			# can log a clear reason when nothing is movable.
 			var preview_without_immunity := _build_valid_dest_keys_for_source(key, effect, _current_piece_type, piece_node, false)
 			if not preview_without_immunity.is_empty():
 				immunity_blocked_sources += 1
@@ -339,6 +393,8 @@ func _request_source_selection_move(effect: Dictionary) -> void:
 	request_tile_selection.emit(valid_source_keys, "Select " + _current_piece_type + " to move (source)")
 
 # unified click handler for any WAITING_SOURCE op (add/remove/convert/move/expand)
+## Called when the player clicks a source piece (elephant / villager) during
+## a move effect. Stores the source and asks for a destination click.
 func confirm_source_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_SOURCE:
 		return
@@ -445,6 +501,8 @@ func confirm_source_selected(tile_key: Vector2i) -> void:
 	request_tile_selection.emit(valid_dest_keys, "Select destination tile")
 
 # called when the player clicks the destination tile of a move
+## Called when the player clicks a destination tile during a move effect.
+## Moves the piece and either starts the next move or finishes the effect.
 func confirm_dest_selected(tile_key: Vector2i) -> void:
 	if state != State.WAITING_DEST:
 		return
@@ -491,6 +549,8 @@ func confirm_dest_selected(tile_key: Vector2i) -> void:
 # ── Auto / non-interactive effects ──────────────────────────────────────────
 
 # grant the current player's elephants 1 round of immunity
+## Handles "immune" op (Biological Fences, Cleared Boundaries, etc.). Makes
+## every elephant currently on the board immune for one full round.
 func _do_immune() -> void:
 	var owner_player := GameState.current_player_index
 	var affected_count := GameState.apply_elephant_immunity_for_round(owner_player)
@@ -499,6 +559,9 @@ func _do_immune() -> void:
 	_advance_effect()
 
 # auto-move every elephant on the board toward / away from a target type
+## Handles "move_all_e_to" op. Automatically moves every elephant on the
+## board toward (or away from) the given tile types within `max_dist`.
+## No player input needed.
 func _do_move_all_e_auto(effect: Dictionary) -> void:
 	var to_types = _parse_types_or_any(effect.get("to", ["ANY"]))
 	var from_types = _parse_types_or_any(effect.get("from", ["ANY"]))
@@ -552,7 +615,10 @@ func _do_move_all_e_auto(effect: Dictionary) -> void:
 	effect_index += 1
 	_advance_effect()
 
-# return-to-hand: hand previously played non-current cards back to their owners
+## Handles the "return_to_hand" op used by the Disagreement card.
+## Puts every OTHER player's last played card back into their hand so they
+## have to play something again next turn. Skips black cards — otherwise
+## Disagreement would keep feeding players event cards that auto-play.
 func _do_return_card() -> void:
 	var owner_player := GameState.current_player_index
 	for player in range(GameState.player_count):
@@ -561,12 +627,19 @@ func _do_return_card() -> void:
 		if player < lastCard.size():
 			var prev_card = lastCard[player]
 			if prev_card and not GameState.player_hands[player].has(prev_card):
+				# Skip black event cards — Disagreement shouldn't put a black
+				# card back into someone's hand, or it auto-plays next turn.
+				var col = CardData.ALL_CARDS.get(prev_card, {}).get("color", Color.WHITE)
+				if col == Color.BLACK:
+					continue
 				GameState.player_hands[player].append(prev_card)
 	_log("Return previously played cards", false)
 	effect_index += 1
 	_advance_effect()
 
 # mark next player's turn as skipped
+## Handles "skip" op. Sets GameState.skip_next_turn so the next player's
+## turn will be announced as skipped.
 func _do_skip() -> void:
 	var next_index = (GameState.current_player_index + 1) % GameState.player_count
 	GameState.skip_next_turn = true
@@ -578,6 +651,8 @@ func _do_skip() -> void:
 # ── Steal (op:steal black card) ─────────────────────────────────────────────
 
 # trigger the random-steal popup; resolved by confirm_steal_target
+## Handles "steal" op (card-driven, not Government's ability). Opens the
+## steal popup to choose a target player.
 func _do_steal() -> void:
 	var thief := GameState.current_player_index
 	GameState.discard_card(thief, "black_corruption")
@@ -597,6 +672,8 @@ func _do_steal() -> void:
 	emit_signal("request_steal_popup")
 
 ## Called by card_table_ui.gd when the player clicks a name in the steal popup.
+## Called when the player picks a target from the steal popup. Moves a
+## random card from the target's hand to the thief's hand.
 func confirm_steal_target(target_player_index: int) -> void:
 	if state != State.WAITING_CHOICE:
 		return
@@ -626,6 +703,9 @@ func confirm_steal_target(target_player_index: int) -> void:
 # ── Plantation Owner: reverse last card ─────────────────────────────────────
 
 # clone target's last card and run it with adds/removes inverted
+## Plantation Owner ability. Takes the target's last played card, flips each
+## sub-effect (adds become removes, forest-to-human becomes human-to-forest),
+## and runs it as if the PO played it. Uses the turn's one card action.
 func execute_reversed_card(target_index: int, ui_node: Node) -> void:
 	_ensure_last_card_size()
 	var stolen = lastCard[target_index] if (target_index >= 0 and target_index < lastCard.size()) else null
@@ -687,6 +767,8 @@ func execute_reversed_card(target_index: int, ui_node: Node) -> void:
 # waits in WAITING_CHOICE, confirm_gov_steal_target performs the steal.
 
 # entry point — queue a gov_steal op into the effect dispatcher
+## Government ability entry point used by the UI button. Checks for valid
+## steal targets and opens the Government steal popup.
 func execute_government_ability(ui_node: Node) -> void:
 	_ability_ui_node = ui_node
 	pending_effects = [{"op": "gov_steal"}]
@@ -695,6 +777,9 @@ func execute_government_ability(ui_node: Node) -> void:
 	_advance_effect()
 
 # legacy direct-target variant kept for the bot path (no popup involved)
+## Direct Government steal used by the bot (no popup). Takes the target's
+## last played card (if it's Green / Yellow / Red) and adds it to the
+## Government player's hand for later replay.
 func execute_government_steal(target_index: int, ui_node: Node) -> void:
 	_ensure_last_card_size()
 	var stolen = lastCard[target_index] if (target_index >= 0 and target_index < lastCard.size()) else null
@@ -747,6 +832,8 @@ func _do_gov_steal() -> void:
 	emit_signal("request_gov_steal_popup")
 
 ## Called by card_table.gd when the player picks a target in the gov-steal popup.
+## Called when the human Government player picks a target in the popup.
+## Same effect as execute_government_steal, just driven by the UI choice.
 func confirm_gov_steal_target(target_index: int) -> void:
 	if state != State.WAITING_CHOICE:
 		return
@@ -796,6 +883,8 @@ func confirm_gov_steal_target(target_index: int) -> void:
 # ── Conservationist: expand forest ──────────────────────────────────────────
 
 # entry point — queue a cons_expand_forest op
+## Conservationist ability: converts one non-forest tile next to a forest
+## tile that has an elephant. Uses the extra-action slot (card play still allowed).
 func execute_conservationist_ability(ui_node: Node) -> void:
 	var valid_tiles = _get_cons_valid_tiles()
 	if valid_tiles.is_empty():
@@ -822,6 +911,8 @@ func _do_cons_expand_forest() -> void:
 	request_tile_selection.emit(valid_tiles, "Select a tile adjacent to the elephant's forest to convert to Forest")
 
 # tiles non-forest and adjacent to a forest tile that holds an elephant
+## Returns the list of tile keys the Conservationist ability can target.
+## Used by both the UI (for highlighting) and the bot (to decide when to act).
 func _get_cons_valid_tiles() -> Array:
 	var elephant_forest_keys: Array = []
 	for key in GameState.tile_registry:
@@ -844,6 +935,8 @@ func _get_cons_valid_tiles() -> Array:
 # ── Land Developer: expand human-dominated area ─────────────────────────────
 
 # entry point — queue an ld_expand_human op
+## Land Developer ability: converts one non-human tile that has 3+ human-
+## dominated neighbours into a Human tile. Extra action (card play still allowed).
 func execute_land_developer_ability(ui_node: Node) -> void:
 	var valid_tiles = _get_ld_valid_tiles()
 	if valid_tiles.is_empty():
@@ -870,6 +963,7 @@ func _do_ld_expand_human() -> void:
 	request_tile_selection.emit(valid_tiles, "Select a tile to convert to Human-Dominated (needs 3+ human neighbours)")
 
 # tiles non-human with 3+ human-dominated neighbours
+## Returns the list of tile keys the Land Developer ability can target.
 func _get_ld_valid_tiles() -> Array:
 	var directions = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 	var valid: Array = []
@@ -891,6 +985,9 @@ func _get_ld_valid_tiles() -> Array:
 # ── Ecotourism Manager: extra move ──────────────────────────────────────────
 
 # entry point — validate the just-played card was piece-increasing, then queue
+## Ecotourism Manager ability: after playing a piece-increasing card, take
+## one extra move (move an elephant or a villager). Opens the EM choice popup
+## to pick which piece type to move.
 func execute_em_ability(ui_node: Node) -> void:
 	if ui_node.has_method("get"):
 		if ui_node.get("em_used_ability_this_turn"):
@@ -935,6 +1032,9 @@ func _do_em_extra_move() -> void:
 	emit_signal("request_em_choice")
 
 ## Called by card_table.gd after the EM choice popup is dismissed.
+## Called when the player picks "elephant", "villager", or "skip" from the
+## EM choice popup. Starts a single move effect for the chosen piece type,
+## or ends the ability if skipped.
 func confirm_em_choice(choice: String) -> void:
 	if state != State.WAITING_CHOICE:
 		return

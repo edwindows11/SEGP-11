@@ -16,7 +16,7 @@ Learn more about MEME: <https://www.meme-elephants.org>
 
 ## Gameplay Overview
 
-- 4 players (any mix of human + AI bots). Each player takes on a unique **role** — Conservationist, Village Head, Plantation Owner, Land Developer, Environmental Consultant, Ecotourism Manager, Wildlife Department, Researcher, or Government — each with its own **win condition** and **special ability**.
+- Each player takes on a unique **role** — Conservationist, Village Head, Plantation Owner, Land Developer, Environmental Consultant, Ecotourism Manager, Wildlife Department, Researcher, or Government — each with its own **win condition** and **special ability**.
 - On your turn, play a card from your 5-card hand to shape the board: add / remove / move elephants and villagers, convert tiles between **Forest**, **Plantation**, and **Human-Dominated**, or trigger role-specific effects.
 - Cards come in four colours:
   - **Green** — helpful/protective actions

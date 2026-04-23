@@ -1,3 +1,8 @@
+## Top-level controller for a running game (the CardTable scene).
+##
+## Wires the 3D board, the 2D UI, CardEffects, and the bot together.
+## Handles setup (build deck, deal hands, spawn pieces), routes tile clicks
+## into the current card effect, and handles end-of-turn bookkeeping.
 extends Node3D
 
 @onready var UI: Control = $CanvasLayer/Control
@@ -7,18 +12,35 @@ extends Node3D
 const ELEPHANT_SCENE = preload("res://assets/Pieces/Elephant.tscn")
 const MEEPLE_SCENE = preload("res://assets/Pieces/Meeple.tscn")
 
+## Running count of elephants on the board (for debug / stats).
 var totalElephants: int = 0
+## Running count of villagers on the board (for debug / stats).
 var totalMeeple: int = 0
+## Player 1's role (kept for legacy UI access; full list is in player_roles).
 var player_role: String = ""
+## Role picked by each of the 4 player slots. Set by RoleSelection before
+## the scene starts.
 var player_roles: Array = []
+## Tile keys that are valid for the current card effect's tile click.
+## Updated each time CardEffects emits request_tile_selection.
 var _current_valid_selection_keys: Array = []
-var card_effects: Node = null  # CardEffects instance
+## The CardEffects node for this game. Created in _ready.
+var card_effects: Node = null
+## How many of the 4 player slots are bots (set by RoleSelection).
 var singleplayer_bot_count: int = 3
+## Which slot is the human player (0 = Player 1). Usually 0.
 var human_player_index: int = 0
+## Bot speed preset applied to every bot ("Slow" / "Normal" / "Fast").
 var bot_speed_preset: String = "Normal"
+## Difficulty per bot player_index (0 = Easy, 1 = Medium, 2 = Hard).
 var bot_difficulty_by_player: Dictionary = {}
+## The bot controller script attached at runtime (only if bots are enabled).
 var bot_ai: Node = null
 
+## Main setup when the game starts. Wires up the Play node, GameState, the
+## deck, initial board pieces, CardEffects, the UI signals, the turn signal,
+## and (optionally) the bot controller. Finishes by triggering the first
+## turn-change so passive abilities (Wildlife Department) fire correctly.
 func _ready() -> void:
 	# --- Connect Play node signals (declared in play_node.gd) ---
 	Play.increase_total_Elephant.connect(_on_play_increase_total_elephant)
@@ -108,8 +130,6 @@ func _ready() -> void:
 	if player_roles.size() > 0:
 		print("Game Started with roles: ", player_roles)
 
-	UI.pause_btn.pressed.connect(_pause)
-
 	# So wildfire special ability happens on turn 1
 	GameState.turn_changed.emit.call_deferred(GameState.current_player_index, player_role, false)
 
@@ -118,16 +138,10 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	pass
 
-func _pause():
-	var pause_menu = get_node_or_null("CanvasLayer/Control/PauseMenu")
-	if pause_menu:
-		pause_menu.toggle_pause()
-		return
-
+## Handles board-level input: 1/2/3 for the Land-Use Planning type pick,
+## and left-click on a tile during an active card effect. Esc is handled
+## by PauseMenu._input so the pause doesn't get toggled twice.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
-		_pause()
-
 	if _is_bot_turn():
 		return
 
@@ -159,6 +173,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # --- Tile selection helpers ---
 
+## Casts a ray from the camera through the mouse position and returns the
+## grid key of the tile (or piece-on-tile) it hits. Returns (-1, -1) for a miss.
 func _raycast_to_tile_key(screen_pos: Vector2) -> Vector2i:
 	var cam = get_viewport().get_camera_3d()
 	var from = cam.project_ray_origin(screen_pos)
@@ -191,6 +207,8 @@ func _raycast_to_tile_key(screen_pos: Vector2) -> Vector2i:
 		
 	return Vector2i(-1, -1)
 
+## Forwards a tile click to the right CardEffects confirm method based on
+## the current state (WAITING_SOURCE / WAITING_DEST) and the active op.
 func _route_tile_click_to_effects(tile_key: Vector2i) -> void:
 	if not _current_valid_selection_keys.has(tile_key):
 		return
@@ -211,22 +229,30 @@ func _route_tile_click_to_effects(tile_key: Vector2i) -> void:
 
 # --- Card effect signal handlers ---
 
+## Called when the human player confirms a card (Play button). Tracks stats,
+## discards the card, and starts the card's effect.
 func _on_card_activated(card_id: String) -> void:
 	if _is_bot_turn():
 		return
 	_track_card_stats_and_discard(card_id)
 	card_effects.execute_card(card_id)
 
+## Called when CardEffects finishes the current card. Enables the End Turn
+## button for humans, or keeps the button disabled for bots.
 func _on_card_effects_complete() -> void:
 	if _is_bot_turn():
 		if UI.play_btn: UI.play_btn.disabled = true
 	else:
 		UI.set_end_turn_ready()  # enables play btn when it's in End Turn mode
 
+## Called when CardEffects needs the player to pick a tile. Caches the list
+## of valid keys and shows the instruction banner at the top of the screen.
 func _on_request_tile_selection(_valid_keys: Array, instruction: String) -> void:
 	_current_valid_selection_keys = _valid_keys.duplicate()
 	UI.show_instruction(instruction)
 
+## Called when CardEffects no longer needs tile input. Clears the cached
+## valid-key list, hides the instruction banner, and removes highlights.
 func _on_clear_tile_selection() -> void:
 	_current_valid_selection_keys.clear()
 	UI.hide_instruction()
@@ -297,12 +323,18 @@ func _on_request_convert_type_popup(current_type: int) -> void:
 		return
 	UI.show_convert_type_popup(card_effects, current_type)
 
+## Updates player stats and moves the played card to the discard pile.
+## Thin wrapper around GameState.record_played_card for the human path.
 func _track_card_stats_and_discard(card_id: String) -> void:
 	GameState.record_played_card(GameState.current_player_index, card_id)
 
 
 # --- End turn ---
 
+## Called when the human player presses End Turn. Also runs the mid-card
+## auto-complete if the timer expires while a card effect is still active.
+## Handles Wildlife Department discard, drawing back up to 5 cards, and
+## advancing to the next player.
 func _on_end_turn_button_pressed() -> void:
 	if _is_bot_turn():
 		return
@@ -337,6 +369,9 @@ func _on_end_turn_button_pressed() -> void:
 	UI.currently_viewing_card = false
 
 # randomly complete card action if the user's timer ended
+## Called when the turn timer runs out. If Wildlife Department still has a
+## bonus card to discard, a random one is auto-picked. Then the normal end-
+## turn flow runs (which also auto-completes any card effect in progress).
 func _on_end_turn_timer_expired() -> void:
 	if _is_bot_turn():
 		return
@@ -353,6 +388,9 @@ func _on_end_turn_timer_expired() -> void:
 		UI.spawn_cards()
 	_on_end_turn_button_pressed()
 
+## Picks random valid selections until the current card effect finishes.
+## Used when the turn timer runs out mid-card so the effect still resolves
+## instead of leaving CardEffects stuck in WAITING state.
 func _auto_complete_card_action() -> void:
 	if card_effects == null:
 		return
@@ -374,6 +412,9 @@ func _auto_complete_card_action() -> void:
 		await get_tree().process_frame
 
 # setup bots to play
+## If the game has bots, creates the bot controller node, applies the
+## difficulty / speed settings chosen in Role Selection, and connects its
+## turn signals to the UI.
 func _setup_singleplayer_bots() -> void:
 	var max_bots: int = maxi(0, GameState.player_count - 1)
 	var bot_count: int = clampi(singleplayer_bot_count, 0, max_bots)
@@ -424,20 +465,27 @@ func _setup_singleplayer_bots() -> void:
 
 	print("Singleplayer bots enabled for players: ", bot_indices)
 
+## True if it's currently a bot's turn.
 func _is_bot_turn() -> bool:
 	return _is_bot_turn_for_player(GameState.current_player_index)
 
+## True if the given player slot is controlled by a bot.
 func _is_bot_turn_for_player(player_index: int) -> bool:
 	if bot_ai == null:
 		return false
 	return bot_ai.is_bot(player_index)
 
+## Tells the UI when it's a bot's turn so it can disable card input and
+## show the "Bot is thinking..." indicator.
 func _on_turn_changed_for_ui(player_index: int, _role_name: String, is_skipped: bool) -> void:
 	var is_bot_turn = _is_bot_turn_for_player(player_index) and not is_skipped
 	UI.set_bot_turn(is_bot_turn)
 		
 # --- Piece spawning (moved from card_functions.gd) ---
 
+## Creates a new piece (elephant or villager) at the given world position
+## and registers it on the tile. Called by card effects that add pieces.
+## Returns false if the tile can't accept this piece type.
 func spawn_piece_on_tile(type: String, pos: Vector3, tile_key: Vector2i) -> bool:
 	if not GameState.can_place_piece(tile_key, type):
 		return false
@@ -448,17 +496,11 @@ func spawn_piece_on_tile(type: String, pos: Vector3, tile_key: Vector2i) -> bool
 		piece_instance = ELEPHANT_SCENE.instantiate()
 		Play.increase_total_Elephant.emit()
 		Play.add_child(piece_instance)
-		piece_instance.Del_Elephant.connect(func():
-			GameState.piece_removed(piece_instance, piece_instance.tile_key, "elephant")
-		)
 
 	elif type == "villager" or type == "Meeple":
 		piece_instance = MEEPLE_SCENE.instantiate()
 		Play.increase_total_Meeple.emit()
 		Play.add_child(piece_instance)
-		piece_instance.Del_Meeple.connect(func():
-			GameState.piece_removed(piece_instance, piece_instance.tile_key, "villager")
-		)
 
 	if piece_instance:
 		piece_instance.position = pos + Vector3(0, 0, 0.1)
@@ -477,6 +519,10 @@ func spawn_piece_on_tile(type: String, pos: Vector3, tile_key: Vector2i) -> bool
 
 # --- Initial board setup ---
 
+## Places the starting elephants and villagers at game start. Uses the
+## chosen scenario if one was picked (fixed positions from ScenarioData),
+## otherwise drops 3 elephants on random forest tiles and 6 villagers on
+## random human / plantation tiles.
 func _spawn_initial_pieces() -> void:
 	var scenario_idx: int = GameState.selected_scenario_index
 	var scenario = null

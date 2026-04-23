@@ -1,29 +1,38 @@
+## For all action card definitions in the game.
+##
+## Holds the card name, colour and effect.
 class_name CardData
 
-# All Green and Yellow card definitions.
-# Each entry maps a card ID string to its definition.
-#
-# Effect op tokens:
-#   "add_v"          - Auto: spawn N villagers on random valid tiles
-#   "add_e"          - Auto: spawn N elephants on random valid tiles
-#   "add_v_in"       - Auto: spawn N villagers only on tiles of "in" type(s)
-#   "remove_v"       - Auto: remove N random villagers
-#   "remove_e"       - Auto: remove N random elephants
-#   "move_e"         - Select: move N elephants (player picks source then dest)
-#   "move_v"         - Select: move N villagers (player picks source then dest)
-#   "move_all_e_to"  - Auto: move all elephants within max_dist to a tile of "to" type
-#   "convert"        - Select: player clicks N tiles to convert from->to
-#   "convert_any_any"- Select: player clicks tile, it cycles to next type (MVP: FOREST->HUMAN->PLANTATION->FOREST)
-#   "immune"         - Auto: no-op, logs a message
-#
-# Effect fields (all optional except "op"):
-#   "count"     : int    - how many pieces/tiles affected
-#   "from"      : Array  - source tile type strings, e.g. ["HUMAN","PLANTATION"], or ["ANY"]
-#   "to"        : String or Array - dest tile type(s), e.g. "FOREST" or ["PLANTATION"]
-#   "in"        : Array  - for add_v_in, which tile type(s) to spawn in
-#   "max_dist"  : int    - max Manhattan grid distance for move, -1 = unlimited
-#   "condition" : String - optional guard, e.g. "forest_lt_12"
-
+## Dictionary of every card in the game. 
+## The key is the card ID, the value is the card's name, colour, and list of effects.
+##
+## Each card data looks like this:
+##     "card_id_here": {
+##         "name": "Name",
+##         "color": Color.GREEN,
+##         "sub_effects": [ ... list of effects ... ]
+##     }
+##
+## Effect "op" types (what the card does):
+##   "add_v"           - Add villagers on valid tiles
+##   "add_e"           - Add elephants on valid tiles
+##   "add_v_in"        - Add villagers only on tiles of "in" type(s)
+##   "remove_v"        - Remove villagers
+##   "remove_e"        - Remove elephants
+##   "move_e"          - Move elephants (player picks source then dest)
+##   "move_v"          - Move villagers (player picks source then dest)
+##   "move_all_e_to"   - Auto, Move all elephants within max_dist to a "to" tile type
+##   "convert"         - Player clicks on valid tiles to change from one type to another
+##   "convert_any_any" - Player clicks a tile, then picks what type to change it to
+##   "immune"          - Makes elephants immune for one round
+##
+## Effect fields (all optional except "op"):
+##   "count"     - how many pieces / tiles affected
+##   "from"      - source tile types: "FOREST", "HUMAN", "PLANTATION", or "ANY"
+##   "to"        - destination tile type
+##   "in"        - for which tile type to spawn in
+##   "max_dist"  - furthest grid distance for a move (-1 means no limit)
+##   "condition" - optional extra rule
 static var ALL_CARDS: Dictionary = {
 	
 	

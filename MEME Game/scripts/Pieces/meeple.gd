@@ -1,40 +1,28 @@
+## A villager is a 3D piece that sits on one tile. 
+## It shows a coloured outline when the mouse hovers over it. 
 extends Node3D
 
+## The mesh this piece renders. Used to apply the outline overlay.
 @export var mesh: MeshInstance3D
+## The material the outline is based on.
 @export var material: StandardMaterial3D
 
 const OUTLINE = preload("res://scripts/Pieces/outline.gd")
+## Helper that draws and colours the outline around the villager.
 var outline_S = OUTLINE.new()
 
+## The Play node that owns this piece.
 var parent:Node3D
-var selected: bool = false
+## Grid key of the tile this villager is sitting on. Vector2i(-1, -1) means unassigned.
 var tile_key: Vector2i = Vector2i(-1, -1)
-
-signal Del_Meeple
 
 func _ready() -> void:
 	add_to_group("meeples")
 	parent = get_parent_node_3d()
 	outline_S.new(mesh, material)
-	
-	if parent != null:
-		parent.delete_Meeple.connect(outline_S.deleteFunc)
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta: float) -> void:
-	pass
-
-func _on_static_body_3d_input_event(_camera: Node, event: InputEvent, _event_position: Vector3, _normal: Vector3, _shape_idx: int) -> void:
-	if event is InputEventMouseButton \
-	  and event.button_index == MOUSE_BUTTON_LEFT \
-	  and event.pressed\
-	  and outline_S.delete == true:
-		emit_signal("Del_Meeple")
-		selected = true
 
 func _on_static_body_3d_mouse_entered() -> void:
 	outline_S.colour("red")
 
 func _on_static_body_3d_mouse_exited() -> void:
-	if selected == false:
-		outline_S.colour("black")
+	outline_S.colour("black")

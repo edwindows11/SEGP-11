@@ -1,11 +1,18 @@
+## Script for the Scenario Select screen shown before Role Selection.
+##
+## Shows 6 cards (5 preset scenarios + 1 Random Map). Clicking a card opens
+## a detail panel with a colour-coded 8x8 map preview, concept description,
+## and difficulty ratings for each role group. Confirming loads the Role
+## Selection screen with the chosen scenario set in GameState.
 extends Control
 
-# Emitted when user confirms a scenario and proceeds to role selection
-const CELL_SIZE := 40  # pixels per grid cell in the preview
+## How many pixels wide one grid cell is in the small preview map.
+const CELL_SIZE := 40
 
-var selected_index: int = -1  # 0.4 = preset scenario, 5 = random
+## Index of the currently selected scenario: 0..4 = preset, 5 = random.
+## -1 means nothing picked yet.
+var selected_index: int = -1
 
-# Node references (created in _ready)
 var card_container: HBoxContainer
 var detail_panel: PanelContainer
 var preview_grid: Control
@@ -15,14 +22,17 @@ var difficulty_label: RichTextLabel
 var stats_label: Label
 var confirm_button: Button
 
-# Color mapping for the tile preview
+## Tile colours used in the 8x8 preview map.
+## 0 = Forest (green), 1 = Human (tan), 2 = Plantation (brown).
 const TILE_COLORS := {
-	0: Color(0.18, 0.55, 0.22),   # Forest — green
-	1: Color(0.82, 0.62, 0.35),   # Human/Village — tan
-	2: Color(0.60, 0.40, 0.12),   # Plantation/OilPalm — brown
+	0: Color(0.18, 0.55, 0.22),
+	1: Color(0.82, 0.62, 0.35),
+	2: Color(0.60, 0.40, 0.12),
 }
 
+## Colour used for the elephant start-position markers on the preview map.
 const ELEPHANT_COLOR := Color(0.75, 0.75, 0.80)
+## Scenario card titles in display order. Last one is the random map.
 const SCENARIO_NAMES := [
 	"Balanced Landscape",
 	"Fragmented Forest",
@@ -195,8 +205,9 @@ func _ready() -> void:
 	detail_panel.visible = false
 
 
-# --- Build the 6 scenario cards ---
-
+## Builds the 6 scenario cards (5 presets + 1 random). Each one is a Button
+## with the scenario name and a coloured ribbon. Clicking one opens the
+## detail panel.
 func _build_scenario_cards() -> void:
 	for i in range(6):
 		var card := Button.new()
@@ -273,6 +284,8 @@ func _build_scenario_cards() -> void:
 
 # --- Card selection ---
 
+## Runs when a scenario card is clicked. Highlights the clicked card and
+## fills in the detail panel with either preset data or the random preview.
 func _on_card_pressed(index: int) -> void:
 	selected_index = index
 
@@ -311,6 +324,8 @@ func _on_card_pressed(index: int) -> void:
 		_show_random_details()
 
 
+## Fills the detail panel using a preset scenario from ScenarioData.
+## Draws the 8x8 map preview and writes the concept / stats / difficulty text.
 func _show_preset_details(idx: int) -> void:
 	var scenario = ScenarioData.SCENARIOS[idx]
 	title_label.text = scenario["name"]
@@ -342,6 +357,8 @@ func _show_preset_details(idx: int) -> void:
 	_draw_grid_preview(grid, scenario["elephants"])
 
 
+## Fills the detail panel with a placeholder explanation for the random map
+## option. The real map is generated when the game starts.
 func _show_random_details() -> void:
 	title_label.text = "Random Map"
 	concept_label.text = "The board is generated using a seed-based flood-fill algorithm that creates three contiguous tile regions — Forest, Village, and Oil Palm. Each game is unique!"
@@ -367,6 +384,8 @@ func _show_random_details() -> void:
 	preview_grid.add_child(center_label)
 
 
+## Draws the 8x8 colour-coded preview map for a preset scenario, plus
+## small markers at each elephant start position.
 func _draw_grid_preview(grid: Array, elephants: Array) -> void:
 	_clear_preview()
 	for row in range(8):
@@ -388,13 +407,13 @@ func _draw_grid_preview(grid: Array, elephants: Array) -> void:
 		preview_grid.add_child(marker)
 
 
+## Removes everything from the preview area so a new map can be drawn.
 func _clear_preview() -> void:
 	for child in preview_grid.get_children():
 		child.queue_free()
 
 
-# --- Legend helper ---
-
+## Adds one coloured swatch + label row to the legend under the preview map.
 func _add_legend_item(parent: HBoxContainer, color: Color, label_text: String) -> void:
 	var swatch := ColorRect.new()
 	swatch.custom_minimum_size = Vector2(14, 14)
@@ -407,9 +426,7 @@ func _add_legend_item(parent: HBoxContainer, color: Color, label_text: String) -
 	parent.add_child(lbl)
 
 
-# --- Confirm > go to Role Selection ---
-
+## Stores the chosen scenario index in GameState and opens Role Selection.
 func _on_confirm_pressed() -> void:
-	# Store choice in GameState
 	GameState.selected_scenario_index = selected_index
 	get_tree().change_scene_to_file("res://scenes/RoleSelection.tscn")

@@ -1,37 +1,65 @@
+## AI controller for bot players.
+##
+## Drives one turn at a time for every bot in the game. When the turn
+## advances to a bot, this script picks an ability (if any) and a card to
+## play, walks CardEffects through the tile selections, plays the card,
+## and ends the turn. Supports Easy / Medium / Hard difficulty levels and
+## Slow / Normal / Fast speed presets.
 extends Node
 
-signal bot_turn_started # signal when bot starts
-signal bot_turn_ended # signal when bot ends
+## Emitted when a bot starts taking its turn. The UI listens to disable input.
+signal bot_turn_started
+## Emitted when a bot finishes its turn.
+signal bot_turn_ended
 
+## Bot difficulty levels. EASY = random, MEDIUM = simple heuristics, HARD = scored picks.
 enum Difficulty { EASY, MEDIUM, HARD }
 
 
-var card_effects: Node = null   # CardEffects instance
-var play: Node3D    = null      # card_table node
-var board: Node3D   = null      # Board node
-var ui: Control     = null      # card_table_ui node
+## CardEffects node — set by card_table.gd on setup.
+var card_effects: Node = null
+## The CardTable root node — used to spawn pieces.
+var play: Node3D    = null
+## The Board node — used for tile lookups and highlights.
+var board: Node3D   = null
+## The UI node — used for banners and animations.
+var ui: Control     = null
 
-# Maps player_index (int) to difficulty
+## Maps player_index to its Difficulty enum value.
 var bot_players: Dictionary = {}
 
-# Timing 
-# Small delays so the bot thinks and not acting instantly
+## Delay before the bot decides on a card (so the move feels human).
 var think_delay: float = 2.0
+## Delay after the card pops up before its effect starts resolving.
 var card_reveal_delay: float = 1.4
+## Delay between clicking tiles for multi-step effects.
 var action_delay: float = 0.85
+## Delay before actually ending the bot's turn.
 var end_turn_delay: float = 1.8
 
-var _pending_selections: Array = []   # Queue of tile keys to feed to CardEffects
+## Queue of tile keys the bot plans to click next. Drained by _process.
+var _pending_selections: Array = []
+## Countdown until the next queued selection is sent.
 var _action_timer: float = 0.0
+## True while a selection is queued but not yet sent.
 var _waiting_for_action: bool = false
-var _bot_is_acting: bool = false      # True while a bot is mid-turn
-var _bot_pre_card_ability: bool = false # True between a pre-card ability (Cons/LD) start and its await returning
+## True from the start of a bot's turn until its _end_bot_turn.
+var _bot_is_acting: bool = false
+## True while Conservationist / Land Developer ability is resolving before
+## the normal card play. Prevents the _on_bot_effects_complete handler from
+## ending the turn too early.
+var _bot_pre_card_ability: bool = false
 
 
-var _current_bot_player: int = -1 # number of bots
-var _em_used_this_turn: bool = false #this is for Ecotourism Manager
-var _vh_activated: bool = false      # Village Head used ability this turn
-var _vh_first_card_added_villagers: bool = false  # tracks if 1st card already added villagers
+## The player_index whose turn is currently being played.
+var _current_bot_player: int = -1
+## True once the Ecotourism Manager already used its extra-move this turn.
+var _em_used_this_turn: bool = false
+## True once Village Head pressed its ability to play a second card.
+var _vh_activated: bool = false
+## Tracks whether VH's first card already counted as a villager-adder
+## (only 1 of the 2 cards may add villagers).
+var _vh_first_card_added_villagers: bool = false
 
 
 # Public API
@@ -69,6 +97,9 @@ func is_bot(player_index: int) -> bool:
 	return bot_players.has(player_index)
 
 
+## Runs when the turn changes. Resets the bot's per-turn state. If it's a
+## bot's turn, after a short "thinking" delay, starts the decision process.
+## Skipped turns pass through immediately to the next player.
 func _on_turn_changed(player_index: int, _role_name: String, is_skipped: bool) -> void:
 	_bot_is_acting = false
 	_pending_selections.clear()
@@ -98,6 +129,9 @@ func _on_turn_changed(player_index: int, _role_name: String, is_skipped: bool) -
 	_bot_take_turn(player_index)
 
 
+## Main bot turn loop. Checks for pre-card abilities (Conservationist,
+## Land Developer, Plantation Owner, Village Head), then picks and plays
+## a card based on difficulty. Handles forced black-card plays too.
 func _bot_take_turn(player_index: int) -> void:
 	if not _bot_is_acting:
 		return
@@ -222,6 +256,7 @@ func _bot_take_turn(player_index: int) -> void:
 	card_effects.execute_card(chosen_card_id)
 
 # bot message appear on the instruction
+## Shows a bot message in both the instruction banner and the action log.
 func _announce_bot_message(player_index: int, message: String, is_positive: bool) -> void:
 	var text := "Player " + str(player_index + 1) + " (Bot) " + message
 
@@ -249,6 +284,10 @@ func _mark_preview_card_as_played(card_id: String) -> void:
 	if ui.has_method("_set_play_btn_disabled"):
 		ui._set_play_btn_disabled(true)
 
+## Tries to trigger the bot's Government or Plantation Owner ability before
+## the card-play stage. Returns true if the ability fully replaces the card
+## action for this turn (Plantation Owner), false otherwise (Government,
+## or no ability used — the bot still plays a card).
 func _try_use_special_ability(role: String, player_index: int) -> bool:
 	var ability_role = role
 	if role == "Environmental Consultant":
@@ -306,6 +345,11 @@ func _try_use_special_ability(role: String, player_index: int) -> bool:
 				_announce_bot_message(player_index, "uses Plantation Owner Special Ability!", true)
 				if not card_effects.effects_complete.is_connected(_on_bot_effects_complete):
 					card_effects.effects_complete.connect(_on_bot_effects_complete)
+				# Reversed cards may include interactive ops (move, convert, etc.),
+				# so the bot's tile-click responder must be wired up too — otherwise
+				# the effect stalls in WAITING_SOURCE with no clicker.
+				if not card_effects.request_tile_selection.is_connected(_on_bot_tile_selection_requested):
+					card_effects.request_tile_selection.connect(_on_bot_tile_selection_requested)
 				card_effects.execute_reversed_card(best_target, ui)
 				return true
 
@@ -318,6 +362,8 @@ var _vh_first_card_id: String = ""  # Village Head 1st card (tracked separately 
 
 # Chose how likely a bot plays a card
 ## EASY — random non-black card. Black cards are only played when forced (see _bot_take_turn).
+## EASY difficulty: picks a random non-black card from the hand. Black
+## cards are handled earlier in _bot_take_turn.
 func _pick_card_easy(hand: Array, _player_index: int) -> String:
 	# Filter out black cards entirely — those are handled upstream in _bot_take_turn
 	var playable = hand.filter(
@@ -329,6 +375,8 @@ func _pick_card_easy(hand: Array, _player_index: int) -> String:
 	return playable[0]
 
 ## MEDIUM — prefers green, avoids harmful red, no black cards.
+## MEDIUM difficulty: scores each card with simple rules (prefer green,
+## avoid red, bonus for role-relevant ops) and picks the best.
 func _pick_card_medium(hand: Array, player_index: int) -> String:
 	var role: String = GameState.player_roles[player_index] if player_index < GameState.player_roles.size() else ""
 
@@ -350,6 +398,9 @@ func _pick_card_medium(hand: Array, player_index: int) -> String:
 	
 # Snapshot of board-wide statistics that the scoring functions read.
 # Loop-invariant within a single decision pass — compute once per pick, not per card.
+## Collects a snapshot of key board stats (tile counts, piece counts,
+## distances) so the scoring functions can read them once per decision
+## instead of recomputing per card.
 func _compute_board_snapshot() -> Dictionary:
 	return {
 		"forest_count":     GameState.count_tiles_of_type(GameState.TileType.FOREST),
@@ -362,6 +413,9 @@ func _compute_board_snapshot() -> Dictionary:
 		"shortest_dist":    GameState.get_shortest_distance_human_elephant(),
 	}
 
+## MEDIUM scorer. Adds up points for good ops (add_e, add_v, forest convert,
+## immune near humans) and subtracts points for bad ones. Includes a small
+## random jitter so medium bots don't feel fully predictable.
 func _score_card_medium(card_id: String, role: String, snap: Dictionary = {}) -> float:
 	if snap.is_empty():
 		snap = _compute_board_snapshot()
@@ -425,6 +479,9 @@ func _score_card_medium(card_id: String, role: String, snap: Dictionary = {}) ->
 	score += randf_range(-1.5, 1.5)
 	return score
 
+## Small role-aware bonus added to the MEDIUM card score. Rewards cards
+## whose effects match the bot's role (e.g. converting to forest for
+## Conservationist).
 func _role_bonus_medium(card_id: String, role: String) -> float:
 	var card    = CardData.ALL_CARDS[card_id]
 	var effects = card.get("sub_effects", [])
@@ -452,6 +509,8 @@ func _role_bonus_medium(card_id: String, role: String) -> float:
 	return bonus
 
 ## HARD — evaluates every non-black card against board state and role win condition.
+## HARD difficulty: uses a richer scoring function that factors in win-
+## condition progress. No random jitter so hard bots play optimally.
 func _pick_card_hard(hand: Array, player_index: int) -> String:
 	var role: String = GameState.player_roles[player_index] if player_index < GameState.player_roles.size() else ""
 
@@ -471,6 +530,9 @@ func _pick_card_hard(hand: Array, player_index: int) -> String:
 
 	return best_id
 	
+## HARD scorer. Strong colour preference, strong bonuses for board state
+## that helps the bot win, and explicit "don't make things worse" logic
+## (moving elephants toward humans is heavily penalised, etc.).
 func _score_card_hard(card_id: String, role: String, player_index: int, snap: Dictionary = {}) -> float:
 	if snap.is_empty():
 		snap = _compute_board_snapshot()
@@ -573,6 +635,9 @@ func _score_card_hard(card_id: String, role: String, player_index: int, snap: Di
 	# No jitter — hard bot plays optimally
 	return score
 
+## Role-specific scoring bonus for the HARD bot. Rewards cards whose
+## effects advance that role's win condition (e.g. +12 per forest convert
+## for Conservationist, scaled bonus for villager count toward the 16 goal).
 func _role_win_score_hard(
 		role: String, effects: Array,
 		forest_count: int,
@@ -661,6 +726,9 @@ func _role_win_score_hard(
 
 
 # choose which tile the bots ill place cards in
+## Called when CardEffects asks for a tile click during a bot's card.
+## Picks one of the valid tiles based on the bot's difficulty and queues
+## it so the selection lands a moment later (feels less robotic).
 func _on_bot_tile_selection_requested(valid_keys: Array, _instruction: String) -> void:
 	if not _bot_is_acting:
 		return
@@ -685,11 +753,13 @@ func _on_bot_tile_selection_requested(valid_keys: Array, _instruction: String) -
 	_waiting_for_action = true
 
 # EASY - random
+## EASY tile pick: fully random.
 func _select_tile_easy(valid_keys: Array, _op: String) -> Vector2i:
-	# Completely random
 	return valid_keys[randi() % valid_keys.size()]
 
-# MEDIUM 
+## MEDIUM tile pick: prefers tiles that match the card's intent (e.g. forest
+## tiles for add_e, plantation tiles for remove_v). Falls back to random
+## if no ideal match is available.
 func _select_tile_medium(valid_keys: Array, op: String) -> Vector2i:
 	match op:
 		"add_e":
@@ -721,7 +791,8 @@ func _select_tile_medium(valid_keys: Array, op: String) -> Vector2i:
 	return valid_keys[randi() % valid_keys.size()]
 
 
-# HARD
+## HARD tile pick: uses stronger strategic rules
+## (elephants to forests farthest from humans, villagers on human tiles, etc.).
 func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 	match op:
 		"add_e":
@@ -788,6 +859,9 @@ func _select_tile_hard(valid_keys: Array, op: String) -> Vector2i:
 # convert_any_any type confirmation 
 
 # Called from _process when state == WAITING_CHOICE and op == convert_any_any
+## Picks a tile type for Land-Use Planning's second step (convert_any_any).
+## Always avoids picking the source tile's current type so CardEffects
+## doesn't reject it and loop.
 func _bot_confirm_convert_any_any_type() -> void:
 	# CardEffects rejects picks that match the source tile's current type and leaves
 	# state in WAITING_CHOICE, so _process would call this again every frame with the
@@ -821,6 +895,8 @@ func _bot_confirm_convert_any_any_type() -> void:
 				chosen = options[0]
 	card_effects.confirm_convert_any_any_type_selected(chosen)
 
+## Picks a target for a card-driven steal effect. Prefers the opponent with
+## the largest hand so the steal has the most options.
 func _bot_confirm_steal_target() -> void:
 	var thief := _current_bot_player
 	var candidates: Array = []
@@ -848,7 +924,8 @@ func _bot_confirm_steal_target() -> void:
 
 	card_effects.confirm_steal_target(target_player)
 
-# ecotourism manager choose base on a 50% chance
+## Picks "elephant" or "villager" with 50/50 odds for the Ecotourism
+## Manager choice popup.
 func _bot_confirm_em_choice() -> void:
 	var choice = "skip"
 	if randf() > 0.5:
@@ -857,6 +934,10 @@ func _bot_confirm_em_choice() -> void:
 		choice = "villager"
 	card_effects.confirm_em_choice(choice)
 
+## Drives the bot's async actions each frame. Feeds queued tile selections
+## to CardEffects on a timer so clicks happen with realistic pacing, and
+## auto-answers any popup-style state (convert_any_any type pick, steal
+## target, EM choice) as soon as CardEffects enters WAITING_CHOICE.
 func _process(delta: float) -> void:
 	if not _bot_is_acting:
 		return
@@ -891,6 +972,8 @@ func _process(delta: float) -> void:
 	_tile_effect_bot(tile_key)
 
 # card effect on tiles
+## Routes one queued tile click to the matching CardEffects confirm method
+## based on the current state and op. Used to apply the bot's queued picks.
 func _tile_effect_bot(tile_key: Vector2i) -> void:
 	if not card_effects:
 		return
@@ -908,13 +991,13 @@ func _tile_effect_bot(tile_key: Vector2i) -> void:
 			card_effects.confirm_dest_selected(tile_key)
 
 
+## Runs when CardEffects finishes the bot's played card. Handles Village
+## Head's 2nd-card pick, Ecotourism Manager's follow-up ability, and then
+## ends the turn. Early-returns if a Cons/LD pre-card ability is still
+## resolving (to avoid ending the turn before the card plays).
 func _on_bot_effects_complete() -> void:
 	if not _bot_is_acting:
 		return
-	# Guard: this handler stays connected across turns. If a pre-card ability
-	# (Conservationist / Land Developer) is currently resolving, _bot_take_turn
-	# is still mid-await and will continue to the card-play section — don't end
-	# the turn prematurely.
 	if _bot_pre_card_ability:
 		return
 
@@ -1006,6 +1089,9 @@ func _on_bot_effects_complete() -> void:
 	_end_bot_turn()
 
 
+## Wraps up a bot's turn: clears flags, logs the cards played as recent
+## cards, updates stats, discards the played cards, refills the hand,
+## and advances the turn.
 func _end_bot_turn() -> void:
 	if not _bot_is_acting:
 		return
@@ -1062,6 +1148,9 @@ func _end_bot_turn() -> void:
 
 # Credit a played card: update stats/discard via GameState, log to recent cards,
 # refill the hand. No-op for empty ids.
+## Credits a played card: logs it to recent cards, updates stats via
+## GameState.record_played_card, and draws a replacement if the hand fell
+## below 5. No-op for empty card ids.
 func _credit_bot_card(card_id: String) -> void:
 	if card_id == "":
 		return
@@ -1074,6 +1163,8 @@ func _credit_bot_card(card_id: String) -> void:
 
 # Tile-scoring
 
+## Returns the tile key in `keys` with the shortest Manhattan distance to
+## any HUMAN tile. Used to move / remove pieces near humans.
 func _key_closest_to_human(keys: Array) -> Vector2i:
 	var best_key: Vector2i = Vector2i(keys[0])
 	var best_dist: int = 999999
@@ -1084,6 +1175,8 @@ func _key_closest_to_human(keys: Array) -> Vector2i:
 			best_key = k
 	return best_key
 
+## Returns the tile key in `keys` with the largest distance to any HUMAN
+## tile. Used to move elephants somewhere safer.
 func _key_farthest_from_human(keys: Array) -> Vector2i:
 	var best_key: Vector2i = Vector2i(keys[0])
 	var best_dist: int = -1
@@ -1094,6 +1187,8 @@ func _key_farthest_from_human(keys: Array) -> Vector2i:
 			best_key = k
 	return best_key
 
+## Returns the tile key in `keys` that borders the most forest tiles.
+## Used when the bot wants to expand forest most efficiently.
 func _key_most_adjacent_forest(keys: Array) -> Vector2i:
 	# Among valid keys, pick the one with the most neighbouring forest tiles.
 	var best_key: Vector2i = Vector2i(keys[0])
@@ -1109,6 +1204,8 @@ func _key_most_adjacent_forest(keys: Array) -> Vector2i:
 			best_key = k
 	return best_key
 
+## Returns the tile key in `keys` with the fewest useful neighbours.
+## Used to pick tiles that are cheap to give up when converting.
 func _key_least_valuable(keys: Array) -> Vector2i:
 	# Plantation first then human then forest to simulate which would be least costly to lose
 	var plantation_keys = keys.filter(func(k): return GameState.tile_registry[k]["type"] == GameState.TileType.PLANTATION)
@@ -1119,6 +1216,8 @@ func _key_least_valuable(keys: Array) -> Vector2i:
 		return human_keys[randi() % human_keys.size()]
 	return keys[randi() % keys.size()]
 
+## Shortest Manhattan distance from `origin` to any tile of `tile_type`.
+## Used by the human-distance helpers above.
 func _min_dist_to_type(origin: Vector2i, tile_type: int) -> int:
 	var best: int = 999999
 	for k in GameState.tile_registry:
@@ -1128,6 +1227,7 @@ func _min_dist_to_type(origin: Vector2i, tile_type: int) -> int:
 				best = d
 	return best
 
+## Returns the four up/down/left/right neighbour tile keys of `key`.
 func _get_neighbours(key: Vector2i) -> Array:
 	return [
 		Vector2i(key.x + 1, key.y),
@@ -1136,10 +1236,13 @@ func _get_neighbours(key: Vector2i) -> Array:
 		Vector2i(key.x, key.y - 1),
 	]
 
+## True if any elephant is within 2 tiles of a villager. Used by scoring
+## to reward protection moves.
 func _elephants_near_humans() -> bool:
 	var dist := GameState.get_shortest_distance_human_elephant()
 	return dist >= 0 and dist <= 2
 
+## Counts every elephant currently on the board.
 func _all_elephants() -> int:
 	var count := 0
 	for k in GameState.tile_registry:

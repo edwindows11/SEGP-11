@@ -1,24 +1,31 @@
+## Helper for drawing a coloured outline around a 3D piece.
+
+## Used to show a hover highlight (red).
+## Call [new()] first to bind the outline to a mesh and material.
 extends Node3D
 
+## The mesh the outline is drawn on top of.
 @export var mesh: MeshInstance3D
+## The material used to colour the outline. 
+## Duplicated in [new()] so each piece has its own copy.
 @export var material: StandardMaterial3D
 
-var delete = false
+## The Play node that owns this piece.
 var parent:Node3D
 
 
-# before you call any function in this script, always call the new function first
+## Sets up the outline for a specific mesh and material.
+## Must be called before using any other function in this script.
 func new(mesh_instance, material_instance) -> void:
 	material = material_instance
 	mesh = mesh_instance
-	
+
 	parent = get_parent_node_3d()
 	material = material.duplicate(true)
 	mesh.material_overlay= material
-	
-	if parent != null:
-		parent.delete.connect(deleteFunc)	
 
+## Changes the outline colour. Accepts "red", "white", or "black".
+## "black" hides the outline (grow_amount = 0).
 func colour(new_colour: String):
 	if new_colour == "red":
 		material.albedo_color = Color("d30000ff")
@@ -30,12 +37,3 @@ func colour(new_colour: String):
 	elif new_colour == "black":
 		material.albedo_color = Color("000000ff")
 		material.grow_amount = 0.0 # Invisible
-	
-func deleteFunc():
-	if (delete):
-		delete = false
-		material.grow_amount = 0
-	else:
-		delete = true
-		material.grow_amount = 0.3
-	

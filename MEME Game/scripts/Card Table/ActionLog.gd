@@ -1,10 +1,18 @@
+## Shows a short list of the most recent actions.
+## (cards played, pieces added / removed, abilities used). 
+## Maximum of 8 entries.
+## Green for positive, Red for negative
+
 extends VBoxContainer
 
 func _ready():
-	# Keep entries visually inside the ActionLog's rect even if more accumulate
-	# than fit — anything outside the bounds is clipped instead of overflowing.
+	# Entries outside the log are clipped
 	clip_contents = true
 
+## Adds one entry to the log
+## `is_positive` = true : green for good things 
+##                 false: red for bad ones
+## Maximum 8 logs
 func add_action(text: String, is_positive: bool):
 	var panel = PanelContainer.new()
 	var style = StyleBoxFlat.new()
@@ -34,7 +42,7 @@ func add_action(text: String, is_positive: bool):
 	panel.add_child(label)
 	add_child(panel)
 
-	# Pop-in + scale animation
+	# Pop-in and scale animation
 	panel.modulate = Color(1, 1, 1, 0)
 	panel.scale = Vector2(0.95, 0.95)
 	panel.pivot_offset = Vector2(0, panel.size.y / 2.0)
@@ -42,7 +50,7 @@ func add_action(text: String, is_positive: bool):
 	tw.tween_property(panel, "modulate", Color(1, 1, 1, 1), 0.35)
 	tw.tween_property(panel, "scale", Vector2(1.0, 1.0), 0.35)
 
-	# Limit number of log entries (ignore ones already animating out)
+	# Limit number of log to 8
 	var live: Array = []
 	for c in get_children():
 		if not c.has_meta("dying"):

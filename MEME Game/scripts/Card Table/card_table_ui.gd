@@ -1,8 +1,22 @@
+## Top-level UI for the game board (everything on screen except the 3D board).
+##
+## Handles the player's hand, the Play / End Turn button, the turn timer,
+## the Special Ability button, goal tracker panels, the Played Cards
+## overlay, the Win screen, and every popup (steal target, EC borrow, EM
+## choice, Wildlife discard, Land-Use Planning type pick). Card-effect
+## logic lives in CardEffects.gd; turn-advancing and piece spawning live in
+## card_table.gd. This script only turns clicks into signals for them to act on.
 extends Control
 
+## Emitted when the player confirms a card (clicked Play).
 signal card_activated(card_id: String)
+## Emitted when the player manually presses the End Turn button.
 signal end_turn_requested()
+## Emitted when the turn timer runs out. Handled separately so end-of-turn
+## cleanup (Wildlife discard, auto-complete) can differ from a normal click.
 signal end_turn_timer_expired()
+## One signal per button-ability role. card_table.gd connects these to the
+## right CardEffects call.
 signal request_po_ability()
 signal request_gov_ability()
 signal request_cons_ability()
@@ -11,8 +25,11 @@ signal request_ec_ability()
 signal request_em_ability()
 
 const CARD_SCENE = preload("res://scenes/Card.tscn")
+## Maximum cards a player can hold in their hand.
 const TOTAL_CARDS = 5
+## Horizontal gap between cards in the hand.
 const CARD_SPACING = 200.0
+## Distance from the bottom of the screen to the hand row.
 const BOTTOM_MARGIN = 50.0
 
 @onready var cards_container = $CardsContainer
@@ -98,6 +115,8 @@ const ROLE_ABILITIES: Dictionary = {
 	"Government":          "Special: Instead of drawing a card, steal any played Yellow, Red, or Green card from another player. You may replay it on your current or later turns (once per card).\nWin by playing 2R + 2Y cards AND having Villagers >= 2x Elephants on the board.",
 }
 
+## Wires up button signals, the turn timer, the window-resize handler, and
+## builds all of the runtime UI widgets (popups, overlays, trackers, win screen).
 func _ready():
 	pause_btn.pressed.connect(_pause)
 	play_btn.pressed.connect(_on_play_btn_pressed)
@@ -264,6 +283,8 @@ func _build_all_trackers(): #trackers are the ones under objective
 	_trackers_vbox_ref = trackers_vbox
 
 # Holds a reference to the trackers VBox built in the same function as the panels.
+## Creates one goal-tracker panel per player slot. Called from card_table.gd
+## after roles are assigned.
 func build_player_trackers() -> void:
 	if _trackers_vbox_ref == null:
 		return
@@ -363,6 +384,9 @@ func _create_player_tracker_panel(player_index: int, role: String) -> Dictionary
 		"image": image_rect,
 	}
 
+## Runs when the Special Ability button is clicked. Emits the right
+## request_*_ability signal based on the current player's role and marks
+## the per-turn used flag.
 func _on_special_ability_pressed():
 	if is_bot_turn:
 		return
@@ -457,6 +481,8 @@ func _build_ec_choice_popup():
 	ec_choice_popup.set_meta("_vbox", vbox)
 	add_child(ec_choice_popup)
 
+## Shows the Environmental Consultant "borrow an ability" popup at game start.
+## The chosen role name is saved in GameState.ec_borrowed_ability.
 func show_ec_choice_popup() -> void:
 	var vbox = ec_choice_popup.get_meta("_vbox")
 	# Clear previously added buttons (keep title at index 0)
@@ -589,6 +615,8 @@ func _update_dropdown_btn_text():
 	var arrow = "▴" if ability_dropdown_panel.visible else "▾"
 	ability_dropdown_btn.text = "Player %d | %s %s" % [p_idx + 1, role, arrow]
 	
+## Enables or disables the Special Ability button based on role, per-turn
+## used flags, and hand size (some roles need cards in hand).
 func _update_special_ability_button_state() -> void:
 	if not special_ability_btn:
 		return
@@ -627,6 +655,8 @@ func _refresh_role_panel_ui():
 const _GOALS_UPDATE_INTERVAL: float = 0.2
 var _goals_update_accum: float = 0.0
 
+## Polls goal-tracker progress every 0.2 s (instead of every frame) to keep
+## the UI cheap. The check stops entirely once the game is over.
 func _process(delta):
 	if is_game_over: return
 	_goals_update_accum += delta
@@ -635,6 +665,9 @@ func _process(delta):
 	_update_goals()
 
 # track goal for player tracker panels and refresh each from RoleEffect
+## Refreshes every goal-tracker panel by asking RoleEffect.compute_goal for
+## fresh data. Also detects the first player to meet their win condition and
+## triggers the win screen.
 func _update_goals():
 	for i in range(_player_tracker_panels.size()):
 		var entry: Dictionary = _player_tracker_panels[i]
@@ -650,6 +683,8 @@ func _update_goals():
 
 func _on_window_resize(): reposition_cards()
 
+## Lays out the cards in the player's hand along the bottom of the screen.
+## Re-runs on window resize and after cards are added or removed.
 func reposition_cards():
 	var screen_size = get_viewport_rect().size
 	var cards = []
@@ -663,6 +698,9 @@ func reposition_cards():
 		card.position = Vector2(start_x + (i * CARD_SPACING) - (card.get_size().x / 2.0), screen_size.y - card.get_size().y - BOTTOM_MARGIN)
 		card.original_position = card.position
 
+## Turn-timer tick. Counts down each second. When time runs out it stops
+## the timer and emits end_turn_timer_expired so card_table.gd can handle
+## Wildlife-discard and mid-card auto-completion.
 func _on_timer_timeout():
 	time_left -= 1
 	if time_left < 0:
@@ -672,6 +710,8 @@ func _on_timer_timeout():
 	else:
 		timer_label.text = str(time_left)
 
+## Rebuilds the hand display from the current player's GameState.player_hands.
+## Called on turn change and after any effect that changes the hand.
 func spawn_cards():
 	for child in cards_container.get_children(): child.queue_free()
 	pending_card = null
@@ -749,6 +789,8 @@ func _focus_card_for_play(selected_card: Control, enable_play_button: bool = tru
 	_update_special_ability_button_state()
 	return tween
 
+## Shows the bot's chosen card in a big pop-in preview so the player can
+## see what the bot is about to play. Waits for the tween to finish.
 func animate_bot_card_popup(card_id: String) -> bool:
 	if card_id == "":
 		return false
@@ -767,6 +809,9 @@ func animate_bot_card_popup(card_id: String) -> bool:
 		return true
 	return false
 
+## Called when a Card emits its card_selected signal. Animates the card up
+## and enables the Play button. Black cards are auto-played after a short
+## pause since they must be played.
 func _on_card_selected(selected_card):
 	if not play_card or is_bot_turn: return
 	
@@ -795,6 +840,9 @@ func _on_card_selected(selected_card):
 		return
 	_focus_card_for_play(selected_card)
 
+## Runs when the Play button is clicked. In Play mode it confirms the
+## selected card by emitting card_activated. In End Turn mode it emits
+## end_turn_requested instead.
 func _on_play_btn_pressed():
 	if _play_btn_is_end_turn:
 		end_turn_requested.emit()
@@ -843,9 +891,14 @@ func _on_play_btn_pressed():
 
 	card_activated.emit(cid)
 
+## Updates the UI's "is this a bot's turn" flag. Called by card_table.gd on
+## each turn change so card clicks are locked out during bot turns.
 func set_bot_turn(bot_turn: bool) -> void:
 	is_bot_turn = bot_turn
 
+## Runs every time the turn advances. Resets per-turn flags, updates the
+## role label and Special Ability button, refreshes goal panels, handles
+## Wildlife Department's bonus draw, and spawns the new hand.
 func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 	play_card = not is_bot_turn and not is_skipped
 	
@@ -913,10 +966,13 @@ func _on_turn_changed(player_index: int, role_name: String, is_skipped: bool):
 		_switch_to_play_mode()
 	spawn_cards()
 
+## Hides the yellow-on-black instruction banner at the top of the screen.
 func hide_instruction():
 	if instruction_label:
 		instruction_label.get_parent().visible = false
 
+## Opens the Wildlife Department discard popup listing the 2 bonus cards
+## just drawn. Lets the player pick which one to discard before ending the turn.
 func show_wildlife_discard_popup():
 	var drawn = GameState.wildlife_dept_drawn_cards
 	if drawn.is_empty(): end_turn_requested.emit(); return
@@ -941,6 +997,9 @@ func show_wildlife_discard_popup():
 	wildlife_discard_popup.visible = true
 
 # reuse the scene $Steal node to show a player-select popup with player + last card name
+## Opens the player-select popup used by Plantation Owner's ability to
+## choose whose last card to reverse. `disabled_func` decides which targets
+## aren't valid; `callback` runs with the chosen player index.
 func show_player_select_popup(_title_text, disabled_func, callback, card_effects_node = null):
 	var steal_node = get_node_or_null("Steal")
 	if not steal_node:
@@ -998,6 +1057,8 @@ func show_player_select_popup(_title_text, disabled_func, callback, card_effects
 func spawn_stolen_gov_card():
 	spawn_cards() # refresh
 
+## Opens the Ecotourism Manager choice popup ("Move an elephant / villager /
+## Skip"). `callback` runs with the picked string.
 func show_em_choice_popup(callback):
 	var vbox = em_choice_popup.get_meta("_vbox")
 	while vbox.get_child_count() > 1: vbox.get_child(vbox.get_child_count()-1).queue_free()
@@ -1150,6 +1211,9 @@ func _close_recent_cards_overlay() -> void:
 	recent_cards_overlay_panel.visible = false
 	_clear_recent_cards_preview()
 
+## Records a card the given player just played so it shows up in the
+## Played Cards overlay. Trimmed to the last RECENT_HISTORY_LIMIT entries
+## per player so the list doesn't grow without bound.
 func add_recent_card_for_player(player_index: int, card_id: String) -> void:
 	if card_id == "":
 		return
@@ -1336,6 +1400,8 @@ func _switch_to_play_mode() -> void:
 	play_btn.texture_focused  = TEX_PLAY_NORMAL
 	_set_play_btn_disabled(true)
 
+## Flips the Play button into End Turn mode and enables it. Called after a
+## card effect finishes so the player can confirm the turn.
 func set_end_turn_ready() -> void:
 	if bot_turn_active:
 		return
@@ -1356,11 +1422,16 @@ func _on_bot_turn_ended() -> void:
 
 # --- Instruction label ---
 
+## Shows a yellow-on-black instruction banner at the top of the screen.
+## Used by card effects to tell the player what to click next.
 func show_instruction(text: String) -> void:
 	if instruction_label:
 		instruction_label.text = text
 		instruction_label.get_parent().visible = true
 
+## Opens the steal-target popup. `mode` is "steal" (regular card steal) or
+## "gov" (Government ability). Clicking a target sends the pick back to
+## CardEffects via the correct confirm method.
 func show_steal_popup(card_effects_node: Node, mode: String = "steal") -> void:
 	if is_bot_turn: return
 
@@ -1426,6 +1497,9 @@ func hide_steal_popup(steal_node) -> void:
 	if steal_node:
 		steal_node.visible = false
 
+## Opens the Land-Use Planning type-pick popup for the convert_any_any op.
+## Hides whichever option matches the tile's current type so the player
+## can't pick "no change".
 func show_convert_type_popup(card_effects_node: Node, current_type: int) -> void:
 	if is_bot_turn: return
 	var popup = get_node_or_null("_convert_type_popup")
@@ -1592,6 +1666,9 @@ func _build_win_screen():
 
 	add_child(win_screen_panel)
 
+## Fires the moment a player's win condition becomes true. Shows the win
+## screen with a pop-in tween, stops the turn timer, freezes the game (via
+## GameState.is_game_over), and closes any overlays.
 func _trigger_win(player_index: int, role_name: String) -> void:
 	if is_game_over:
 		return

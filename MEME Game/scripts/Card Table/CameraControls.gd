@@ -1,34 +1,51 @@
+## The camera moves around a fixed centre point (the board). 
+## Left-click drag rotates the view, mouse wheel zooms, and Q / E snap-rotate by 90 degrees.
+
 extends Camera3D
 
-# Camera Settings
+## How fast drag rotates the camera.
 var rotation_speed: float = 0.5
+## How much one wheel click changes the zoom.
 var zoom_speed: float = 2.0
+## Closest the camera can zoom in.
 var zoom_min: float = 5.0
+## Furthest the camera can zoom out.
 var zoom_max: float = 30.0
+## How quickly the smoothed values catch up to the target values.
 var smoothing: float = 10.0
 
-# State
+## The point the camera orbits around (the centre of the board).
 var pivot_point: Vector3 = Vector3(0, 0, 0)
-var current_rotation: Vector2 = Vector2(0, deg_to_rad(45)) # Yaw (X), Pitch (Y)
+## Current rotation: X = yaw (spin around), Y = pitch (up/down).
+var current_rotation: Vector2 = Vector2(0, deg_to_rad(45))
+## Where the rotation is heading. Smoothing blends current toward target.
 var target_rotation: Vector2 = Vector2(0, deg_to_rad(45))
+## Current distance from pivot.
 var current_zoom: float = 15.0
+## Target zoom distance.
 var target_zoom: float = 15.0
+## True while the mouse is moving enough to count as a rotate drag.
 var is_dragging: bool = false
+## True while the left mouse button is held down.
 var _mouse_held: bool = false
+## Total pixels the mouse has moved since the click started.
 var _drag_total: float = 0.0
-const DRAG_THRESHOLD: float = 5.0  # pixels mouse must move before rotation begins
+## Mouse must move at least this many pixels before a drag starts rotating.
+const DRAG_THRESHOLD: float = 5.0
 
 func _ready() -> void:
 	# Calculate initial rotation/zoom 
 	update_camera_transform()
 
+## Smoothly blends current rotation / zoom toward target values each frame, then updates the camera position so it feels fluid.
 func _process(delta: float) -> void:
-	# Smoothly interpolate values
 	current_rotation = current_rotation.lerp(target_rotation, smoothing * delta)
 	current_zoom = lerp(current_zoom, target_zoom, smoothing * delta)
-	
+
 	update_camera_transform()
 
+## Moves and rotates the Camera3D based on the current pivot, rotation and zoom values. 
+## Called every frame from _process.
 func update_camera_transform() -> void:
 	# Convert spherical coordinates to Cartesian
 	var x = current_zoom * cos(current_rotation.y) * sin(current_rotation.x)
@@ -38,11 +55,9 @@ func update_camera_transform() -> void:
 	position = pivot_point
 	rotation = Vector3.ZERO
 	
-	# calculate offset manually to avoid gimbal lock issues if we used Euler directly on the node repeatedly
-	
 
 	# Start at (0, 0, zoom), 
-	#r otate around X axis (Pitch), rotate around Y axis
+	# rotate around X axis (Pitch), rotate around Y axis
 	
 	var offset = Vector3(0, 0, current_zoom)
 	
@@ -55,6 +70,8 @@ func update_camera_transform() -> void:
 	look_at(pivot_point)
 
 
+## Handles input for the camera: wheel zoom, left-drag rotate, and Q / E snap-rotate. 
+## Skips everything if a UI overlay (like Played Cards) is open.
 func _unhandled_input(event: InputEvent) -> void:
 	if _is_board_input_blocked():
 		return
@@ -92,13 +109,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			_snap_rotate(90.0)
 
 
+## Returns true if any Control node in the "blocks_board_input" group is visible. 
+## While one is open, the camera ignores all input so the overlay can take the clicks.
 func _is_board_input_blocked() -> bool:
 	for node in get_tree().get_nodes_in_group("blocks_board_input"):
 		if node is Control and node.visible:
 			return true
 	return false
 
-# Snap to the nearest multiple of 90°
+## Rotates the camera by `degrees` (left = -90, right = +90), snapping to
+## the nearest multiple of 90 first so repeated presses are predictable.
 func _snap_rotate(degrees: float) -> void:
 	var step: float = deg_to_rad(90.0)
 	var snapped_rot: float = round(target_rotation.x / step) * step

@@ -1,23 +1,23 @@
+## Each scenario is a fixed 8x8 map with a specific tile layout, elephant start positions and villager count. 
 class_name ScenarioData
 
-# Tile types: 0=FOREST, 1=HUMAN (Village), 2=PLANTATION (Oil Palm)
-# Row layouts use: F=FOREST, V=HUMAN, O=PLANTATION
-# Grid is 8x8, indexed [row][col] where row 0 = top row (Row 1 in spec)
+## Tile type code for a forest tile.
+const F = 0
+## Tile type code for a village tile.
+const V = 1
+## Tile type code for a plantation tile.
+const O = 2
 
-# Each scenario dict:
-#   "name"           : String
-#   "concept"        : String
-#   "grid"           : Array[Array[int]] — 8 rows of 8 tile types
-#   "elephants"      : Array[Vector2i]   — starting elephant positions (row, col) 0-indexed
-#   "villagers_count": int               — number of villagers to place randomly on HUMAN tiles
-#   "difficulty"     : Dictionary         — { "pro_elephant": String, "neutral": String, "pro_people": String }
-
-const F = 0   # Forest
-const V = 1   # Human / Village
-const O = 2   # Plantation / Oil Palm
-
+## List of all scenarios in the game. Each entry is a Dictionary:
+##   "id"              : unique identifier
+##   "name"            : display name
+##   "concept"         : short description shown on the select screen
+##   "grid"            : 8 tile-type ints (F / V / O)
+##   "elephants"       : starting elephant positions (row, col)
+##   "villagers_count" : villagers placed randomly on HUMAN tiles
+##   "difficulty"      : Dictionary with keys "pro_elephant", "neutral", "pro_people"
 static var SCENARIOS: Array = [
-	# --- Scenario 1: Balanced Landscape ---
+	# Scenario 1: Balanced Landscape
 	{
 		"id": "balanced_landscape",
 		"name": "Balanced Landscape",
@@ -41,7 +41,7 @@ static var SCENARIOS: Array = [
 		},
 	},
 
-	# --- Scenario 2: Fragmented Forest ---
+	# Scenario 2: Fragmented Forest 
 	{
 		"id": "fragmented_forest",
 		"name": "Fragmented Forest",
@@ -65,7 +65,7 @@ static var SCENARIOS: Array = [
 		},
 	},
 
-	# --- Scenario 3: Forest Corridor ---
+	# Scenario 3: Forest Corridor 
 	{
 		"id": "forest_corridor",
 		"name": "Forest Corridor",
@@ -89,7 +89,7 @@ static var SCENARIOS: Array = [
 		},
 	},
 
-	# --- Scenario 4: Village Expansion ---
+	# Scenario 4: Village Expansion 
 	{
 		"id": "village_expansion",
 		"name": "Village Expansion",
@@ -113,7 +113,7 @@ static var SCENARIOS: Array = [
 		},
 	},
 
-	# --- Scenario 5: Protected Forest Core ---
+	# Scenario 5: Protected Forest Core 
 	{
 		"id": "protected_forest_core",
 		"name": "Protected Forest Core",
@@ -138,11 +138,13 @@ static var SCENARIOS: Array = [
 	},
 ]
 
-# Returns null for "random" — caller should use the original flood-fill algorithm
+## Returns the scenario at the given index, or null if the index is out of range. 
+## Out-of-range = "random": The board is built using the random flood-fill algorithm.
 static func get_scenario(index: int):
 	if index < 0 or index >= SCENARIOS.size():
 		return null
 	return SCENARIOS[index]
 
+## Returns how many preset scenarios exist.
 static func get_scenario_count() -> int:
 	return SCENARIOS.size()

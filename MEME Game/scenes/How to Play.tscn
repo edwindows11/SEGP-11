@@ -201,7 +201,6 @@ text = "How to Play"
 horizontal_alignment = 1
 
 [node name="The Board" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
-visible = false
 layout_mode = 2
 
 [node name="Overview" type="RichTextLabel" parent="Background/How To Play/How to play pages/The Board"]
@@ -640,6 +639,7 @@ expand_mode = 1
 stretch_mode = 4
 
 [node name="Game Overview 1" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
 layout_mode = 2
 
 [node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 1"]

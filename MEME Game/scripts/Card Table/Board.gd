@@ -1,19 +1,25 @@
+## It generates a grid of forest / human / plantation tiles, and registers each one in GameState. 
+## Handles converting tiles between types and highlighting tiles for card actions.
 extends Node3D
 
+## The board is 8x8 = 64 tiles.
 const BOARD_SIZE = 8
+## Size of each tile in world units.
 const TILE_SIZE = 2.0
 
 const FOREST_TILE = preload("res://assets/Tiles/ForestTile.glb")
 const HUMAN_TILE = preload("res://assets/Tiles/HumanDominatedTile.glb")
 const PLANTATION_TILE = preload("res://assets/Tiles/PlantationTile.glb")
 
-# 8×8 = 64 tiles — same 40:30:30 ratio scaled down
-# FOREST=26, HUMAN=19, PLANTATION=19
+## Target tile counts for random boards: 26 Forest, 19 Human, 19 Plantation.
 const TILE_QUOTAS = [26, 19, 19]
 
 func _ready() -> void:
 	generate_board()
 
+## Builds the 8x8 grid of tiles. 
+## Uses the chosen scenario if one was picked, otherwise generates a random layout. 
+## Each tile is placed in 3D space, given a collider, and registered in GameState.
 func generate_board() -> void:
 	var type_map: Dictionary
 	var scenario_idx: int = GameState.selected_scenario_index
@@ -44,9 +50,9 @@ func generate_board() -> void:
 			GameState.register_tile(x, z, tile_type, tile_instance, world_pos)
 
 
-# --- Regional blob generation ---
-# Grows one contiguous region per tile type so same-type tiles cluster together.
-
+## Flood Fill Algorithm
+## Builds a random tile-type map where same-type tiles group together.
+## Plants one seed per type, then grows each region outward in turn until every tile is assigned.
 func _generate_type_map() -> Dictionary:
 	var type_map: Dictionary = {}
 	var remaining: Array = TILE_QUOTAS.duplicate()
@@ -114,6 +120,7 @@ func _generate_type_map() -> Dictionary:
 	return type_map
 
 
+## Returns the list of neighbouring cells that don't have a tile type assigned yet. 
 func _get_unassigned_neighbors(cell: Vector2i, type_map: Dictionary) -> Array:
 	var result: Array = []
 	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -124,6 +131,8 @@ func _get_unassigned_neighbors(cell: Vector2i, type_map: Dictionary) -> Array:
 	return result
 
 
+## Picks starting points for the region-grow loop.
+## BOARD_SIZE/2 apart so the regions don't end up on top of each other.
 func _pick_spread_seeds(count: int) -> Array:
 	# Shuffle all positions then pick ones at least BOARD_SIZE/2 apart (Manhattan)
 	var candidates: Array = []
@@ -157,8 +166,8 @@ func _pick_spread_seeds(count: int) -> Array:
 
 	return chosen
 
-# --- Scenario-based type map ---
-
+## Builds a tile-type map from a preset scenario in ScenarioData.
+## Converts from grid[row][col] layout to the Board's Vector2i(x, z) keys.
 func _type_map_from_scenario(scenario_idx: int) -> Dictionary:
 	var scenario = ScenarioData.get_scenario(scenario_idx)
 	var grid: Array = scenario["grid"]
@@ -171,12 +180,15 @@ func _type_map_from_scenario(scenario_idx: int) -> Dictionary:
 	return type_map
 
 
+## Returns the 3D scene for a given tile type (0 = Forest, 1 = Human, 2 = Plantation). Falls back to Forest if the type is unknown.
 func _scene_for_type(tile_type: int) -> PackedScene:
 	match tile_type:
 		1:  return HUMAN_TILE
 		2:  return PLANTATION_TILE
 	return FOREST_TILE  # 0 = FOREST (default)
 
+## Adds a box collider on top of the tile so mouse raycasts can hit it.
+## Used for tile selection during card effects.
 func create_tile_collider(tile_node: Node3D) -> void:
 	var static_body = StaticBody3D.new()
 	tile_node.add_child(static_body)
@@ -190,8 +202,9 @@ func create_tile_collider(tile_node: Node3D) -> void:
 	static_body.collision_layer = 1
 
 
-# --- Convert a tile to a new type in place ---
-
+## Replaces the tile at `tile_key` with a new tile of `new_type`.
+## Used by card effects that change tile types (e.g. "convert").
+## Removes the old tile node, spawns the new one at the same position, and updates GameState's tile_registry.
 func convert_tile(tile_key: Vector2i, new_type: int) -> void:
 	if not GameState.tile_registry.has(tile_key):
 		push_warning("convert_tile: key not in registry: " + str(tile_key))
@@ -218,9 +231,7 @@ func convert_tile(tile_key: Vector2i, new_type: int) -> void:
 	GameState.tile_registry[tile_key]["type"] = new_type
 
 
-# --- Highlight System ---
-# Adds a translucent flat plane on top of specified tiles.
-
+## Adds a see-through coloured plane on top of the given tiles so the player can see which tiles are valid for the current card effect.
 func highlight_tiles(tile_keys: Array, color: Color) -> void:
 	for key in tile_keys:
 		if not GameState.tile_registry.has(key):
@@ -232,6 +243,7 @@ func highlight_tiles(tile_keys: Array, color: Color) -> void:
 			continue  # Already highlighted
 		_apply_highlight(tile_node, color)
 
+## Removes every highlight from the board.
 func clear_all_highlights() -> void:
 	for key in GameState.tile_registry:
 		var tile_node: Node3D = GameState.tile_registry[key]["node"]

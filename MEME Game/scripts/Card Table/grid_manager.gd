@@ -1,10 +1,18 @@
+## Early prototype for drag-and-drop piece placement on a grid.
+##
+## Not used in the current game (card-driven play replaced this).
+## Kept as reference for the drag-to-snap-to-grid logic.
 extends Node3D
 
+## Size of one grid cell in world units.
 @export var grid_size: float = 2.0
+## The scene to spawn when the player starts dragging on an empty board.
 @export var elephant_scene: PackedScene
 
+## The piece currently being dragged with the mouse, or null if none.
 var current_dragged_unit: Node3D = null
 
+## The last placed piece (so it can be picked up again).
 var placed_unit: Node3D = null
 
 func _unhandled_input(event):
