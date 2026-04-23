@@ -20,12 +20,12 @@
 [ext_resource type="Texture2D" uid="uid://cihmm0on7ibr5" path="res://assets/Card/Plantation Conversion.png" id="13_aowxo"]
 [ext_resource type="Texture2D" uid="uid://bteumol6k7d8" path="res://assets/Card/Oil Palm Burning.png" id="14_wkea1"]
 [ext_resource type="Texture2D" uid="uid://bc3qgdkdkwsmy" path="res://assets/How To Play/Gameplay/Role Card.png" id="15_l34am"]
-[ext_resource type="Texture2D" uid="uid://d3uqsek7sq84" path="res://assets/How To Play/Overview/Game Overview.png" id="16_4r6ud"]
-[ext_resource type="Texture2D" uid="uid://cnop3etwa83vf" path="res://assets/How To Play/Overview/Rotate Screen.png" id="16_jpidl"]
-[ext_resource type="Texture2D" uid="uid://c6hke3oaxides" path="res://assets/How To Play/Overview/Role Overview.png" id="17_jpidl"]
+[ext_resource type="Texture2D" uid="uid://n7rxn2gqjuw3" path="res://assets/How To Play/Overview/Game Overview.png" id="16_4r6ud"]
+[ext_resource type="Texture2D" uid="uid://cpthch6ab0klo" path="res://assets/How To Play/Overview/Rotate Screen.png" id="16_jpidl"]
+[ext_resource type="Texture2D" uid="uid://b8k2hvsq7y8dd" path="res://assets/How To Play/Overview/Role Overview.png" id="17_jpidl"]
 [ext_resource type="Texture2D" uid="uid://diurjuteo72ru" path="res://assets/How To Play/Gameplay/Recent Played 1.png" id="18_tq2qq"]
 [ext_resource type="Texture2D" uid="uid://ciej8t4cx6oas" path="res://assets/How To Play/Gameplay/Recent Played 2.png" id="19_3rlu7"]
-[ext_resource type="Texture2D" uid="uid://bvjxcboanrcjo" path="res://assets/How To Play/Overview/Role Overview 2.png" id="19_tq2qq"]
+[ext_resource type="Texture2D" uid="uid://dr463w46uek2l" path="res://assets/How To Play/Overview/Role Overview 2.png" id="19_tq2qq"]
 [ext_resource type="Texture2D" uid="uid://ddjbp3jlk7dtc" path="res://assets/How To Play/Gameplay/Play Card 1.png" id="22_3rlu7"]
 [ext_resource type="Texture2D" uid="uid://c7qv7gla1ofha" path="res://assets/How To Play/Gameplay/Play Card 2.png" id="23_kttaw"]
 [ext_resource type="Texture2D" uid="uid://u6imdycswa22" path="res://assets/How To Play/Gameplay/Special Action.png" id="24_gwoir"]
@@ -201,6 +201,7 @@ text = "How to Play"
 horizontal_alignment = 1
 
 [node name="The Board" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
+visible = false
 layout_mode = 2
 
 [node name="Overview" type="RichTextLabel" parent="Background/How To Play/How to play pages/The Board"]
@@ -588,7 +589,7 @@ text = "
 
 
 [b]Winning [/b]
-The first player to meet all of their role's win conditions simultaneously wins.
+The first player to meet all of their role's win conditions wins.
 
 "
 fit_content = true
@@ -639,7 +640,6 @@ expand_mode = 1
 stretch_mode = 4
 
 [node name="Game Overview 1" type="VBoxContainer" parent="Background/How To Play/How to play pages"]
-visible = false
 layout_mode = 2
 
 [node name="RichTextLabel" type="RichTextLabel" parent="Background/How To Play/How to play pages/Game Overview 1"]
