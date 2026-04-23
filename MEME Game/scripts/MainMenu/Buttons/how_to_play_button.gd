@@ -1,4 +1,3 @@
-## Script for the How To Play button on the Main Menu.
 ## Opens the How To Play scene when clicked.
 extends Button
 

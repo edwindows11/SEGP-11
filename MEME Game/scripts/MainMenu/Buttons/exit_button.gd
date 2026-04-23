@@ -1,4 +1,3 @@
-## Script for the Exit button on the Main Menu.
 ## Closes the game when clicked.
 extends Button
 

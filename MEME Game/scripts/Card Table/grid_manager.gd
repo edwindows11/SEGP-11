@@ -1,5 +1,3 @@
-## Early prototype for drag-and-drop piece placement on a grid.
-##
 ## Not used in the current game (card-driven play replaced this).
 ## Kept as reference for the drag-to-snap-to-grid logic.
 extends Node3D

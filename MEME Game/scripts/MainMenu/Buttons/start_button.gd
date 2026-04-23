@@ -1,4 +1,3 @@
-## Script for the Start button on the Main Menu.
 ## Opens the Scenario Select scene when clicked.
 extends Button
 
