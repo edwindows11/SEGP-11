@@ -10,7 +10,7 @@ signal end_turn_requested()
 ## Emitted when the turn timer runs out. 
 ## Handled separately so end-of-turn cleanup can differ from a normal click.
 signal end_turn_timer_expired()
-## One signal per button-ability role. card_table.gd connects these to the right CardEffects call.
+## One signal per button-ability role. [card_table.gd] connects these to the right CardEffects call.
 signal request_po_ability()
 signal request_gov_ability()
 signal request_cons_ability()
@@ -277,7 +277,7 @@ func _build_all_trackers(): #trackers are the ones under objective
 	_trackers_vbox_ref = trackers_vbox
 
 ## Creates one goal-tracker panel per player slot. 
-## Called from card_table.gd after roles are assigned.
+## Called from [card_table.gd] after roles are assigned.
 func build_player_trackers() -> void:
 	if _trackers_vbox_ref == null:
 		return
@@ -688,7 +688,7 @@ func reposition_cards():
 		card.original_position = card.position
 
 ## Turn-timer tick. Counts down each second. When time runs out it stops
-## the timer and emits end_turn_timer_expired so card_table.gd can handle
+## the timer and emits end_turn_timer_expired so [card_table.gd] can handle
 ## Wildlife-discard and mid-card auto-completion.
 func _on_timer_timeout():
 	time_left -= 1

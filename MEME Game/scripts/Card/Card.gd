@@ -1,8 +1,8 @@
 ## Creates a action card in player's hand.
-## Contains the name, picture, colour and effect based on the info in CardData.gd. 
+## Contains the name, picture, colour and effect based on the info in [CardData.gd]. 
 ## When the player clicked, signal "card_selected" to enlarge the view.
 ##
-## The actual effect of the action card is handled by CardEffects.gd.
+## The actual effect of the action card is handled by [CardEffects.gd].
 extends Control
 
 ## Sent when a action card is clicked 
@@ -37,7 +37,7 @@ func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	gui_input.connect(_on_gui_input)
 
-## Fills in the card's name, picture, and background colour using the CardData.gd. 
+## Fills in the card's name, picture, and background colour using the [CardData.gd]. 
 ## Picture are in assets/Card/ with the same name as the card.
 ## If the card is a black card, it selects itself straight.
 func set_card_data(id: String) -> void:

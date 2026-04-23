@@ -1,6 +1,6 @@
 ## Keeps every role's name, description,
-## special ability, max cards per turn, and win condition. card_table_ui.gd
-## and bot.gd ask this script rather than checking role names themselves,
+## special ability, max cards per turn, and win condition. [card_table_ui.gd]
+## and [bot.gd] ask this script rather than checking role names themselves,
 ## so adding or changing a role only needs updates here.
 extends Node
 

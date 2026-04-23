@@ -41,7 +41,7 @@ var cards_played_this_turn: int = 0
 ## When true, the next turn is announced as skipped. Used by effects that freeze a player.
 var skip_next_turn = false
 ## True once someone has met their win condition. 
-## Blocks advance_turn() so no new turns start after the win screen shows.
+## Blocks [advance_turn()] so no new turns start after the win screen shows.
 var is_game_over: bool = false
 
 ## The 2 bonus card IDs Wildlife Department drew this turn. 
@@ -73,7 +73,7 @@ var government_stolen_cards: Dictionary = {}
 ## Immunity expires when the turn comes back to that player.
 var elephant_immunity_owner_by_id: Dictionary = {}
 
-## Emitted when the turn advances. card_table_ui and bot.gd listen for this.
+## Emitted when the turn advances. card_table_ui and [bot.gd] listen for this.
 signal turn_changed(player_index: int, role_name: String, is_skipped: bool)
 
 
@@ -107,7 +107,7 @@ func reset() -> void:
 
 
 ## Adds a new tile to tile_registry. 
-## Called by Board.gd as it builds the 8x8 grid so other scripts can look up tiles by grid key.
+## Called by [Board.gd] as it builds the 8x8 grid so other scripts can look up tiles by grid key.
 func register_tile(x: int, z: int, tile_type: int, node: Node3D, world_pos: Vector3) -> void:
 	var key = Vector2i(x, z)
 	tile_registry[key] = {

@@ -16,7 +16,7 @@ signal bot_turn_ended
 enum Difficulty { EASY, MEDIUM, HARD }
 
 
-## CardEffects node — set by card_table.gd on setup.
+## CardEffects node — set by [card_table.gd] on setup.
 var card_effects: Node = null
 ## The CardTable root node — used to spawn pieces.
 var play: Node3D    = null

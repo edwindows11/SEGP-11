@@ -660,7 +660,7 @@ func _do_steal() -> void:
 	state = State.WAITING_CHOICE
 	emit_signal("request_steal_popup")
 
-## Called by card_table_ui.gd when the player clicks a name in the steal popup.
+## Called by [card_table_ui.gd] when the player clicks a name in the steal popup.
 ## Moves a random card from the target's hand to the thief's hand.
 func confirm_steal_target(target_player_index: int) -> void:
 	if state != State.WAITING_CHOICE:
