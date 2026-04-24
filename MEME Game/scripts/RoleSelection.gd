@@ -4,21 +4,23 @@
 extends Control
 
 ## Enabled only when all 4 slots have picked a role.
-## Clicking loads CardTable with the chosen settings.
 @onready var start_game_button = $StartGameButton
 ## Grid of 9 clickable role buttons.
 @onready var role_grid = $RoleGrid
-## Container holding the 4 player slots and their "Select" buttons.
+## Container holding the 4 player slots.
 @onready var player_slots_container = $PlayerSlots
 ## Dropdown for choosing how many of the 4 slots are bots.
 @onready var bot_count = $"Bot Container/VBoxContainer/Bot Count and Speed/GridContainer/Bot Count/Option"
 ## Dropdown for the bot speed preset (Slow / Normal / Fast).
 @onready var bot_speed = $"Bot Container/VBoxContainer/Bot Count and Speed/GridContainer/Bot Speed/Option"
-## Difficulty dropdown for Player 2 (Easy / Medium / Hard). Greyed out if not a bot.
+## Difficulty dropdown for Player 2 (Easy / Medium / Hard). 
+## Greyed out if not a bot.
 @onready var bot_player2 = $"Bot Container/VBoxContainer/Bot Difficulty/VBoxContainer/MarginContainer/GridContainer/Player 2/Option"
-## Difficulty dropdown for Player 3. Greyed out if not a bot.
+## Difficulty dropdown for Player 3. 
+## Greyed out if not a bot.
 @onready var bot_player3 = $"Bot Container/VBoxContainer/Bot Difficulty/VBoxContainer/MarginContainer/GridContainer/Player 3/Option"
-## Difficulty dropdown for Player 4. Greyed out if not a bot.
+## Difficulty dropdown for Player 4. 
+## Greyed out if not a bot.
 @onready var bot_player4 = $"Bot Container/VBoxContainer/Bot Difficulty/VBoxContainer/MarginContainer/GridContainer/Player 4/Option"
 
 ## List of all 9 roles shown in the role grid.
@@ -51,12 +53,16 @@ var role_colors = {
 var player_selections = [null, null, null, null]
 ## Which slot is currently choosing. Changes after each pick.
 var current_player_index = 0
-## How many player slots there are (always 4).
+## 4 player slots
 var total_players = 4
 
 ## How many of the 4 slots are bots. Player 1 is always human.
 var singleplayer_bot_count = 3
+
+## How many bots.
 var bot_count_option: OptionButton = null
+
+## Bot speed.
 var bot_speed_option: OptionButton = null
 ## Speed preset applied to every bot: "Slow", "Normal" or "Fast".
 var bot_speed_preset: String = "Normal"
@@ -91,7 +97,7 @@ func _ready():
 	_refresh_bot_difficulty_controls()
 	_connect_bot_container_controls() 
 
-## Loads every role's card image once at startup so hover preview feels snappy.
+## Loads every role's card image once at startup.
 func _preload_role_textures():
 	for role in roles:
 		var path = "res://assets/Role Card/%s.png" % role
@@ -102,7 +108,7 @@ func _preload_role_textures():
 			print("WARNING: Could not load texture for role: ", role, " at path: ", path)
 
 
-## Wires up the bot settings panel: bot count, speed, and per-bot difficulty.
+## Create the bot settings panel - bot count, speed, and per-bot difficulty.
 func _connect_bot_container_controls():
 	bot_count_option = bot_count
 	bot_speed_option = bot_speed
@@ -120,7 +126,7 @@ func _connect_bot_container_controls():
 	_connect_difficulty_option(bot_player4, 3)
 
 
-## Connects one bot's difficulty OptionButton and sets its default value.
+## Connects one bot's difficulty OptionButton and sets the default value.
 func _connect_difficulty_option(option_node: OptionButton, player_idx: int):
 	if option_node == null:
 		return
@@ -135,8 +141,8 @@ func _connect_difficulty_option(option_node: OptionButton, player_idx: int):
 		bot_difficulty_panels[player_idx] = parent_container
 
 
-## Builds the 9 role buttons with coloured backgrounds and wires up click +
-## hover signals. Hover shows a preview card in the active player's slot.
+## Builds the 9 role buttons with coloured backgrounds and click and hover. 
+## Hover shows a preview card in the active player's slot.
 func setup_role_buttons():
 	var border_width = 5
 	var border_radius = 5
@@ -189,9 +195,8 @@ func setup_role_buttons():
 		role_grid.add_child(button)
 
 
-## Shows the role's card image in the current player's slot while the mouse
-## is over the role button. Skipped if the role is already taken or the slot
-## already has a confirmed pick.
+## Shows the role's card image in the current player's slot while the mouse is over the role button. 
+## Skipped if the role is already taken or the slot already has a confirmed pick.
 func _on_role_button_hovered(role_name: String):
 	if is_role_taken(role_name):
 		return
@@ -237,8 +242,7 @@ func _get_slot_texture_rect(slot_index: int) -> TextureRect:
 		tex_rect = slot.get_node_or_null("PlayerRole")
 	return tex_rect
 	
-## Finds the text label inside a slot used as a fallback when the card
-## image is missing.
+## Finds the text label inside a slot used as a fallback when the card image is missing.
 func _get_slot_role_label(slot_index: int) -> Label:
 	var slot = player_slots_container.get_child(slot_index)
 	if slot == null:
@@ -251,15 +255,15 @@ func _get_slot_role_label(slot_index: int) -> Label:
 	return label
 
 
-## Wires up each player slot's Select button to switch the active player.
+## Creates each player slot's Select to switch the active player.
 func setup_player_slots():
 	for i in range(total_players):
 		var slot = player_slots_container.get_child(i)
 		var select_btn = slot.get_node("SelectButton")
 		select_btn.pressed.connect(_on_player_slot_pressed.bind(i))
 
-## Runs when the bot-count dropdown changes. Updates the slot headers and
-## greys out difficulty controls for slots that are no longer bots.
+## Runs when the bot-count dropdown changes. 
+## Updates the slot headers and greys out difficulty controls for slots that are no longer bots.
 func _on_bot_count_selected(index: int):
 	if bot_count_option == null:
 		return
@@ -305,8 +309,8 @@ func _refresh_bot_difficulty_controls():
 			panel.modulate = Color(1, 1, 1, 0.5) if disabled else Color(1, 1, 1, 1)
 
 
-## Returns a dictionary mapping each active bot's player index to its
-## chosen difficulty. Inactive slots are skipped. Passed to card_table on start.
+## Returns a dictionary mapping each active bot's player index to its chosen difficulty. 
+## Inactive slots are skipped. 
 func _build_active_bot_difficulty_map() -> Dictionary:
 	var result: Dictionary = {}
 	for player_idx in range(1, total_players):
@@ -332,8 +336,8 @@ func _refresh_player_slot_headers():
 			label.text = "Player %d" % [i + 1]
 
 
-## Confirms the current player's role pick. Locks the card image in their
-## slot and moves on to the next unpicked slot.
+## Confirms the current player's role pick. 
+## Locks the card image in their slot and moves on to the next unpicked slot.
 func _on_role_button_pressed(role_name: String):
 	if is_role_taken(role_name):
 		return
@@ -375,9 +379,8 @@ func is_role_taken(role_name) -> bool:
 	return false
 
 
-## Refreshes every slot's border, label, and card image to match the current
-## selection state. Also disables role buttons that are already taken and
-## enables Start Game only when all four slots have picked.
+## Refreshes every slot's border, label, and card image to match the current selection state. 
+## Disables role buttons that are already taken and enables Start Game only when all four slots have picked.
 func update_ui():
 	for i in range(total_players):
 		var slot = player_slots_container.get_child(i)
@@ -436,7 +439,8 @@ func update_ui():
 	var all_selected = player_selections.all(func(r): return r != null)
 	start_game_button.disabled = not all_selected
 
-## Runs when the Start Game button is clicked. Loads the CardTable scene,
+## Runs when the Start Game button is clicked. 
+## Loads the CardTable scene,
 ## copies over the chosen roles / bot count / bot speed / bot difficulties,
 ## and switches to it.
 func _on_start_game_pressed():

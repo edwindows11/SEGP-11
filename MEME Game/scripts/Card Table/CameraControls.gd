@@ -58,7 +58,6 @@ func update_camera_transform() -> void:
 
 	# Start at (0, 0, zoom), 
 	# rotate around X axis (Pitch), rotate around Y axis
-	
 	var offset = Vector3(0, 0, current_zoom)
 	
 	# start position

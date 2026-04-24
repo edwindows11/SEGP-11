@@ -1,7 +1,5 @@
-## Keeps every role's name, description,
-## special ability, max cards per turn, and win condition. [card_table_ui.gd]
-## and [bot.gd] ask this script rather than checking role names themselves,
-## so adding or changing a role only needs updates here.
+## Keeps every role's name, description, special ability, max cards per turn, and win condition. 
+
 extends Node
 
 ## Role name identifiers. Used as string keys everywhere else in the game.
@@ -30,7 +28,7 @@ const ALL_ROLES := [
 ]
 
 ## Roles whose ability needs a "Special Ability" button click to trigger.
-## Wildlife Department and Researcher are passive (handled automatically);
+## Wildlife Department and Researcher are passive.
 ## Village Head is here because activating its 2-card mode is optional.
 const BUTTON_ROLES := [
 	CONSERVATIONIST,
@@ -63,12 +61,12 @@ func is_valid_role(role: String) -> bool:
 func has_button_ability(role: String) -> bool:
 	return role in BUTTON_ROLES
 
-## Looks up the short ability description for a role. Returns "" if unknown.
+## Looks up the short ability description for a role. 
+## Returns "" if unknown.
 func description_for(role: String) -> String:
 	return DESCRIPTIONS.get(role, "")
 
-## Returns the role whose ability the player effectively has. Usually just
-## their own role, but Environmental Consultant reports the role they borrowed.
+## Returns the role whose ability the player effectively has. 
 func effective_role(player_index: int) -> String:
 	if player_index < 0 or player_index >= GameState.player_roles.size():
 		return ""
@@ -77,8 +75,7 @@ func effective_role(player_index: int) -> String:
 		return GameState.ec_borrowed_ability
 	return role
 
-## Returns true if the given role has already used its once-per-turn ability
-## this turn. Reads per-role flags stored on the UI node.
+## Returns true if the given role has already used its once-per-turn ability this turn. 
 func ability_used_this_turn(role: String, ui_node: Node) -> bool:
 	match role:
 		PLANTATION_OWNER:   return ui_node.get("cards_played_this_turn") != 0
@@ -96,8 +93,8 @@ func can_use_button(role: String, ui_node: Node) -> bool:
 		return false
 	return not ability_used_this_turn(role, ui_node)
 
-## Runs the right CardEffects call for the role's ability. Resolves the
-## borrowed ability for Environmental Consultant.
+## Runs the right CardEffects call for the role's ability. 
+## Resolves the borrowed ability for Environmental Consultant.
 func trigger_special_ability(role: String, ui_node: Node, card_effects: Node, target_index: int = -1) -> void:
 	var resolved := role
 	if role == ENVIRONMENTAL_CONSULT:
@@ -120,8 +117,8 @@ func trigger_special_ability(role: String, ui_node: Node, card_effects: Node, ta
 		_:
 			ui_node.show_instruction("This role has no on-demand ability.")
 
-## Runs at the start of a player's turn. Triggers Wildlife Department's
-## passive bonus-card draw. Other passive roles hook in here too if needed.
+## Runs at the start of a player's turn. 
+## Triggers Wildlife Department's passive bonus-card draw. 
 func on_turn_start(player_index: int) -> void:
 	var role := effective_role(player_index)
 	if role == WILDLIFE_DEPARTMENT:
@@ -131,9 +128,8 @@ func on_turn_start(player_index: int) -> void:
 func wildlife_discard(player_index: int, card_id: String) -> void:
 	GameState.wildlife_dept_discard_bonus(player_index, card_id)
 
-## Returns how many cards this player can play per turn. Normally 1, but
-## Village Head gets 2 after pressing its Special Ability button.
-## Pass `ui_node` to check the vh-activated flag; without it, assume 1.
+## Returns how many cards this player can play per turn. 
+## Pass `ui_node` to check the vh-activated flag, if no , assume 1.
 func max_cards_per_turn(role: String, ui_node: Node = null) -> int:
 	var is_vh := (role == VILLAGE_HEAD) or (role == ENVIRONMENTAL_CONSULT and GameState.ec_borrowed_ability == VILLAGE_HEAD)
 	if is_vh and ui_node != null and bool(ui_node.get("vh_used_ability_this_turn")):
@@ -161,10 +157,9 @@ func goal_title(role: String) -> String:
 func goal_color(role: String) -> Color:
 	return GOAL_DISPLAY.get(role, {}).get("color", Color(1.0, 0.8, 0.2))
 
-## Builds the current goal-tracker data for a player. Returns a dictionary
-## with display strings and a `won` flag. Used by card_table_ui to render
-## every role's goal panel from a single template. The `won` flag is polled
-## every 0.2 s to detect a winning player.
+## Builds the current goal-tracker data for a player. 
+## Returns a dictionary with display strings and a `won` flag. 
+## The `won` flag is polled every 0.2 s to detect a winning player.
 ##
 ## Returned keys:
 ##   title : String - panel title (e.g. "Conservationist Goal")
