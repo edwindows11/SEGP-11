@@ -1,0 +1,34 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Godot export builds
+*.exe
+*.pck
+*.console.exe
+
+# Blender autosaves
+*.blend1
+
+# Imported translations (automatically generated from CSV files)
+*.translation
+
+# Mono-specific ignores
+.mono/
+data_*/
+mono_crash.*.json
+
+# System/tool files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Claude Code local settings
+.claude/
