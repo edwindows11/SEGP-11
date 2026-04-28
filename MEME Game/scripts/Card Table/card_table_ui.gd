@@ -44,7 +44,6 @@ var recent_cards_toggle_button: Button = null
 var recent_cards_overlay_panel: PanelContainer = null
 var recent_cards_sections_container: HBoxContainer = null
 var recent_cards_by_player: Array = []
-const RECENT_HISTORY_LIMIT: int = 5
 var recent_cards_preview_card: Control = null
 var recent_cards_preview_holder: CenterContainer = null
 var recent_cards_preview_caption: Label = null
@@ -1197,8 +1196,7 @@ func _close_recent_cards_overlay() -> void:
 	_clear_recent_cards_preview()
 
 ## Records a card the given player just played so it shows up in the
-## Played Cards overlay. Trimmed to the last RECENT_HISTORY_LIMIT entries
-## per player so the list doesn't grow without bound.
+## Played Cards overlay.
 func add_recent_card_for_player(player_index: int, card_id: String) -> void:
 	if card_id == "":
 		return
@@ -1211,8 +1209,6 @@ func add_recent_card_for_player(player_index: int, card_id: String) -> void:
 	var entry := {"uid": entry_uid, "card_id": card_id}
 	var bucket: Array = recent_cards_by_player[player_index]
 	bucket.append(entry)
-	if bucket.size() > RECENT_HISTORY_LIMIT:
-		bucket = bucket.slice(bucket.size() - RECENT_HISTORY_LIMIT)
 
 	recent_cards_by_player[player_index] = bucket
 
