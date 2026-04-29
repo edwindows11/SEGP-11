@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Strategy Game"
+config/name="Trunk Tales"
 run/main_scene="res://scenes/MainMenu.tscn"
 config/features=PackedStringArray("4.5", "Forward Plus")
 
